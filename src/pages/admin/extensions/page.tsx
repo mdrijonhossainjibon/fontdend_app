@@ -348,6 +348,24 @@ export default function AdminExtensionsPage() {
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Type</p>
                                         <p className="text-sm font-bold text-foreground font-mono">{ext.fileType}</p>
                                     </div>
+                                    <div className="bg-muted/30 rounded-lg p-2 col-span-2 flex items-center justify-between group/link">
+                                        <div>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Short Link</p>
+                                            <p className="text-xs font-mono text-amber-500 truncate w-[180px]">/api/d/{ext.shortId}</p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 rounded-md hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500"
+                                            onClick={() => {
+                                                const link = `${window.location.origin}/api/d/${ext.shortId}`
+                                                navigator.clipboard.writeText(link)
+                                                message.success('Short link copied!')
+                                            }}
+                                        >
+                                            <Copy className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
                                 </div>
 
                                 {/* Uploaded date */}
