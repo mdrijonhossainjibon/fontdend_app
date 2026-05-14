@@ -33,6 +33,9 @@ function* uploadExtensionSaga(action: any) {
       method: 'POST',
       url: '/admin/extensions',
       body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
     })
 
     yield put(actions.uploadExtensionSuccess())
