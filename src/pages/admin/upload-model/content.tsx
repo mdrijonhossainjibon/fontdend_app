@@ -357,9 +357,9 @@ export default function UploadModelContent() {
             return
         }
 
-        // Forward via Main Backend to avoid Mixed Content/CORS issues
+        // Upload via Main Backend /api/admin/upload-model
         const botUrl = `${endpoint.protocol}://${endpoint.endpoint}:${endpoint.port}/upload-model`
-        const url = `/api/upload/model-to-bot`
+        const url = `/api/admin/upload-model`
 
         const formData = new FormData()
         formData.append("file", file)
