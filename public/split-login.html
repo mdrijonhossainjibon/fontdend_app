@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — CaptchaⱮaster</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'Geist', 'system-ui', 'sans-serif'] },
+          colors: {
+            gold: {
+              50: '#fef7e6',
+              100: '#fcecb3',
+              200: '#f9e080',
+              300: '#f5d54d',
+              400: '#f2c91a',
+              500: '#f0b90b',
+              600: '#c89709',
+              700: '#a07507',
+              800: '#785305',
+              900: '#503103',
+            },
+          },
+          animation: {
+            'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'float-slow': 'float 8s ease-in-out infinite',
+            'slideUp': 'slideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards',
+            'fadeIn': 'fadeIn 0.3s ease-out forwards',
+            'shimmer': 'shimmer 2s ease-in-out infinite',
+            'scan-line': 'scan-line 2.5s ease-in-out infinite',
+            'spin-slow': 'spin 10s linear infinite',
+            'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+          },
+          keyframes: {
+            'pulse-glow': {
+              '0%, 100%': { filter: 'drop-shadow(0 0 8px rgba(240,185,11,0.4))', transform: 'translateY(0)' },
+              '50%': { filter: 'drop-shadow(0 0 20px rgba(240,185,11,0.7))', transform: 'translateY(-2px)' },
+            },
+            'float': {
+              '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
+              '25%': { transform: 'translateY(-20px) translateX(10px)' },
+              '50%': { transform: 'translateY(-10px) translateX(-10px)' },
+              '75%': { transform: 'translateY(-30px) translateX(5px)' },
+            },
+            'slideUp': {
+              'from': { opacity: '0', transform: 'translateY(30px)' },
+              'to': { opacity: '1', transform: 'translateY(0)' },
+            },
+            'fadeIn': {
+              'from': { opacity: '0' },
+              'to': { opacity: '1' },
+            },
+            'shimmer': {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            },
+            'scan-line': {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(160px)' },
+            },
+            'pulse-soft': {
+              '0%, 100%': { opacity: '0.6' },
+              '50%': { opacity: '1' },
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* ── Base ── */
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', 'Geist', system-ui, sans-serif; }
+
+    /* ── Input focus glow ── */
+    .input-glow:focus {
+      border-color: #f0b90b;
+      box-shadow: 0 0 0 1px rgba(240,185,11,0.15), 0 0 20px rgba(240,185,11,0.08);
+    }
+    .dark .input-glow:focus {
+      box-shadow: 0 0 0 1px rgba(240,185,11,0.2), 0 0 24px rgba(240,185,11,0.12);
+    }
+
+    /* ── Gold gradient button ── */
+    .btn-gold {
+      background: linear-gradient(135deg, #f0b90b, #d49a06);
+      transition: all 0.3s ease;
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, #f5c534, #dba60d);
+      box-shadow: 0 0 24px rgba(240,185,11,0.35);
+      transform: translateY(-1px);
+    }
+    .btn-gold:active { transform: translateY(0); }
+
+    /* ── Glassmorphism ── */
+    .glass-card {
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+    .dark .glass-card {
+      background: rgba(15,23,42,0.65);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .glass-reflection {
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-reflection::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+    .dark .glass-reflection::before {
+      background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+    }
+
+    /* ── Custom checkbox ── */
+    .custom-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .custom-checkbox:checked {
+      background: #f0b90b;
+      border-color: #f0b90b;
+    }
+    .custom-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px; top: 1px;
+      width: 5px; height: 9px;
+      border: solid #1e293b;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .dark .custom-checkbox { border-color: #475569; }
+
+    /* ── Stagger delays ── */
+    .stagger-1 { animation-delay: 0.05s; animation-fill-mode: both; }
+    .stagger-2 { animation-delay: 0.1s; animation-fill-mode: both; }
+    .stagger-3 { animation-delay: 0.15s; animation-fill-mode: both; }
+    .stagger-4 { animation-delay: 0.2s; animation-fill-mode: both; }
+    .stagger-5 { animation-delay: 0.25s; animation-fill-mode: both; }
+    .stagger-6 { animation-delay: 0.3s; animation-fill-mode: both; }
+    .stagger-7 { animation-delay: 0.35s; animation-fill-mode: both; }
+    .stagger-8 { animation-delay: 0.4s; animation-fill-mode: both; }
+
+    /* ── Social button ── */
+    .btn-social {
+      border: 1px solid #e2e8f0;
+      transition: all 0.25s ease;
+    }
+    .btn-social:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+    .dark .btn-social {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .dark .btn-social:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    /* ── Tab styling ── */
+    .tab-btn {
+      position: relative;
+      transition: color 0.2s;
+    }
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #f0b90b;
+      transform: scaleX(0);
+      transition: transform 0.25s ease;
+      border-radius: 2px;
+    }
+    .tab-btn.active::after { transform: scaleX(1); }
+    .tab-btn.active { color: #f0b90b; }
+
+    /* ── QR container ── */
+    .qr-container {
+      position: relative;
+      overflow: hidden;
+    }
+    .qr-scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #f0b90b, transparent);
+      animation: scan-line 2.5s ease-in-out infinite;
+      z-index: 5;
+    }
+
+    /* ── Blob shapes ── */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* ── Floating badge ── */
+    .floating-badge {
+      position: absolute;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: white;
+    }
+
+    /* ── Stat bar fill ── */
+    .stat-fill {
+      background: linear-gradient(90deg, #f0b90b, #f5c534);
+      border-radius: 999px;
+      height: 8px;
+      animation: fillBar 1.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes fillBar {
+      from { width: 0; }
+    }
+
+    /* ── Particles ── */
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(240,185,11,0.6);
+      border-radius: 50%;
+      opacity: 0;
+    }
+
+    /* ── Autofill ── */
+    input:-webkit-autofill,
+    input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+      -webkit-text-fill-color: #0f172a !important;
+    }
+    .dark input:-webkit-autofill,
+    .dark input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+      -webkit-text-fill-color: #f1f5f9 !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════ SPLIT CONTAINER ══════════ -->
+  <div class="flex flex-col lg:flex-row min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300">
+
+    <!-- ════════ LEFT PANEL (Promotional) ════════ -->
+    <aside class="relative w-full lg:w-1/2 min-h-[50vh] lg:min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center p-6 md:p-10 overflow-hidden">
+
+      <!-- Blobs -->
+      <div class="blob w-[450px] h-[450px] bg-yellow-500/10 -top-24 -left-24"></div>
+      <div class="blob w-[350px] h-[350px] bg-amber-500/8 bottom-10 -right-10"></div>
+      <div class="blob w-[250px] h-[250px] bg-yellow-500/5 top-1/2 left-1/3"></div>
+
+      <!-- Particles -->
+      <div id="particles-left" aria-hidden="true"></div>
+
+      <!-- Floating badges -->
+      <div class="floating-badge top-[12%] right-[10%] animate-float hidden md:flex shadow-lg">
+        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse-soft"></div>
+        <span class="text-white/90">2,847 online</span>
+      </div>
+      <div class="floating-badge bottom-[18%] left-[8%] animate-float-slow hidden md:flex shadow-lg">
+        <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+        <span class="text-white/90">4.96 avg rating</span>
+      </div>
+
+      <!-- Content -->
+      <div class="relative z-10 w-full max-w-lg opacity-0 animate-slideUp stagger-1">
+
+        <!-- Logo -->
+        <div class="mb-8 animate-float">
+          <span class="text-2xl font-bold tracking-tight text-white">Captcha</span>
+          <span class="text-2xl font-bold tracking-tight text-yellow-400">Ɱ</span>
+          <span class="text-2xl font-bold tracking-tight text-yellow-400">aster</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight mb-4">
+          Automate CAPTCHA<br />
+          Solving <span class="text-yellow-400">Instantly</span>
+        </h1>
+        <p class="text-slate-400 text-sm md:text-base leading-relaxed mb-8 max-w-md">
+          Secure, fast, AI-powered CAPTCHA solutions for developers &amp; teams.
+        </p>
+
+        <!-- Dashboard Mockup -->
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 mb-8 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-white/70 text-xs font-medium uppercase tracking-wider">Today's Stats</span>
+            <span class="text-green-400 text-xs flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> live
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-white/5 rounded-lg p-3">
+              <p class="text-yellow-400 text-lg font-bold">124.8K</p>
+              <p class="text-white/50 text-[10px] uppercase tracking-wider">Solved</p>
+            </div>
+            <div class="bg-white/5 rounded-lg p-3">
+              <p class="text-yellow-400 text-lg font-bold">0.3s</p>
+              <p class="text-white/50 text-[10px] uppercase tracking-wider">Avg Speed</p>
+            </div>
+            <div class="bg-white/5 rounded-lg p-3">
+              <p class="text-yellow-400 text-lg font-bold">99.8%</p>
+              <p class="text-white/50 text-[10px] uppercase tracking-wider">Accuracy</p>
+            </div>
+          </div>
+          <!-- Mini bar chart -->
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <span class="text-white/40 text-[10px] w-6 text-right">M</span>
+              <div class="flex-1 bg-white/5 rounded-full h-2"><div class="stat-fill" style="width:92%"></div></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-white/40 text-[10px] w-6 text-right">T</span>
+              <div class="flex-1 bg-white/5 rounded-full h-2"><div class="stat-fill" style="width:78%;animation-delay:0.1s"></div></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-white/40 text-[10px] w-6 text-right">W</span>
+              <div class="flex-1 bg-white/5 rounded-full h-2"><div class="stat-fill" style="width:95%;animation-delay:0.2s"></div></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-white/40 text-[10px] w-6 text-right">T</span>
+              <div class="flex-1 bg-white/5 rounded-full h-2"><div class="stat-fill" style="width:65%;animation-delay:0.3s"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature cards -->
+        <div class="grid grid-cols-2 gap-3 mb-8">
+          <div class="flex items-center gap-2.5 bg-white/5 rounded-lg px-3.5 py-2.5 border border-white/5">
+            <svg class="w-4 h-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span class="text-white/80 text-xs font-medium">AI Solving</span>
+          </div>
+          <div class="flex items-center gap-2.5 bg-white/5 rounded-lg px-3.5 py-2.5 border border-white/5">
+            <svg class="w-4 h-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span class="text-white/80 text-xs font-medium">Ultra-fast API</span>
+          </div>
+          <div class="flex items-center gap-2.5 bg-white/5 rounded-lg px-3.5 py-2.5 border border-white/5">
+            <svg class="w-4 h-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <span class="text-white/80 text-xs font-medium">Multi CAPTCHA</span>
+          </div>
+          <div class="flex items-center gap-2.5 bg-white/5 rounded-lg px-3.5 py-2.5 border border-white/5">
+            <svg class="w-4 h-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span class="text-white/80 text-xs font-medium">Real-time Analytics</span>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <a href="#" class="btn-gold inline-flex items-center gap-2 text-slate-900 font-semibold text-sm rounded-lg px-6 py-3 no-underline">
+          Get Started
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ════════ RIGHT PANEL (Login + QR) ════════ -->
+    <main class="relative w-full lg:w-1/2 min-h-screen flex items-center justify-center p-4 md:p-8 bg-slate-50 dark:bg-slate-950 transition-colors duration-300" role="main">
+
+      <!-- Theme toggle -->
+      <button id="themeToggle" class="fixed top-5 right-5 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer" aria-label="Toggle theme">
+        <svg id="sun-icon" class="w-4 h-4 text-amber-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg id="moon-icon" class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+
+      <div class="w-full max-w-md opacity-0 animate-slideUp stagger-1">
+        <div class="glass-card glass-reflection rounded-xl p-7 md:p-9 shadow-[0_4px_24px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
+
+          <!-- Logo -->
+          <div class="text-center mb-6">
+            <a href="/" class="inline-flex items-center gap-1 no-underline animate-float">
+              <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Captcha</span>
+              <span class="text-xl font-bold tracking-tight text-yellow-500">Ɱ</span>
+              <span class="text-xl font-bold tracking-tight text-yellow-500">aster</span>
+            </a>
+          </div>
+
+          <!-- Headline -->
+          <div class="text-center mb-5">
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Welcome Back</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Choose your login method</p>
+          </div>
+
+          <!-- ── Tabs ── -->
+          <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+            <button class="tab-btn active flex-1 pb-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 tab-btn active" onclick="switchTab('email')" id="tab-email">Email / Password</button>
+            <button class="tab-btn flex-1 pb-2.5 text-sm font-medium text-slate-500 dark:text-slate-400" onclick="switchTab('qr')" id="tab-qr">QR Code</button>
+          </div>
+
+          <!-- ── Email Login Form ── -->
+          <div id="panel-email">
+            <form novalidate onsubmit="handleLogin(event)">
+              <div class="mb-3.5">
+                <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
+                <input id="email" type="email" placeholder="mila@captchamaster.com" autocomplete="email" required
+                  class="input-glow w-full bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm outline-none transition-all duration-200" />
+              </div>
+              <div class="mb-3.5">
+                <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                <div class="relative">
+                  <input id="password" type="password" placeholder="••••••••••••" autocomplete="current-password" required minlength="8"
+                    class="input-glow w-full bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2.5 pr-10 text-sm outline-none transition-all duration-200" />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors" onclick="togglePassword()" role="button" aria-label="Toggle password" tabindex="0">
+                    <svg id="eye-open" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg id="eye-closed" class="w-[18px] h-[18px] hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between mb-5">
+                <label class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 cursor-pointer select-none">
+                  <input type="checkbox" class="custom-checkbox" checked />
+                  <span>Remember me</span>
+                </label>
+                <a href="#" class="text-sm text-yellow-600 dark:text-yellow-400/80 hover:text-yellow-500 transition-colors no-underline">Forgot Password?</a>
+              </div>
+              <button type="submit" class="btn-gold w-full text-slate-900 font-semibold text-sm rounded-lg px-4 py-3 cursor-pointer">
+                Sign In
+              </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-3 my-5">
+              <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+              <span class="text-xs text-slate-400 dark:text-slate-500">or continue with</span>
+              <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+            </div>
+
+            <!-- Social -->
+            <div class="grid grid-cols-3 gap-2.5 mb-5">
+              <button class="btn-social flex items-center justify-center rounded-lg py-2.5 bg-white dark:bg-transparent cursor-pointer" aria-label="Google">
+                <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </button>
+              <button class="btn-social flex items-center justify-center rounded-lg py-2.5 bg-white dark:bg-transparent cursor-pointer" aria-label="GitHub">
+                <svg class="w-[18px] h-[18px] text-slate-700 dark:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+              </button>
+              <button class="btn-social flex items-center justify-center rounded-lg py-2.5 bg-white dark:bg-transparent cursor-pointer" aria-label="Microsoft">
+                <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="9" height="9" fill="#F25022"/><rect x="13" y="2" width="9" height="9" fill="#7FBA00"/><rect x="2" y="13" width="9" height="9" fill="#00A4EF"/><rect x="13" y="13" width="9" height="9" fill="#FFB900"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- ── QR Code Login ── -->
+          <div id="panel-qr" class="hidden">
+            <div class="text-center">
+              <div class="qr-container inline-flex rounded-xl bg-white p-4 shadow-inner mb-4 mx-auto">
+                <div class="relative w-[200px] h-[200px]">
+                  <!-- QR code grid pattern -->
+                  <svg class="w-full h-full" viewBox="0 0 200 200">
+                    <rect x="10" y="10" width="40" height="40" rx="4" fill="#1e293b"/>
+                    <rect x="150" y="10" width="40" height="40" rx="4" fill="#1e293b"/>
+                    <rect x="10" y="150" width="40" height="40" rx="4" fill="#1e293b"/>
+                    <!-- Inner finder patterns -->
+                    <rect x="18" y="18" width="24" height="24" rx="2" fill="white"/>
+                    <rect x="158" y="18" width="24" height="24" rx="2" fill="white"/>
+                    <rect x="18" y="158" width="24" height="24" rx="2" fill="white"/>
+                    <rect x="22" y="22" width="16" height="16" rx="1" fill="#1e293b"/>
+                    <rect x="162" y="22" width="16" height="16" rx="1" fill="#1e293b"/>
+                    <rect x="22" y="162" width="16" height="16" rx="1" fill="#1e293b"/>
+                    <!-- Random data modules -->
+                    <rect x="60" y="10" width="6" height="6" fill="#1e293b"/><rect x="70" y="10" width="6" height="6" fill="#1e293b"/><rect x="90" y="10" width="6" height="6" fill="#1e293b"/><rect x="110" y="10" width="6" height="6" fill="#1e293b"/><rect x="130" y="10" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="20" width="6" height="6" fill="#1e293b"/><rect x="80" y="20" width="6" height="6" fill="#1e293b"/><rect x="100" y="20" width="6" height="6" fill="#1e293b"/><rect x="120" y="20" width="6" height="6" fill="#1e293b"/><rect x="140" y="20" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="30" width="6" height="6" fill="#1e293b"/><rect x="70" y="30" width="6" height="6" fill="#1e293b"/><rect x="90" y="30" width="6" height="6" fill="#1e293b"/><rect x="110" y="30" width="6" height="6" fill="#1e293b"/><rect x="130" y="30" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="60" width="6" height="6" fill="#1e293b"/><rect x="80" y="60" width="6" height="6" fill="#1e293b"/><rect x="90" y="60" width="6" height="6" fill="#1e293b"/><rect x="100" y="60" width="6" height="6" fill="#1e293b"/><rect x="120" y="60" width="6" height="6" fill="#1e293b"/><rect x="140" y="60" width="6" height="6" fill="#1e293b"/><rect x="150" y="60" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="70" width="6" height="6" fill="#1e293b"/><rect x="90" y="70" width="6" height="6" fill="#1e293b"/><rect x="110" y="70" width="6" height="6" fill="#1e293b"/><rect x="130" y="70" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="80" width="6" height="6" fill="#1e293b"/><rect x="70" y="80" width="6" height="6" fill="#1e293b"/><rect x="80" y="80" width="6" height="6" fill="#1e293b"/><rect x="100" y="80" width="6" height="6" fill="#1e293b"/><rect x="110" y="80" width="6" height="6" fill="#1e293b"/><rect x="120" y="80" width="6" height="6" fill="#1e293b"/><rect x="130" y="80" width="6" height="6" fill="#1e293b"/><rect x="150" y="80" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="90" width="6" height="6" fill="#1e293b"/><rect x="70" y="90" width="6" height="6" fill="#1e293b"/><rect x="90" y="90" width="6" height="6" fill="#1e293b"/><rect x="100" y="90" width="6" height="6" fill="#1e293b"/><rect x="130" y="90" width="6" height="6" fill="#1e293b"/><rect x="140" y="90" width="6" height="6" fill="#1e293b"/><rect x="150" y="90" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="100" width="6" height="6" fill="#1e293b"/><rect x="70" y="100" width="6" height="6" fill="#1e293b"/><rect x="80" y="100" width="6" height="6" fill="#1e293b"/><rect x="90" y="100" width="6" height="6" fill="#1e293b"/><rect x="110" y="100" width="6" height="6" fill="#1e293b"/><rect x="130" y="100" width="6" height="6" fill="#1e293b"/><rect x="140" y="100" width="6" height="6" fill="#1e293b"/><rect x="150" y="100" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="110" width="6" height="6" fill="#1e293b"/><rect x="90" y="110" width="6" height="6" fill="#1e293b"/><rect x="100" y="110" width="6" height="6" fill="#1e293b"/><rect x="120" y="110" width="6" height="6" fill="#1e293b"/><rect x="140" y="110" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="120" width="6" height="6" fill="#1e293b"/><rect x="70" y="120" width="6" height="6" fill="#1e293b"/><rect x="80" y="120" width="6" height="6" fill="#1e293b"/><rect x="100" y="120" width="6" height="6" fill="#1e293b"/><rect x="110" y="120" width="6" height="6" fill="#1e293b"/><rect x="120" y="120" width="6" height="6" fill="#1e293b"/><rect x="130" y="120" width="6" height="6" fill="#1e293b"/><rect x="150" y="120" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="140" width="6" height="6" fill="#1e293b"/><rect x="70" y="140" width="6" height="6" fill="#1e293b"/><rect x="80" y="140" width="6" height="6" fill="#1e293b"/><rect x="90" y="140" width="6" height="6" fill="#1e293b"/><rect x="100" y="140" width="6" height="6" fill="#1e293b"/><rect x="110" y="140" width="6" height="6" fill="#1e293b"/><rect x="140" y="140" width="6" height="6" fill="#1e293b"/><rect x="150" y="140" width="6" height="6" fill="#1e293b"/>
+                    <rect x="70" y="150" width="6" height="6" fill="#1e293b"/><rect x="90" y="150" width="6" height="6" fill="#1e293b"/><rect x="110" y="150" width="6" height="6" fill="#1e293b"/><rect x="130" y="150" width="6" height="6" fill="#1e293b"/>
+                    <rect x="60" y="160" width="6" height="6" fill="#1e293b"/><rect x="80" y="160" width="6" height="6" fill="#1e293b"/><rect x="90" y="160" width="6" height="6" fill="#1e293b"/><rect x="100" y="160" width="6" height="6" fill="#1e293b"/><rect x="120" y="160" width="6" height="6" fill="#1e293b"/><rect x="130" y="160" width="6" height="6" fill="#1e293b"/><rect x="140" y="160" width="6" height="6" fill="#1e293b"/>
+                    <!-- Gold accent center -->
+                    <rect x="92" y="92" width="16" height="16" rx="2" fill="#f0b90b"/>
+                    <rect x="96" y="96" width="8" height="8" rx="1" fill="white"/>
+                  </svg>
+                  <!-- Scan line overlay -->
+                  <div class="qr-scan-line"></div>
+                </div>
+              </div>
+              <p class="text-sm text-slate-600 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                Scan this code with the <span class="font-semibold text-yellow-600 dark:text-yellow-400">CaptchaⱮaster App</span> to login instantly
+              </p>
+              <div class="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Secured with end-to-end encryption</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Footer ── -->
+          <div class="text-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              Don't have an account?
+              <a href="#" class="text-yellow-600 dark:text-yellow-400 hover:text-yellow-500 font-medium transition-colors no-underline">Sign Up</a>
+            </p>
+            <p class="text-xs text-slate-400 dark:text-slate-600 mt-3">&copy; 2026 CaptchaⱮaster. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ── Particles ──
+    (function createParticles() {
+      const container = document.getElementById('particles-left');
+      if (!container) return;
+      for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+        p.style.animation = `float-up ${3 + Math.random() * 4}s ease-in-out ${Math.random() * 5}s infinite`;
+        p.style.opacity = '0.6';
+        container.appendChild(p);
+      }
+    })();
+
+    // ── Keyframes for particles ──
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes float-up {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.6; }
+        90% { opacity: 0.6; }
+        100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // ── Password toggle ──
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const open = document.getElementById('eye-open');
+      const closed = document.getElementById('eye-closed');
+      if (input.type === 'password') {
+        input.type = 'text';
+        open.classList.add('hidden');
+        closed.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        open.classList.remove('hidden');
+        closed.classList.add('hidden');
+      }
+    }
+
+    // ── Tab switching ──
+    function switchTab(tab) {
+      const emailPanel = document.getElementById('panel-email');
+      const qrPanel = document.getElementById('panel-qr');
+      const tabEmail = document.getElementById('tab-email');
+      const tabQr = document.getElementById('tab-qr');
+
+      if (tab === 'email') {
+        emailPanel.classList.remove('hidden');
+        qrPanel.classList.add('hidden');
+        tabEmail.classList.add('active');
+        tabQr.classList.remove('active');
+      } else {
+        emailPanel.classList.add('hidden');
+        qrPanel.classList.remove('hidden');
+        tabEmail.classList.remove('active');
+        tabQr.classList.add('active');
+      }
+    }
+
+    // ── Theme toggle ──
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+
+    // Default: light theme (no dark class)
+    sunIcon.classList.remove('hidden');
+    moonIcon.classList.add('hidden');
+
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      sunIcon.classList.toggle('hidden');
+      moonIcon.classList.toggle('hidden');
+    });
+
+    // ── Form handler ──
+    function handleLogin(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type=submit]');
+      const original = btn.textContent;
+      btn.textContent = 'Signing in…';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.disabled = false;
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

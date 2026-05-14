@@ -1,0 +1,15 @@
+export const FETCH_PACKAGES_REQUEST = 'admin/packages/FETCH_PACKAGES_REQUEST'
+export const FETCH_PACKAGES_SUCCESS = 'admin/packages/FETCH_PACKAGES_SUCCESS'
+export const FETCH_PACKAGES_FAILURE = 'admin/packages/FETCH_PACKAGES_FAILURE'
+
+export const CREATE_PACKAGE_REQUEST = 'admin/packages/CREATE_PACKAGE_REQUEST'
+export const CREATE_PACKAGE_SUCCESS = 'admin/packages/CREATE_PACKAGE_SUCCESS'
+export const CREATE_PACKAGE_FAILURE = 'admin/packages/CREATE_PACKAGE_FAILURE'
+
+export const UPDATE_PACKAGE_REQUEST = 'admin/packages/UPDATE_PACKAGE_REQUEST'
+export const UPDATE_PACKAGE_SUCCESS = 'admin/packages/UPDATE_PACKAGE_SUCCESS'
+export const UPDATE_PACKAGE_FAILURE = 'admin/packages/UPDATE_PACKAGE_FAILURE'
+
+export const DELETE_PACKAGE_REQUEST = 'admin/packages/DELETE_PACKAGE_REQUEST'
+export const DELETE_PACKAGE_SUCCESS = 'admin/packages/DELETE_PACKAGE_SUCCESS'
+export const DELETE_PACKAGE_FAILURE = 'admin/packages/DELETE_PACKAGE_FAILURE'

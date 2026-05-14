@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — CaptchaⱮaster</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design System Tokens (matches CaptchaMaster src/index.css) ── */
+    :root {
+      --background: oklch(0.12 0.01 90);
+      --foreground: oklch(0.96 0.005 90);
+      --card: oklch(0.16 0.01 90);
+      --card-foreground: oklch(0.96 0.005 90);
+      --popover: oklch(0.16 0.01 90);
+      --primary: oklch(0.82 0.18 90);
+      --primary-foreground: oklch(0.12 0.01 90);
+      --secondary: oklch(0.22 0.01 90);
+      --secondary-foreground: oklch(0.96 0.005 90);
+      --muted: oklch(0.22 0.01 90);
+      --muted-foreground: oklch(0.65 0.01 90);
+      --accent: oklch(0.82 0.18 90);
+      --accent-foreground: oklch(0.12 0.01 90);
+      --border: oklch(0.28 0.015 90);
+      --input: oklch(0.28 0.01 90);
+      --ring: oklch(0.82 0.18 90);
+    }
+    .light {
+      --background: oklch(0.98 0.005 90);
+      --foreground: oklch(0.15 0.01 90);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.15 0.01 90);
+      --primary: oklch(0.82 0.18 90);
+      --primary-foreground: oklch(0.15 0.01 90);
+      --secondary: oklch(0.96 0.01 90);
+      --secondary-foreground: oklch(0.25 0.01 90);
+      --border: oklch(0.9 0.015 90);
+      --input: oklch(0.92 0.01 90);
+      --ring: oklch(0.82 0.18 90);
+      --muted: oklch(0.94 0.008 90);
+      --muted-foreground: oklch(0.5 0.01 90);
+    }
+
+    /* ── Animations (matches src/index.css) ── */
+    @keyframes pulse-glow {
+      0%, 100% { filter: drop-shadow(0 0 8px oklch(0.82 0.18 90 / 0.6)); }
+      50% { filter: drop-shadow(0 0 20px oklch(0.82 0.18 90 / 0.9)); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) translateX(0px); }
+      25% { transform: translateY(-20px) translateX(10px); }
+      50% { transform: translateY(-10px) translateX(-10px); }
+      75% { transform: translateY(-30px) translateX(5px); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float-up {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+    }
+
+    .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    .animate-float { animation: float 6s ease-in-out infinite; }
+    .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+    .animate-slideUp { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-shimmer { background: linear-gradient(90deg, transparent, oklch(0.82 0.18 90 / 0.3), transparent); background-size: 200% 100%; animation: shimmer 2s ease-in-out infinite; }
+    .animate-float-up { animation: float-up 4s ease-in-out forwards; }
+
+    /* ── Glassmorphism ── */
+    .glass-card {
+      background: oklch(0 0 0 / 0.4);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border: 1px solid oklch(1 1 90 / 0.06);
+    }
+    .light .glass-card {
+      background: oklch(1 0 0 / 0.7);
+      border: 1px solid oklch(0 0 0 / 0.06);
+    }
+
+    .glass-reflection {
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-reflection::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, oklch(1 1 90 / 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+    .light .glass-reflection::before {
+      background: linear-gradient(135deg, oklch(1 1 90 / 0.3) 0%, transparent 50%);
+    }
+
+    /* ── Input focus glow ── */
+    .input-glow:focus {
+      border-color: oklch(0.82 0.18 90 / 0.6);
+      box-shadow: 0 0 0 1px oklch(0.82 0.18 90 / 0.15), 0 0 20px oklch(0.82 0.18 90 / 0.1);
+    }
+
+    /* ── Button gold gradient ── */
+    .btn-gold {
+      background: linear-gradient(135deg, oklch(0.80 0.20 90), oklch(0.70 0.22 85));
+      transition: all 0.3s ease;
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, oklch(0.85 0.20 90), oklch(0.75 0.22 85));
+      box-shadow: 0 0 24px oklch(0.82 0.18 90 / 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-gold:active {
+      transform: translateY(0);
+    }
+
+    /* ── Social button ── */
+    .btn-social {
+      background: oklch(1 1 90 / 0.04);
+      border: 1px solid oklch(1 1 90 / 0.08);
+      transition: all 0.25s ease;
+    }
+    .btn-social:hover {
+      background: oklch(1 1 90 / 0.08);
+      border-color: oklch(1 1 90 / 0.15);
+      transform: translateY(-1px);
+    }
+    .light .btn-social {
+      background: oklch(0 0 0 / 0.03);
+      border: 1px solid oklch(0 0 0 / 0.08);
+    }
+    .light .btn-social:hover {
+      background: oklch(0 0 0 / 0.06);
+      border-color: oklch(0 0 0 / 0.12);
+    }
+
+    /* ── Floating blobs ── */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* ── Particles ── */
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: oklch(0.82 0.18 90 / 0.5);
+      border-radius: 50%;
+      opacity: 0;
+    }
+
+    /* ── Custom checkbox ── */
+    .custom-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid oklch(1 1 90 / 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .custom-checkbox:checked {
+      background: oklch(0.82 0.18 90);
+      border-color: oklch(0.82 0.18 90);
+    }
+    .custom-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 5px;
+      height: 9px;
+      border: solid oklch(0.12 0.01 90);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .light .custom-checkbox {
+      border-color: oklch(0 0 0 / 0.15);
+    }
+
+    /* ── Password toggle ── */
+    .password-toggle {
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+    .password-toggle:hover { opacity: 0.9; }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: oklch(1 1 90 / 0.05);
+      border: 1px solid oklch(1 1 90 / 0.08);
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+    .theme-toggle:hover {
+      background: oklch(1 1 90 / 0.1);
+      transform: scale(1.05);
+    }
+
+    /* ── Misc ── */
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', 'Geist', system-ui, sans-serif; }
+    .stagger-1 { animation-delay: 0.05s; animation-fill-mode: both; }
+    .stagger-2 { animation-delay: 0.1s; animation-fill-mode: both; }
+    .stagger-3 { animation-delay: 0.15s; animation-fill-mode: both; }
+    .stagger-4 { animation-delay: 0.2s; animation-fill-mode: both; }
+    .stagger-5 { animation-delay: 0.25s; animation-fill-mode: both; }
+    .stagger-6 { animation-delay: 0.3s; animation-fill-mode: both; }
+    .stagger-7 { animation-delay: 0.35s; animation-fill-mode: both; }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 30px oklch(0.18 0.01 90) inset !important;
+      -webkit-text-fill-color: oklch(0.96 0.005 90) !important;
+    }
+    .light input:-webkit-autofill,
+    .light input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 30px oklch(1 0 0) inset !important;
+      -webkit-text-fill-color: oklch(0.15 0.01 90) !important;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-[background-color] duration-300">
+
+  <!-- ── Background Blobs ── -->
+  <div class="blob w-[400px] h-[400px] bg-[var(--primary)]/10 -top-20 -left-20"></div>
+  <div class="blob w-[350px] h-[350px] bg-[var(--primary)]/8 bottom-10 -right-20"></div>
+  <div class="blob w-[250px] h-[250px] bg-[var(--primary)]/6 top-1/3 right-1/4"></div>
+
+  <!-- ── Particles ── -->
+  <div id="particles" aria-hidden="true"></div>
+
+  <!-- ── Theme Toggle ── -->
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    </svg>
+    <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    </svg>
+  </button>
+
+  <!-- ── Login Card ── -->
+  <main class="relative w-full max-w-[420px] animate-slideUp stagger-1 opacity-0" role="main">
+    <div class="glass-card glass-reflection rounded-xl p-8 md:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
+
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <a href="/" class="inline-flex items-center gap-1 animate-float no-underline">
+          <span class="text-2xl font-bold tracking-tight text-[var(--foreground)]">Captcha</span>
+          <span class="text-2xl font-bold tracking-tight text-[var(--primary)]">Ɱ</span>
+          <span class="text-2xl font-bold tracking-tight text-[var(--primary)]">aster</span>
+        </a>
+      </div>
+
+      <!-- Headline -->
+      <div class="text-center mb-7">
+        <h1 class="text-2xl font-semibold tracking-tight text-[var(--foreground)]">Welcome Back</h1>
+        <p class="text-sm text-[var(--muted-foreground)] mt-1">Login to manage your CAPTCHAs instantly</p>
+      </div>
+
+      <!-- Form -->
+      <form novalidate onsubmit="handleLogin(event)">
+        <!-- Email -->
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium text-[var(--foreground)] mb-1.5">Email</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="mila@captchamaster.com"
+            autocomplete="email"
+            required
+            class="input-glow w-full bg-[var(--input)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50 border border-[var(--border)] rounded-lg px-3.5 py-2.5 text-sm outline-none transition-all duration-200 focus:border-[var(--primary)]/60 focus:shadow-[0_0_0_1px_var(--ring)/0.15,0_0_20px_var(--ring)/0.1]"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label for="password" class="block text-sm font-medium text-[var(--foreground)] mb-1.5">Password</label>
+          <div class="relative">
+            <input
+              id="password"
+              type="password"
+              placeholder="••••••••••••"
+              autocomplete="current-password"
+              required
+              minlength="8"
+              class="input-glow w-full bg-[var(--input)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50 border border-[var(--border)] rounded-lg px-3.5 py-2.5 pr-10 text-sm outline-none transition-all duration-200 focus:border-[var(--primary)]/60 focus:shadow-[0_0_0_1px_var(--ring)/0.15,0_0_20px_var(--ring)/0.1]"
+            />
+            <span class="password-toggle absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" onclick="togglePassword()" role="button" aria-label="Toggle password visibility" tabindex="0">
+              <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <!-- Remember Me + Forgot -->
+        <div class="flex items-center justify-between mb-6">
+          <label class="flex items-center gap-2 text-sm text-[var(--muted-foreground)] cursor-pointer select-none">
+            <input type="checkbox" class="custom-checkbox" checked />
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="text-sm text-[var(--primary)]/80 hover:text-[var(--primary)] transition-colors no-underline">Forgot Password?</a>
+        </div>
+
+        <!-- Login Button -->
+        <button type="submit" class="btn-gold w-full text-[var(--primary-foreground)] font-semibold text-sm rounded-lg px-4 py-3 cursor-pointer">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="flex items-center gap-3 my-6">
+        <div class="h-px flex-1 bg-[var(--border)]"></div>
+        <span class="text-xs text-[var(--muted-foreground)]">or continue with</span>
+        <div class="h-px flex-1 bg-[var(--border)]"></div>
+      </div>
+
+      <!-- Social Login -->
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <button class="btn-social rounded-lg py-2.5 flex items-center justify-center cursor-pointer" aria-label="Sign in with Google">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        </button>
+        <button class="btn-social rounded-lg py-2.5 flex items-center justify-center cursor-pointer" aria-label="Sign in with GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        </button>
+        <button class="btn-social rounded-lg py-2.5 flex items-center justify-center cursor-pointer" aria-label="Sign in with Microsoft">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="9" height="9"/><rect x="13" y="2" width="9" height="9"/><rect x="2" y="13" width="9" height="9"/><rect x="13" y="13" width="9" height="9"/></svg>
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center">
+        <p class="text-sm text-[var(--muted-foreground)]">
+          Don't have an account?
+          <a href="#" class="text-[var(--primary)] hover:text-[var(--primary)]/80 font-medium transition-colors no-underline">Sign Up</a>
+        </p>
+        <p class="text-xs text-[var(--muted-foreground)]/60 mt-4">&copy; 2026 CaptchaⱮaster. All rights reserved.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* ── Particles ── */
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle animate-float-up';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = '-' + Math.random() * 20 + '%';
+        p.style.animationDuration = (3 + Math.random() * 4) + 's';
+        p.style.animationDelay = Math.random() * 5 + 's';
+        p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+        container.appendChild(p);
+      }
+    }
+    createParticles();
+
+    /* ── Password Toggle ── */
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const open = document.getElementById('eye-open');
+      const closed = document.getElementById('eye-closed');
+      if (input.type === 'password') {
+        input.type = 'text';
+        open.classList.add('hidden');
+        closed.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        open.classList.remove('hidden');
+        closed.classList.add('hidden');
+      }
+    }
+
+    /* ── Theme Toggle ── */
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.classList.toggle('light');
+      const sun = document.getElementById('sun-icon');
+      const moon = document.getElementById('moon-icon');
+      sun.classList.toggle('hidden');
+      moon.classList.toggle('hidden');
+    }
+
+    /* ── Form Handler ── */
+    function handleLogin(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type=submit]');
+      const originalText = btn.textContent;
+      btn.textContent = 'Signing in…';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 2000);
+    }
+  </script>
+
+</body>
+</html>

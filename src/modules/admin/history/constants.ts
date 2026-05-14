@@ -1,0 +1,4 @@
+export const FETCH_HISTORY_REQUEST = 'admin/history/FETCH_HISTORY_REQUEST'
+export const FETCH_HISTORY_SUCCESS = 'admin/history/FETCH_HISTORY_SUCCESS'
+export const FETCH_HISTORY_FAILURE = 'admin/history/FETCH_HISTORY_FAILURE'
+
