@@ -357,8 +357,8 @@ export default function UploadModelContent() {
             return
         }
 
-        // Upload DIRECTLY to bot endpoint
-        const url = `${endpoint.protocol}://${endpoint.endpoint}:${endpoint.port}/upload-model`
+        // Upload via Nginx proxy to avoid CORS/Mixed Content issues
+        const url = `/upload-model-proxy/upload-model`
 
         const formData = new FormData()
         formData.append("file", file)
