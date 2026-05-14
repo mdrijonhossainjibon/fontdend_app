@@ -64,7 +64,7 @@ function* deleteExtensionSaga(action: any) {
   try {
     yield call(API_CALL, {
       method: 'DELETE',
-      url: `/admin/extensions?id=${action.payload.id}`,
+      url: `/admin/extensions/${action.payload.id}`,
     })
 
     yield put(actions.deleteExtensionSuccess())
