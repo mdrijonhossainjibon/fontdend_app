@@ -109,14 +109,14 @@ export default function AdminExtensionsPage() {
                 if (data.success) {
                     setUploadForm(prev => ({
                         ...prev,
-                        name: prev.name || data.data.name || '',
+                        name: data.data.name || prev.name || '',
                         version: data.data.version || prev.version || '',
-                        description: prev.description || data.data.description || '',
-                        platform: data.data.platform || prev.platform || 'All',
+                        description: data.data.description || prev.description || '',
                         changelog: data.data.changelog || prev.changelog || '',
-                        icon: data.data.icon || ''
+                        releaseNote: data.data.releaseNote || prev.releaseNote || ''
                     }))
-                    message.success(`Detected: ${data.data.name || 'Extension'} for ${data.data.platform || 'All'}`)
+                    message.success(`Detected: ${data.data.name || 'Extension'} v${data.data.version || ''}`)
+                }
                 }
 
 
