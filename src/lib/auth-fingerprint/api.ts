@@ -91,7 +91,7 @@ export const API_CALL = async (props: APICallProps): Promise<APIResponse> => {
     const api = axios.create({ baseURL: baseUrl });
 
     const defaultHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
+        'Content-Type': props.headers?.['Content-Type'] === 'multipart/form-data' ? 'multipart/form-data' : 'application/json',
     };
 
     // Attach Bearer token from localStorage if available
