@@ -96,8 +96,12 @@ export default function AdminExtensionsPage() {
                 const formData = new FormData()
                 formData.append('file', file)
 
+                const token = localStorage.getItem("authToken")
                 const res = await fetch('/api/admin/extensions/scan', {
                     method: 'POST',
+                    headers: {
+                        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    },
                     body: formData
                 })
                 const data = await res.json()
