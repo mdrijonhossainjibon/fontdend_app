@@ -353,18 +353,40 @@ export default function AdminExtensionsPage() {
                                             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Short Link</p>
                                             <p className="text-xs font-mono text-amber-500 truncate w-[180px]">/api/d/{ext.shortId}</p>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-md hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500"
-                                            onClick={() => {
-                                                const link = `${window.location.origin}/api/d/${ext.shortId}`
-                                                navigator.clipboard.writeText(link)
-                                                message.success('Short link copied!')
-                                            }}
-                                        >
-                                            <Copy className="w-3.5 h-3.5" />
-                                        </Button>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 rounded-md hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500"
+                                                onClick={() => {
+                                                    const link = `${window.location.origin}/api/d/${ext.shortId}`
+                                                    if (navigator.share) {
+                                                        navigator.share({
+                                                            title: ext.name,
+                                                            text: `Download ${ext.name} v${ext.version}`,
+                                                            url: link
+                                                        })
+                                                    } else {
+                                                        navigator.clipboard.writeText(link)
+                                                        message.success('Short link copied!')
+                                                    }
+                                                }}
+                                            >
+                                                <Share2 className="w-3.5 h-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 rounded-md hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500"
+                                                onClick={() => {
+                                                    const link = `${window.location.origin}/api/d/${ext.shortId}`
+                                                    navigator.clipboard.writeText(link)
+                                                    message.success('Short link copied!')
+                                                }}
+                                            >
+                                                <Copy className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
 
