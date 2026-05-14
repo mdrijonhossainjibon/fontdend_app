@@ -211,7 +211,7 @@ export default function AdminExtensionsPage() {
 
     const handleSaveEdit = () => {
         if (!editingExt) return
-        dispatch(updateExtensionRequest({ id: editingExt._id, ...editForm }))
+        dispatch(updateExtensionRequest({ id: editingExt._id, data: editForm }))
         setIsEditModalOpen(false)
     }
 

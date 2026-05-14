@@ -49,7 +49,7 @@ function* updateExtensionSaga(action: any) {
   try {
     yield call(API_CALL, {
       method: 'PATCH',
-      url: '/admin/extensions',
+      url: `/admin/extensions/${action.payload.id}`,
       data: action.payload.data,
     })
 
