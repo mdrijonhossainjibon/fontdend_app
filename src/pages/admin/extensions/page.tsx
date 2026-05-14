@@ -112,6 +112,7 @@ export default function AdminExtensionsPage() {
                         name: data.data.name || prev.name || '',
                         version: data.data.version || prev.version || '',
                         description: data.data.description || prev.description || '',
+                        platform: data.data.platform || prev.platform || 'All',
                         changelog: data.data.changelog || prev.changelog || '',
                         releaseNote: data.data.releaseNote || prev.releaseNote || ''
                     }))
