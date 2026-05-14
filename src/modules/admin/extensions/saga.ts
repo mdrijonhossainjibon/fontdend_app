@@ -32,7 +32,7 @@ function* uploadExtensionSaga(action: any) {
     const { response }: APIResponse = yield call(API_CALL, {
       method: 'POST',
       url: '/admin/extensions',
-      body: formData,
+      data: formData,
       headers: {
         'Content-Type': 'multipart/form-data',
       }
