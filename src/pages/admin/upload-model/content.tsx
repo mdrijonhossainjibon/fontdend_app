@@ -371,6 +371,12 @@ export default function UploadModelContent() {
             const xhr = new XMLHttpRequest()
             xhr.open("POST", url)
 
+            // Auth Token
+            const token = localStorage.getItem("authToken")
+            if (token) {
+                xhr.setRequestHeader("Authorization", `Bearer ${token}`)
+            }
+
             // Cache Control
             xhr.setRequestHeader("Cache-Control", "no-cache, no-store, must-revalidate")
             xhr.setRequestHeader("Pragma", "no-cache")
