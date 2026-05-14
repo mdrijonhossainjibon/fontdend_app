@@ -117,9 +117,6 @@ export default function AdminExtensionsPage() {
                     }))
                     message.success(`Detected: ${data.data.name || 'Extension'} v${data.data.version || ''}`)
                 }
-                }
-
-
             } catch (err) {
                 console.warn('Auto-detection failed', err)
             } finally {
