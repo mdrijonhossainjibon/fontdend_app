@@ -45,7 +45,11 @@ function* fetchAdminUsersSaga(action: any): Generator {
         });
 
         if (response && response.success) {
-            yield put(actions.fetchAdminUsersSuccess({ users: response.users, pagination: response.pagination }));
+            const mappedUsers = response.users.map((u: any) => ({
+                ...u,
+                id: u._id || u.id,
+            }));
+            yield put(actions.fetchAdminUsersSuccess({ users: mappedUsers, pagination: response.pagination }));
         } else {
             yield put(actions.fetchAdminUsersFailure(response?.error || 'Failed to fetch users'));
             message.error(response?.error || 'Failed to fetch users');
@@ -59,14 +63,14 @@ function* fetchAdminUsersSaga(action: any): Generator {
 function* updateAdminUserSaga(action: any): Generator {
     try {
         const { userId, name, balance, status: userStatus } = action.payload;
+        const cleanBalance = typeof balance === 'string' ? parseFloat(balance.replace(/[^0-9.-]/g, '')) || 0 : balance;
 
         const { response, status }: APIResponse = yield call(API_CALL, {
             method: 'PATCH',
-            url: '/admin/users',
+            url: `/admin/users/${userId}`,
             body: {
-                userId,
                 name,
-                balance,
+                balance: cleanBalance,
                 status: userStatus
             }
         });
@@ -98,7 +102,7 @@ function* deleteAdminUserSaga(action: any): Generator {
 
         const { response, status }: APIResponse = yield call(API_CALL, {
             method: 'DELETE',
-            url: `/admin/users?userId=${userId}`
+            url: `/admin/users/${userId}`
         });
 
         if (response && response.success) {
@@ -255,6 +259,7 @@ export default function* adminSaga() {
     yield takeLatest(types.FETCH_ADMIN_USERS_REQUEST, fetchAdminUsersSaga);
     yield takeLatest(types.UPDATE_ADMIN_USER_REQUEST, updateAdminUserSaga);
     yield takeLatest(types.DELETE_ADMIN_USER_REQUEST, deleteAdminUserSaga);
+ 
     // Bots
     yield takeLatest(types.FETCH_ADMIN_BOTS_REQUEST, fetchAdminBotsSaga);
     yield takeLatest(types.UPDATE_ADMIN_BOT_REQUEST, updateAdminBotSaga);

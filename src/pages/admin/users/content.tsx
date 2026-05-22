@@ -1,7 +1,9 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Modal, message } from "antd"
 import { useDispatch, useSelector } from "react-redux"
+import store from "@/modules/store"
+type AppDispatch = typeof store.dispatch
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +17,16 @@ import {
   updateAdminUserRequest,
   deleteAdminUserRequest
 } from "@/modules/admin/actions"
+import {
+  fetchUserPackagesRequest,
+  updateUserPackageRequest,
+  deleteUserPackageRequest,
+  assignPackageRequest,
+  resetAssignSuccess,
+} from "@/modules/admin/user-packages/actions"
+import {
+  fetchPricingPlansRequest,
+} from "@/modules/admin/pricing-plans/actions"
 
 interface User {
   id: string
@@ -40,10 +52,12 @@ interface Pagination {
 
 export default function AdminUsersContent() {
   const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const dispatch: AppDispatch = useDispatch()
 
   // Redux state
   const { users, loading: isLoading, pagination, isSaving, error } = useSelector((state: RootState) => state.admin)
+  const { plans: pricingPlanList } = useSelector((state: RootState) => state.adminPricingPlans)
+  const { packages: userPkgList, assigning: isAssigningPkg, updating: isUpdatingPkg, assignSuccess: assignPkgSuccess, error: assignPkgError } = useSelector((state: RootState) => state.adminUserPackages)
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
@@ -57,7 +71,6 @@ export default function AdminUsersContent() {
   const [pricingPlans, setPricingPlans] = useState<any[]>([])
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [selectedPlanId, setSelectedPlanId] = useState("")
-  const [assigningPkg, setAssigningPkg] = useState(false)
   const [isFreeTrial, setIsFreeTrial] = useState(false)
 
   // Manage packages modal state
@@ -67,7 +80,6 @@ export default function AdminUsersContent() {
   const [loadingPackages, setLoadingPackages] = useState(false)
   const [editingPkgId, setEditingPkgId] = useState<string | null>(null)
   const [editPkgCredits, setEditPkgCredits] = useState<number>(0)
-  const [savingPkgEdit, setSavingPkgEdit] = useState(false)
   const [removingPkgId, setRemovingPkgId] = useState<string | null>(null)
   const [trialDays, setTrialDays] = useState(7)
   const [trialCredits, setTrialCredits] = useState(50)
@@ -97,6 +109,41 @@ export default function AdminUsersContent() {
       message.error(error)
     }
   }, [error])
+
+  // Sync pricing plans from Redux to local state
+  const [prevPricingPlanLen, setPrevPricingPlanLen] = useState(0)
+  useEffect(() => {
+    setPricingPlans(pricingPlanList)
+    setLoadingPlans(false)
+    if (pricingPlanList.length > 0 && pricingPlanList.length !== prevPricingPlanLen) {
+      setSelectedPlanId(pricingPlanList[0]._id)
+      setPrevPricingPlanLen(pricingPlanList.length)
+    }
+  }, [pricingPlanList])
+
+  // Sync user packages from Redux to local state
+  useEffect(() => {
+    setUserPackages(userPkgList)
+    setLoadingPackages(false)
+  }, [userPkgList])
+
+  // Handle package assign success
+  useEffect(() => {
+    if (assignPkgSuccess) {
+      message.success('Package assigned successfully')
+      setIsPkgModalOpen(false)
+      dispatch(resetAssignSuccess())
+    }
+  }, [assignPkgSuccess])
+
+  // Handle package assign error
+  const prevAssigningRef = useRef(false)
+  useEffect(() => {
+    if (prevAssigningRef.current && assignPkgError) {
+      message.error(assignPkgError)
+    }
+    prevAssigningRef.current = isAssigningPkg
+  }, [assignPkgError, isAssigningPkg])
 
   const handleEditUser = () => {
     if (!selectedUser) return
@@ -129,40 +176,11 @@ export default function AdminUsersContent() {
     setPkgManageUser(user)
     setIsPkgManageOpen(true)
     setLoadingPackages(true)
-    try {
-      const res = await fetch(`/api/admin/users/packages?userId=${user.id}`)
-      const data = await res.json()
-      if (data.success) {
-        setUserPackages(data.packages)
-      }
-    } catch {
-      console.error('Failed to fetch packages')
-    } finally {
-      setLoadingPackages(false)
-    }
+    dispatch(fetchUserPackagesRequest(user.id))
   }
 
   const handleEditPackageCredits = async (pkgId: string) => {
-    setSavingPkgEdit(true)
-    try {
-      const res = await fetch('/api/admin/users/packages', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageId: pkgId, credits: editPkgCredits }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        message.success(data.message)
-        setUserPackages(prev => prev.map(p => p.id === pkgId ? { ...p, credits: editPkgCredits } : p))
-        setEditingPkgId(null)
-      } else {
-        message.error(data.error || 'Failed to update package')
-      }
-    } catch {
-      message.error('Network error')
-    } finally {
-      setSavingPkgEdit(false)
-    }
+    dispatch(updateUserPackageRequest({ packageId: pkgId, credits: editPkgCredits }))
   }
 
   const handleRemovePackage = async (pkgId: string) => {
@@ -174,20 +192,7 @@ export default function AdminUsersContent() {
       cancelText: 'Cancel',
       onOk: async () => {
         setRemovingPkgId(pkgId)
-        try {
-          const res = await fetch(`/api/admin/users/packages?packageId=${pkgId}`, { method: 'DELETE' })
-          const data = await res.json()
-          if (data.success) {
-            message.success(data.message)
-            setUserPackages(prev => prev.filter(p => p.id !== pkgId))
-          } else {
-            message.error(data.error || 'Failed to remove package')
-          }
-        } catch {
-          message.error('Network error')
-        } finally {
-          setRemovingPkgId(null)
-        }
+        dispatch(deleteUserPackageRequest(pkgId))
       }
     })
   }
@@ -323,12 +328,7 @@ export default function AdminUsersContent() {
                                   setPricingPlans([])
                                   setIsPkgModalOpen(true)
                                   setLoadingPlans(true)
-                                  fetch('/api/admin/pricing-plans').then(r => r.json()).then(d => {
-                                    const plans = d.plans || d.data || []
-                                    setPricingPlans(plans)
-                                    if (plans.length > 0) setSelectedPlanId(plans[0].id)
-                                    else if (d.error) message.error(d.error)
-                                  }).catch(() => message.error('Failed to load pricing plans')).finally(() => setLoadingPlans(false))
+                                  dispatch(fetchPricingPlansRequest())
                                 }}
                               >
                                 <Package className="w-3 h-3" />
@@ -589,46 +589,29 @@ export default function AdminUsersContent() {
           open={isPkgModalOpen}
           onCancel={() => setIsPkgModalOpen(false)}
           footer={[
-            <Button key="cancel" variant="outline" onClick={() => setIsPkgModalOpen(false)} className="bg-transparent" disabled={assigningPkg}>
+            <Button key="cancel" variant="outline" onClick={() => setIsPkgModalOpen(false)} className="bg-transparent" disabled={isAssigningPkg}>
               Cancel
             </Button>,
             <Button
               key="submit"
               className="bg-purple-500 hover:bg-purple-600"
-              onClick={async () => {
+              onClick={() => {
                 if (!pkgUser) return
                 if (!isFreeTrial && !selectedPlanId) return
-                setAssigningPkg(true)
-                try {
-                  const body: any = { userId: pkgUser.id }
-                  if (isFreeTrial) {
-                    body.freeTrial = true
-                    body.trialDays = trialDays
-                    body.trialCredits = trialCredits
-                  } else {
-                    body.planId = selectedPlanId
-                  }
-                  const res = await fetch('/api/admin/users/assign-package', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                  })
-                  const data = await res.json()
-                  if (data.success) {
-                    message.success(data.message)
-                    setIsPkgModalOpen(false)
-                  } else {
-                    message.error(data.error || 'Failed to assign package')
-                  }
-                } catch {
-                  message.error('Network error')
-                } finally {
-                  setAssigningPkg(false)
+                const body: any = { userId: pkgUser.id }
+                if (isFreeTrial) {
+                  body.freeTrial = true
+                  body.trialDays = trialDays
+                  body.trialCredits = trialCredits
+                } else {
+                  body.planId = selectedPlanId
                 }
+              
+                dispatch(assignPackageRequest(body))
               }}
-              disabled={assigningPkg || (!isFreeTrial && !selectedPlanId)}
+              disabled={isAssigningPkg || (!isFreeTrial && !selectedPlanId)}
             >
-              {assigningPkg ? (
+              {isAssigningPkg ? (
                 <><Loader2 className="w-4 h-4 animate-spin mr-2" />Assigning...</>
               ) : isFreeTrial ? (
                 'Assign Free Trial'
@@ -696,10 +679,10 @@ export default function AdminUsersContent() {
             <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
               {pricingPlans.map((plan: any) => (
                 <div
-                  key={plan.id}
-                  onClick={() => setSelectedPlanId(plan.id)}
+                  key={plan._id}
+                  onClick={() => setSelectedPlanId(plan._id)}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    selectedPlanId === plan.id
+                    selectedPlanId === plan._id
                       ? 'border-purple-500 bg-purple-500/10'
                       : 'border-border bg-muted/30 hover:border-purple-500/50'
                   }`}
@@ -707,7 +690,7 @@ export default function AdminUsersContent() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
-                        selectedPlanId === plan.id ? 'bg-purple-500 text-white' : 'bg-muted text-muted-foreground'
+                        selectedPlanId === plan._id ? 'bg-purple-500 text-white' : 'bg-muted text-muted-foreground'
                       }`}>
                         <Package className="w-5 h-5" />
                       </div>
@@ -765,7 +748,7 @@ export default function AdminUsersContent() {
             <div className="space-y-3 py-4 max-h-[500px] overflow-y-auto">
               {userPackages.map((pkg: any) => (
                 <div
-                  key={pkg.id}
+                  key={pkg._id}
                   className="p-4 rounded-xl border border-border bg-muted/30"
                 >
                   <div className="flex items-start justify-between">
@@ -803,7 +786,7 @@ export default function AdminUsersContent() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      {editingPkgId === pkg.id ? (
+                      {editingPkgId === pkg._id ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
@@ -815,10 +798,10 @@ export default function AdminUsersContent() {
                           <Button
                             size="sm"
                             className="bg-green-500 hover:bg-green-600 text-white h-8 px-2"
-                            onClick={() => handleEditPackageCredits(pkg.id)}
-                            disabled={savingPkgEdit}
+                            onClick={() => handleEditPackageCredits(pkg._id)}
+                            disabled={isUpdatingPkg}
                           >
-                            {savingPkgEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                            {isUpdatingPkg ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                           </Button>
                           <Button
                             size="sm"
@@ -835,7 +818,7 @@ export default function AdminUsersContent() {
                           variant="outline"
                           className="bg-transparent border-blue-500/50 text-blue-500 hover:bg-blue-500 hover:text-white h-8 px-3 text-xs"
                           onClick={() => {
-                            setEditingPkgId(pkg.id)
+                            setEditingPkgId(pkg._id)
                             setEditPkgCredits(pkg.credits)
                           }}
                         >
@@ -846,10 +829,10 @@ export default function AdminUsersContent() {
                         size="sm"
                         variant="outline"
                         className="bg-transparent border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white h-8 px-3 text-xs"
-                        onClick={() => handleRemovePackage(pkg.id)}
-                        disabled={removingPkgId === pkg.id}
+                        onClick={() => handleRemovePackage(pkg._id)}
+                        disabled={removingPkgId === pkg._id}
                       >
-                        {removingPkgId === pkg.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                        {removingPkgId === pkg._id ?<Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                       </Button>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
-
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,57 +21,21 @@ import {
     PieChart,
     Zap
 } from "lucide-react"
-import { message } from "antd"
-
-interface UserDetail {
-    id: string
-    name: string
-    email: string
-    status: string
-    balance: number
-    joined: string
-    role: string
-    twoFactorEnabled: boolean
-    lastLogin?: string
-    emailVerified?: boolean
-}
+import { fetchAdminUserDetailsRequest } from "@/modules/admin/user-details/actions"
 
 export default function UserDetailPage() {
     const params = useParams()
     const navigate = useNavigate()
-    const [user, setUser] = useState<UserDetail | null>(null)
-    const [packages, setPackages] = useState<any[]>([])
-    const [activities, setActivities] = useState<any[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const dispatch = useDispatch()
+    const { user, packages, activities, loading } = useSelector((state: any) => state.adminUserDetails)
 
     useEffect(() => {
         if (params.id) {
-            fetchUserDetails()
+            dispatch(fetchAdminUserDetailsRequest(params.id))
         }
-    }, [params.id])
+    }, [params.id, dispatch])
 
-    const fetchUserDetails = async () => {
-        try {
-            setIsLoading(true)
-            const response = await fetch(`/api/admin/users/${params.id}`)
-            const data = await response.json()
-
-            if (data.success) {
-                setUser(data.user)
-                setPackages(data.packages || [])
-                setActivities(data.activities || [])
-            } else {
-                message.error(data.error || 'Failed to fetch user details')
-            }
-        } catch (error) {
-            console.error('Error fetching user details:', error)
-            message.error('Failed to fetch user details')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    if (isLoading) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center h-[60vh]">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -83,7 +47,7 @@ export default function UserDetailPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <p className="text-muted-foreground">User not found</p>
-                <Button onClick={() => router.back()}>
+                <Button onClick={() => navigate(-1)}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Go Back
                 </Button>
@@ -96,7 +60,7 @@ export default function UserDetailPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-secondary">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full hover:bg-secondary">
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
                     <div>
@@ -105,7 +69,7 @@ export default function UserDetailPage() {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => router.back()}>
+                    <Button variant="outline" onClick={() => navigate(-1)}>
                         Close
                     </Button>
                 </div>
@@ -243,7 +207,7 @@ export default function UserDetailPage() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {packages.map((pkg) => (
+                                        {packages.map((pkg: any) => (
                                             <div key={pkg._id} className="p-4 rounded-2xl border border-border/50 bg-card hover:border-primary/30 transition-colors group">
                                                 <div className="flex justify-between items-start mb-3">
                                                     <h4 className="font-bold text-foreground group-hover:text-primary transition-colors">{pkg.name}</h4>
@@ -291,7 +255,7 @@ export default function UserDetailPage() {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-border/40">
-                                        {activities.map((activity, i) => (
+                                        {activities.map((activity: any, i: number) => (
                                             <div key={activity._id} className="py-4 flex items-start gap-4 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${i * 50}ms` }}>
                                                 <div className={`p-2 rounded-xl mt-0.5 ${activity.status === 'success' ? 'bg-green-500/10 text-green-600' :
                                                     activity.status === 'failed' ? 'bg-red-500/10 text-red-600' :

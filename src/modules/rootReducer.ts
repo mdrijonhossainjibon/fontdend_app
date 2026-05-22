@@ -14,6 +14,9 @@ import adminUploadModelReducer from './admin/upload-model/reducer';
 import adminCacheControlReducer from './admin/cache-control/reducer';
 import adminDatabaseReducer from './admin/database/reducer';
 import adminRedeemCodesReducer from './admin/redeem-codes/reducer';
+import adminPricingPlansReducer from './admin/pricing-plans/reducer';
+import adminUserPackagesReducer from './admin/user-packages/reducer';
+import adminUserDetailsReducer from './admin/user-details/reducer';
 import dashboardReducer from './dashboard/reducer';
 import aiTrainingReducer from './ai-training/reducer';
 import authReducer from './auth/reducer';
@@ -39,6 +42,9 @@ const rootReducer = combineReducers({
     adminCacheControl: adminCacheControlReducer,
     adminDatabase: adminDatabaseReducer,
     adminRedeemCodes: adminRedeemCodesReducer,
+    adminPricingPlans: adminPricingPlansReducer,
+    adminUserPackages: adminUserPackagesReducer,
+    adminUserDetails: adminUserDetailsReducer,
     dashboard: dashboardReducer,
     aiTraining: aiTrainingReducer,
     settings: settingsReducer,
