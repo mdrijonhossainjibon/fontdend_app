@@ -61,9 +61,11 @@ const managementItems = [
   { href: "/admin/upload-model", label: "Upload Model", icon: Upload },
   { href: "/admin/cache-control", label: "Cache Control", icon: RefreshCw },
   { href: "/admin/redeem-codes", label: "Redeem Codes", icon: Gift },
+  { href: "/admin/promo-offers", label: "Promo Offers", icon: Gift },
 ]
 
 const systemItems = [
+  { href: "/admin/permissions", label: "Permissions", icon: Lock },
   { href: "/admin/system/smtp", label: "SMTP Config", icon: Settings },
   { href: "/admin/email", label: "Email Templates", icon: Mail },
   { href: "/admin/database", label: "Database", icon: Database }

@@ -14,9 +14,11 @@ import adminUploadModelSaga from './admin/upload-model/saga';
 import adminCacheControlSaga from './admin/cache-control/saga';
 import adminDatabaseSaga from './admin/database/saga';
 import adminRedeemCodesSaga from './admin/redeem-codes/saga';
+import adminPromoOffersSaga from './admin/promo-offers/saga';
 import adminPricingPlansSaga from './admin/pricing-plans/saga';
 import adminUserPackagesSaga from './admin/user-packages/saga';
 import adminUserDetailsSaga from './admin/user-details/saga';
+import adminPermissionsSaga from './admin/permissions/saga';
 import dashboardSaga from './dashboard/saga';
 import aiTrainingSaga from './ai-training/saga';
 import authSaga from './auth/saga';
@@ -42,9 +44,11 @@ export default function* rootSaga(): Generator {
         adminCacheControlSaga(),
         adminDatabaseSaga(),
         adminRedeemCodesSaga(),
+        adminPromoOffersSaga(),
         adminPricingPlansSaga(),
         adminUserPackagesSaga(),
         adminUserDetailsSaga(),
+        adminPermissionsSaga(),
         dashboardSaga(),
         aiTrainingSaga(),
         authSaga(),

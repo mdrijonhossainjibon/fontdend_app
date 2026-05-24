@@ -17,8 +17,8 @@ function* fetchAdminStatsSaga(): Generator {
                 revenue: { monthlyRevenue: d.revenue?.monthly || 0, change: '+0%', trend: 'up' },
                 totalDeposits: { value: d.system?.deposits || 0, change: '+0%', trend: 'up' },
             },
-            recentDeposits: [],
-            systemMetrics: {
+            recentDeposits: d.recentDeposits || [],
+            systemMetrics: d.systemMetrics || {
                 cpu: { status: 'healthy', usage: 0, cores: 0, temp: 0 },
                 memory: { status: 'healthy', usage: 0, used: 0, total: 0 },
                 storage: { status: 'healthy', usage: 0 },
@@ -254,12 +254,95 @@ function* deleteAdminWalletSaga(action: any): Generator {
     }
 }
 
+// ── Email Templates ────────────────────────────────────────────────────────────
+function* fetchEmailTemplatesSaga(): Generator {
+    try {
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'GET',
+            url: '/admin/email-templates'
+        });
+        if (response && response.success) {
+            yield put(actions.fetchEmailTemplatesSuccess({ templates: response.templates || [] }));
+        } else {
+            yield put(actions.fetchEmailTemplatesFailure(response?.error || 'Failed to fetch templates'));
+            message.error(response?.error || 'Failed to fetch templates');
+        }
+    } catch (error) {
+        yield put(actions.fetchEmailTemplatesFailure('Error fetching templates'));
+        message.error('Error fetching templates');
+    }
+}
+
+function* createEmailTemplateSaga(action: any): Generator {
+    try {
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'POST',
+            url: '/admin/email-templates',
+            body: action.payload
+        });
+        if (response && response.success) {
+            yield put(actions.createEmailTemplateSuccess(response.template));
+            message.success('Template saved');
+            yield put(actions.fetchEmailTemplatesRequest());
+        } else {
+            yield put(actions.createEmailTemplateFailure(response?.error || 'Failed to save'));
+            message.error(response?.error || 'Failed to save');
+        }
+    } catch (error) {
+        yield put(actions.createEmailTemplateFailure('Error saving template'));
+        message.error('Error saving template');
+    }
+}
+
+function* updateEmailTemplateSaga(action: any): Generator {
+    try {
+        const { id, ...body } = action.payload;
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'PATCH',
+            url: `/admin/email-templates/${id}`,
+            body
+        });
+        if (response && response.success) {
+            yield put(actions.updateEmailTemplateSuccess(response.template));
+            message.success('Template updated');
+            yield put(actions.fetchEmailTemplatesRequest());
+        } else {
+            yield put(actions.updateEmailTemplateFailure(response?.error || 'Failed to update'));
+            message.error(response?.error || 'Failed to update');
+        }
+    } catch (error) {
+        yield put(actions.updateEmailTemplateFailure('Error updating template'));
+        message.error('Error updating template');
+    }
+}
+
+function* deleteEmailTemplateSaga(action: any): Generator {
+    try {
+        const id = action.payload;
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'DELETE',
+            url: `/admin/templates/email/${id}`
+        });
+        if (response && response.success) {
+            yield put(actions.deleteEmailTemplateSuccess(id));
+            message.success('Template deleted');
+            yield put(actions.fetchEmailTemplatesRequest());
+        } else {
+            yield put(actions.deleteEmailTemplateFailure(response?.error || 'Failed to delete'));
+            message.error(response?.error || 'Failed to delete');
+        }
+    } catch (error) {
+        yield put(actions.deleteEmailTemplateFailure('Error deleting template'));
+        message.error('Error deleting template');
+    }
+}
+
 export default function* adminSaga() {
     yield takeLatest(types.FETCH_ADMIN_STATS_REQUEST, fetchAdminStatsSaga);
     yield takeLatest(types.FETCH_ADMIN_USERS_REQUEST, fetchAdminUsersSaga);
     yield takeLatest(types.UPDATE_ADMIN_USER_REQUEST, updateAdminUserSaga);
     yield takeLatest(types.DELETE_ADMIN_USER_REQUEST, deleteAdminUserSaga);
- 
+
     // Bots
     yield takeLatest(types.FETCH_ADMIN_BOTS_REQUEST, fetchAdminBotsSaga);
     yield takeLatest(types.UPDATE_ADMIN_BOT_REQUEST, updateAdminBotSaga);
@@ -268,5 +351,10 @@ export default function* adminSaga() {
     yield takeLatest(types.FETCH_ADMIN_WALLETS_REQUEST, fetchAdminWalletsSaga);
     yield takeLatest(types.CREATE_ADMIN_WALLET_REQUEST, createAdminWalletSaga);
     yield takeLatest(types.DELETE_ADMIN_WALLET_REQUEST, deleteAdminWalletSaga);
+    // Email Templates
+    yield takeLatest(types.FETCH_EMAIL_TEMPLATES_REQUEST, fetchEmailTemplatesSaga);
+    yield takeLatest(types.CREATE_EMAIL_TEMPLATE_REQUEST, createEmailTemplateSaga);
+    yield takeLatest(types.UPDATE_EMAIL_TEMPLATE_REQUEST, updateEmailTemplateSaga);
+    yield takeLatest(types.DELETE_EMAIL_TEMPLATE_REQUEST, deleteEmailTemplateSaga);
 }
 

@@ -5,6 +5,7 @@ export interface TxRecord {
     type: string
     credits: number
     amount: number
+    amountUSD: number
     date: string
     time: string
     status: string

@@ -122,6 +122,67 @@ export const fetchAdminWalletsFailure = (error: string) => ({
     payload: error,
 });
 
+// ── Email Templates ──────────────────────────────────────────────────────────
+
+export const fetchEmailTemplatesRequest = () => ({
+    type: types.FETCH_EMAIL_TEMPLATES_REQUEST,
+});
+
+export const fetchEmailTemplatesSuccess = (payload: any) => ({
+    type: types.FETCH_EMAIL_TEMPLATES_SUCCESS,
+    payload,
+});
+
+export const fetchEmailTemplatesFailure = (error: string) => ({
+    type: types.FETCH_EMAIL_TEMPLATES_FAILURE,
+    payload: error,
+});
+
+export const createEmailTemplateRequest = (payload: any) => ({
+    type: types.CREATE_EMAIL_TEMPLATE_REQUEST,
+    payload,
+});
+
+export const createEmailTemplateSuccess = (payload: any) => ({
+    type: types.CREATE_EMAIL_TEMPLATE_SUCCESS,
+    payload,
+});
+
+export const createEmailTemplateFailure = (error: string) => ({
+    type: types.CREATE_EMAIL_TEMPLATE_FAILURE,
+    payload: error,
+});
+
+export const updateEmailTemplateRequest = (payload: any) => ({
+    type: types.UPDATE_EMAIL_TEMPLATE_REQUEST,
+    payload,
+});
+
+export const updateEmailTemplateSuccess = (payload: any) => ({
+    type: types.UPDATE_EMAIL_TEMPLATE_SUCCESS,
+    payload,
+});
+
+export const updateEmailTemplateFailure = (error: string) => ({
+    type: types.UPDATE_EMAIL_TEMPLATE_FAILURE,
+    payload: error,
+});
+
+export const deleteEmailTemplateRequest = (payload: any) => ({
+    type: types.DELETE_EMAIL_TEMPLATE_REQUEST,
+    payload,
+});
+
+export const deleteEmailTemplateSuccess = (payload: any) => ({
+    type: types.DELETE_EMAIL_TEMPLATE_SUCCESS,
+    payload,
+});
+
+export const deleteEmailTemplateFailure = (error: string) => ({
+    type: types.DELETE_EMAIL_TEMPLATE_FAILURE,
+    payload: error,
+});
+
 export const createAdminWalletRequest = (payload: any) => ({
     type: types.CREATE_ADMIN_WALLET_REQUEST,
     payload,

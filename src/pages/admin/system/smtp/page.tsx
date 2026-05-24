@@ -14,7 +14,7 @@ import {
     Send,
     CheckCircle2
 } from "lucide-react"
-import { message, Spin } from 'antd'
+import { toast } from '@/hooks/use-toast'
 import { API_CALL } from '@/lib/auth-fingerprint'
 
 export default function SmtpSettingsPage() {
@@ -28,7 +28,7 @@ export default function SmtpSettingsPage() {
         user: '',
         pass: '',
         from: '',
-        isActive: true
+        status: 'active'
     })
 
     useEffect(() => {
@@ -43,10 +43,19 @@ export default function SmtpSettingsPage() {
                 url: '/admin/system/smtp'
             })
             if (status === 200) {
-                setSettings({ ...response, pass: '' }) // Clear password for UI
+                const s = response.settings || response
+                setSettings({
+                    host: s.host || '',
+                    port: s.port || 587,
+                    secure: s.secure ?? false,
+                    user: s.user || '',
+                    pass: '', // never prefill password
+                    from: s.from || '',
+                    isActive: s.status === 'active',
+                })
             }
         } catch (error) {
-            message.error('Failed to load SMTP settings')
+            toast({ title: 'Failed to load SMTP settings', variant: 'destructive' })
         } finally {
             setLoading(false)
         }
@@ -56,17 +65,17 @@ export default function SmtpSettingsPage() {
         setSaving(true)
         try {
             const { response, status } = await API_CALL({
-                method: 'POST',
+                method: 'PATCH',
                 url: '/admin/system/smtp',
-                body: settings
+                body: { ...settings, isActive: undefined, status: settings.isActive ? 'active' : 'inactive' }
             })
             if (status === 200) {
-                message.success('SMTP settings saved successfully')
+                toast({ title: 'SMTP settings saved successfully' })
             } else {
-                message.error(response.error || 'Failed to save settings')
+                toast({ title: response.error || 'Failed to save settings', variant: 'destructive' })
             }
         } catch (error) {
-            message.error('An error occurred while saving')
+            toast({ title: 'An error occurred while saving', variant: 'destructive' })
         } finally {
             setSaving(false)
         }
@@ -76,17 +85,17 @@ export default function SmtpSettingsPage() {
         setTesting(true)
         try {
             const { response, status } = await API_CALL({
-                method: 'PUT',
-                url: '/admin/system/smtp',
+                method: 'POST',
+                url: '/admin/system/smtp/test',
                 body: settings
             })
             if (status === 200) {
-                message.success('SMTP connection verified successfully')
+                toast({ title: 'SMTP connection verified successfully' })
             } else {
-                message.error(response.error || 'Connection test failed')
+                toast({ title: response.error || 'Connection test failed', variant: 'destructive' })
             }
         } catch (error: any) {
-            message.error(error.message || 'Connection test failed')
+            toast({ title: error.message || 'Connection test failed', variant: 'destructive' })
         } finally {
             setTesting(false)
         }
@@ -95,13 +104,13 @@ export default function SmtpSettingsPage() {
     if (loading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
-                <Spin size="large" />
+                <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
         )
     }
 
     return (
-        <div className="p-8 max-w-4xl mx-auto space-y-8">
+        <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
@@ -195,10 +204,10 @@ export default function SmtpSettingsPage() {
                     </CardContent>
                 </Card>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 justify-end">
                     <Button
                         variant="outline"
-                        className="flex-1 gap-2 py-6 rounded-2xl hover:bg-secondary/50"
+                        className="gap-2 py-5 px-6 rounded-xl hover:bg-secondary/50"
                         onClick={handleTest}
                         disabled={testing || saving}
                     >
@@ -206,7 +215,7 @@ export default function SmtpSettingsPage() {
                         Test Connection
                     </Button>
                     <Button
-                        className="flex-[2] gap-2 py-6 rounded-2xl shadow-lg shadow-primary/20"
+                        className="gap-2 py-5 px-6 rounded-xl shadow-lg shadow-primary/20"
                         onClick={handleSave}
                         disabled={saving || testing}
                     >

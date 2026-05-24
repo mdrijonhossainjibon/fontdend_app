@@ -15,6 +15,9 @@ const initialState: any = {
     extensions: [],
     extensionsLoading: false,
     extensionsError: null,
+    offers: [],
+    offersLoading: false,
+    offersError: null,
 };
 
 const dashboardReducer = (state = initialState, action: any) => {
@@ -160,6 +163,25 @@ const dashboardReducer = (state = initialState, action: any) => {
                 ...state,
                 extensionsLoading: false,
                 extensionsError: action.payload,
+            };
+
+        case types.FETCH_OFFERS_REQUEST:
+            return {
+                ...state,
+                offersLoading: true,
+                offersError: null,
+            };
+        case types.FETCH_OFFERS_SUCCESS:
+            return {
+                ...state,
+                offersLoading: false,
+                offers: action.payload,
+            };
+        case types.FETCH_OFFERS_FAILURE:
+            return {
+                ...state,
+                offersLoading: false,
+                offersError: action.payload,
             };
 
         default:

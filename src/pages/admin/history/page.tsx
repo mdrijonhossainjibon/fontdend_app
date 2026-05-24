@@ -189,7 +189,7 @@ export default function AdminHistoryPage() {
                       </td>
                       <td className="px-5 py-4 text-right">
                         <span className="text-muted-foreground">
-                          {tx.amount > 0 ? '$' + tx.amount.toFixed(2) : '-'}
+                          {tx.amountUSD > 0 ? '$' + tx.amountUSD.toFixed(2) : '-'}
                         </span>
                       </td>
                       <td className="px-5 py-4">

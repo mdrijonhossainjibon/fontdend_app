@@ -38,6 +38,7 @@ const AdminTopupHistory = lazy(() => import('@/pages/admin/topup-history/page'))
 const AdminHistory = lazy(() => import('@/pages/admin/history/page'))
 const AdminCacheControl = lazy(() => import('@/pages/admin/cache-control/page'))
 const AdminRedeemCodes = lazy(() => import('@/pages/admin/redeem-codes/page'))
+const AdminPromoOffers = lazy(() => import('@/pages/admin/promo-offers/page'))
 const AdminSettings = lazy(() => import('@/pages/admin/settings/page'))
 const AdminNotifications = lazy(() => import('@/pages/admin/notifications/page'))
 const AdminEmail = lazy(() => import('@/pages/admin/email/page'))
@@ -49,6 +50,7 @@ const AdminTrainingBots = lazy(() => import('@/pages/admin/ai-training/bots/page
 const AdminHealthCheck = lazy(() => import('@/pages/admin/ai-training/health-check/page'))
 const AdminTrainingData = lazy(() => import('@/pages/admin/ai-training/training-data/page'))
 const AdminSmtp = lazy(() => import('@/pages/admin/system/smtp/page'))
+const AdminPermissions = lazy(() => import('@/pages/admin/permissions/page'))
 
 // Public pages
 const AboutPage = lazy(() => import('@/pages/about/page'))
@@ -115,6 +117,7 @@ export default function App() {
           <Route path="history" element={<AdminHistory />} />
           <Route path="cache-control" element={<AdminCacheControl />} />
           <Route path="redeem-codes" element={<AdminRedeemCodes />} />
+          <Route path="promo-offers" element={<AdminPromoOffers />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="email" element={<AdminEmail />} />
@@ -126,6 +129,7 @@ export default function App() {
           <Route path="ai-training/health-check" element={<AdminHealthCheck />} />
           <Route path="ai-training/training-data" element={<AdminTrainingData />} />
           <Route path="system/smtp" element={<AdminSmtp />} />
+          <Route path="permissions" element={<AdminPermissions />} />
         </Route>
 
         {/* Public pages */}

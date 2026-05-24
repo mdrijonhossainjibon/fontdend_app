@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useSearchParams } from "react-router-dom"
 import type { RootState } from "@/modules/rootReducer"
 import { fetchPricingPackagesRequest, subscribeToPlanRequest, clearSubscriptionResult } from "@/modules/pricing/actions"
 import { Package, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
@@ -57,6 +58,9 @@ export function DashboardPricing() {
     const { subscribing: subscribLoading, subscriptionResult, subscribeError: subError } = useSelector((state: RootState) => state.pricing)
     const activePackageInfo = useSelector((state: RootState) => state.topup.activePackage)
     const activePackage = activePackageInfo?.activePackage?.code ? { code: activePackageInfo.activePackage.code } : null
+    const [searchParams] = useSearchParams()
+    const offerCode = searchParams.get('offer')
+    const [offerHighlighted, setOfferHighlighted] = useState<string | null>(null)
 
     // Detect mobile device
     useEffect(() => {
@@ -81,6 +85,23 @@ export function DashboardPricing() {
     const filteredPackages = filterType === "all"
         ? pricingPackages
         : pricingPackages.filter(pkg => pkg.type === filterType)
+
+    // Auto-highlight offer package when ?offer= param present
+    useEffect(() => {
+        if (offerCode && pricingPackages.length > 0 && !offerHighlighted) {
+            const match = pricingPackages.find((pkg: PricingPackage) => pkg.code === offerCode)
+            if (match) {
+                setOfferHighlighted(match.id)
+                setTimeout(() => {
+                    const el = document.getElementById(`pricing-card-${match.id}`)
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        el.focus()
+                    }
+                }, 150)
+            }
+        }
+    }, [offerCode, pricingPackages, offerHighlighted])
 
     // Stagger animation for cards
     useEffect(() => {
@@ -266,12 +287,14 @@ export function DashboardPricing() {
                         {filteredPackages.map((pkg, index) => (
                             <div
                                 key={pkg.id}
+                                id={`pricing-card-${pkg.id}`}
                                 className={`relative bg-gradient-to-br from-card/90 via-card/60 to-card/30 backdrop-blur-xl rounded-2xl p-6 transition-all duration-700 group overflow-hidden
                                 ${visibleCards.has(pkg.id)
                                         ? 'opacity-100 translate-y-0 scale-100'
                                         : 'opacity-0 translate-y-8 scale-95'
                                     }
                                 hover:shadow-[0_20px_60px_-15px_rgba(154,205,50,0.3)] hover:-translate-y-3 hover:scale-[1.02]
+                                ${offerHighlighted === pkg.id ? 'ring-2 ring-[#9ACD32] ring-offset-2 ring-offset-background shadow-[0_0_30px_rgba(154,205,50,0.5)] scale-[1.02] animate-pulse' : ''}
                             `}
                                 style={{
                                     transitionDelay: `${index * 60}ms`,

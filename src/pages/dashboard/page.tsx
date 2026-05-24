@@ -9,7 +9,8 @@ import {
   deleteKeyRequest,
   regenerateKeyRequest,
   toggleAutoRenewRequest,
-  cancelPackageRequest
+  cancelPackageRequest,
+  fetchOffersRequest,
 } from "@/modules/dashboard/actions"
 
 import { useDashboardSocket } from "@/hooks/useDashboardSocket"
@@ -30,7 +31,9 @@ export default function DashboardPage() {
     apiKeys: dashboardApiKeys,
     loading,
     generatingKey,
-    regeneratingKey
+    regeneratingKey,
+    offers,
+    offersLoading,
   } = useSelector((state: RootState) => state.dashboard)
 
   const autoRenew = activePackage?.autoRenew ?? true
@@ -41,6 +44,7 @@ export default function DashboardPage() {
   // Initial data fetch on mount
   useEffect(() => {
     dispatch(fetchDashboardDataRequest())
+    dispatch(fetchOffersRequest())
   }, [dispatch])
 
   useEffect(() => {
@@ -151,65 +155,68 @@ export default function DashboardPage() {
           <p className="text-xs md:text-sm text-muted-foreground">{getCurrentDate()}</p>
         </div>
 
-        {/* Promotional Banner */}
-        <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-primary/10 border border-purple-500/30 p-4 md:p-6 animate-in slide-in-from-top duration-500">
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-bl-full"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-500/20 to-transparent rounded-tr-full"></div>
+        {/* Promotional Offers */}
+        {!offersLoading && offers.length > 0 && offers.map((offer: any, idx: number) => (
+          <div key={offer.id || idx} className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-primary/10 border border-purple-500/30 p-4 md:p-6 animate-in slide-in-from-top duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-bl-full"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-500/20 to-transparent rounded-tr-full"></div>
 
-          {/* Badge */}
-          <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-xs font-bold text-white shadow-lg animate-pulse">
-            LIMITED OFFER
-          </div>
-
-          <div className="relative z-10">
-            <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-                    <Sparkles className="w-6 h-6 text-purple-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg md:text-xl font-bold text-foreground">Upgrade to Premium</h3>
-                    <p className="text-xs text-muted-foreground">Get 50% more credits + Priority Support</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-2 md:gap-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-sm text-foreground">50,000 credits/month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-sm text-foreground">24/7 Priority Support</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <span className="text-sm text-foreground">Advanced Analytics</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm font-semibold text-yellow-500">Save $7/month</span>
-                  </div>
-                </div>
+            {offer.offerBadge && (
+              <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-xs font-bold text-white shadow-lg animate-pulse">
+                {offer.offerBadge}
               </div>
+            )}
 
-              <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
-                <div className="text-left md:text-right">
-                  <p className="text-2xl md:text-3xl font-bold text-foreground">$47.99</p>
-                  <p className="text-xs text-muted-foreground line-through">$55.58/month</p>
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
+                      <Sparkles className="w-6 h-6 text-purple-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg md:text-xl font-bold text-foreground">{offer.offerTitle}</h3>
+                      {offer.offerDescription && (
+                        <p className="text-xs text-muted-foreground">{offer.offerDescription}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {offer.offerFeatures && offer.offerFeatures.length > 0 && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2 md:gap-4">
+                      {offer.offerFeatures.map((feature: string, fi: number) => (
+                        <div key={fi} className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          <span className="text-sm text-foreground">{feature}</span>
+                        </div>
+                      ))}
+                      {offer.offerHighlight && (
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4 text-yellow-500" />
+                          <span className="text-sm font-semibold text-yellow-500">{offer.offerHighlight}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <Link to="/dashboard/pricing" className="w-full md:w-auto">
-                  <button className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                    Upgrade Now
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </Link>
+
+                <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
+                  <div className="text-left md:text-right">
+                    <p className="text-2xl md:text-3xl font-bold text-foreground">{offer.price}</p>
+                    <p className="text-xs text-muted-foreground">{offer.validity} validity</p>
+                  </div>
+                  <Link to={`/dashboard/pricing?offer=${offer.code}`} className="w-full md:w-auto">
+                    <button className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+                      Upgrade Now
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ))}
 
 
 

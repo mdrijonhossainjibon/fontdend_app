@@ -19,6 +19,9 @@ const initialState = {
     // Wallet Management
     wallets: [],
     walletLoading: false,
+    // Email Templates
+    emailTemplates: [],
+    emailLoading: false,
 };
 
 
@@ -168,6 +171,35 @@ const adminReducer = (state = initialState, action: any) => {
             return { ...state, walletLoading: false, error: null };
         case types.DELETE_ADMIN_WALLET_FAILURE:
             return { ...state, walletLoading: false, error: action.payload };
+
+        // ── Email Templates ─────────────────────────────────────────────────
+        case types.FETCH_EMAIL_TEMPLATES_REQUEST:
+            return { ...state, emailLoading: true, error: null };
+        case types.FETCH_EMAIL_TEMPLATES_SUCCESS:
+            return { ...state, emailLoading: false, emailTemplates: action.payload.templates, error: null };
+        case types.FETCH_EMAIL_TEMPLATES_FAILURE:
+            return { ...state, emailLoading: false, error: action.payload };
+
+        case types.CREATE_EMAIL_TEMPLATE_REQUEST:
+            return { ...state, emailLoading: true, error: null };
+        case types.CREATE_EMAIL_TEMPLATE_SUCCESS:
+            return { ...state, emailLoading: false, error: null };
+        case types.CREATE_EMAIL_TEMPLATE_FAILURE:
+            return { ...state, emailLoading: false, error: action.payload };
+
+        case types.UPDATE_EMAIL_TEMPLATE_REQUEST:
+            return { ...state, emailLoading: true, error: null };
+        case types.UPDATE_EMAIL_TEMPLATE_SUCCESS:
+            return { ...state, emailLoading: false, error: null };
+        case types.UPDATE_EMAIL_TEMPLATE_FAILURE:
+            return { ...state, emailLoading: false, error: action.payload };
+
+        case types.DELETE_EMAIL_TEMPLATE_REQUEST:
+            return { ...state, emailLoading: true, error: null };
+        case types.DELETE_EMAIL_TEMPLATE_SUCCESS:
+            return { ...state, emailLoading: false, error: null };
+        case types.DELETE_EMAIL_TEMPLATE_FAILURE:
+            return { ...state, emailLoading: false, error: action.payload };
 
         default:
             return state;

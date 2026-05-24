@@ -254,7 +254,6 @@ export default function AdminDepositAddresses() {
         const id = balanceResult.id
         toast.success(`Live: ${balanceResult.balance.toFixed(6)} ${balanceResult.cryptoId.toUpperCase()}`)
         setRowBalanceLoading(p => ({ ...p, [id]: false }))
-        fetchAddresses()
         dispatch(depositActions.clearBalanceResult())
     }, [balanceResult]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -455,7 +454,7 @@ export default function AdminDepositAddresses() {
                                             className="rounded border-border/60 accent-primary"
                                         />
                                     </th>
-                                    {["User", "Asset", "Address", "Balance", "Security", "Status", "Last Activity", "Actions"].map(h => (
+                                    {["User", "Asset", "Address", "Balance", "Security", "Status", "Actions"].map(h => (
                                         <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">{h}</th>
                                     ))}
                                 </tr>
@@ -463,14 +462,14 @@ export default function AdminDepositAddresses() {
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={9} className="text-center py-16 text-muted-foreground">
+                                        <td colSpan={8} className="text-center py-16 text-muted-foreground">
                                             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
                                             <p className="text-xs">Fetching wallets…</p>
                                         </td>
                                     </tr>
                                 ) : addresses.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="text-center py-16 text-muted-foreground text-sm">
+                                        <td colSpan={8} className="text-center py-16 text-muted-foreground text-sm">
                                             No deposit addresses found.
                                         </td>
                                     </tr>
@@ -571,12 +570,6 @@ export default function AdminDepositAddresses() {
                                                     {rec.isActive ? "Active" : "Inactive"}
                                                 </span>
                                             </div>
-                                        </td>
-
-                                        {/* Last Activity */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <p className="text-xs text-foreground">{rec.lastUsedAt ? new Date(rec.lastUsedAt).toLocaleTimeString() : "Never"}</p>
-                                            <p className="text-[10px] text-muted-foreground">{rec.lastUsedAt ? new Date(rec.lastUsedAt).toLocaleDateString() : "Pending check"}</p>
                                         </td>
 
                                         {/* Actions */}

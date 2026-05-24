@@ -154,6 +154,23 @@ function* fetchExtensionsSaga(): Generator {
     }
 }
 
+function* fetchOffersSaga(): Generator {
+    try {
+        const { response, status }: APIResponse = yield (call as any)(API_CALL, {
+            method: 'GET',
+            url: '/pricing/offers'
+        });
+
+        if (status === 200 && response.success) {
+            yield put(actions.fetchOffersSuccess(response.offers || []));
+        } else {
+            yield put(actions.fetchOffersFailure(response?.error || 'Failed to fetch offers'));
+        }
+    } catch (error: any) {
+        yield put(actions.fetchOffersFailure(error.message || 'An error occurred'));
+    }
+}
+
 export default function* dashboardSaga() {
     yield all([
         takeLatest(types.FETCH_DASHBOARD_DATA_REQUEST, fetchDashboardDataSaga),
@@ -164,5 +181,6 @@ export default function* dashboardSaga() {
         takeLatest(types.CANCEL_PACKAGE_REQUEST, cancelPackageSaga),
         takeLatest(types.FETCH_ACTIVITIES_REQUEST, fetchActivitiesSaga),
         takeLatest(types.FETCH_EXTENSIONS_REQUEST, fetchExtensionsSaga),
+        takeLatest(types.FETCH_OFFERS_REQUEST, fetchOffersSaga),
     ]);
 }

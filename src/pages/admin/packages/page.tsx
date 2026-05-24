@@ -27,7 +27,7 @@ export default function AdminPricingPage() {
     count: '',
     dailyLimit: '',
     rateLimit: '',
-    isActive: true
+    status: 'active'
   })
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function AdminPricingPage() {
       validity: formData.validity,
       validityDays: formData.validityDays,
       recognition: formData.recognition,
-      isActive: formData.isActive
+      status: formData.status
     }
     if (formData.type === 'count') {
       if (!formData.count) { message.error('Please enter total request count'); return }
@@ -71,7 +71,7 @@ export default function AdminPricingPage() {
       validity: formData.validity,
       validityDays: formData.validityDays,
       recognition: formData.recognition,
-      isActive: formData.isActive
+      status: formData.status
     }
     if (formData.type === 'count' && formData.count) payload.count = parseInt(formData.count)
     else if (formData.type === 'daily' && formData.dailyLimit) payload.dailyLimit = parseInt(formData.dailyLimit)
@@ -107,7 +107,7 @@ export default function AdminPricingPage() {
       count: pkg.count?.toString() || '',
       dailyLimit: pkg.dailyLimit?.toString() || '',
       rateLimit: pkg.rateLimit?.toString() || '',
-      isActive: pkg.active
+      status: pkg.status
     })
     setIsModalOpen(true)
   }
@@ -123,7 +123,7 @@ export default function AdminPricingPage() {
       count: '',
       dailyLimit: '',
       rateLimit: '',
-      isActive: true
+      status: 'active'
     })
   }
 
@@ -294,7 +294,7 @@ export default function AdminPricingPage() {
 
               {/* Status Badge */}
               <div className="mb-4">
-                {pkg.active ? (
+                {pkg.status === 'active' ? (
                   <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-600">Active</span>
                 ) : (
                   <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-500/20 text-gray-600">Inactive</span>
@@ -480,10 +480,10 @@ export default function AdminPricingPage() {
               <p className="text-sm text-muted-foreground">Make this package available immediately</p>
             </div>
             <button
-              onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-              className={`relative w-14 h-7 rounded-full transition-colors ${formData.isActive ? 'bg-amber-500' : 'bg-gray-300'}`}
+              onClick={() => setFormData({ ...formData, status: formData.status === 'active' ? 'inactive' : 'active' })}
+              className={`relative w-14 h-7 rounded-full transition-colors ${formData.status === 'active' ? 'bg-amber-500' : 'bg-gray-300'}`}
             >
-              <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${formData.isActive ? 'right-1' : 'left-1'}`} />
+              <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all ${formData.status === 'active' ? 'right-1' : 'left-1'}`} />
             </button>
           </div>
         </div>

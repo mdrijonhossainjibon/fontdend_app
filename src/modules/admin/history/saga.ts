@@ -15,10 +15,16 @@ function* fetchHistorySaga(action: ReturnType<typeof actions.fetchHistoryRequest
         const { response }: APIResponse = yield call(API_CALL, { method: 'GET', url: `/admin/deposits?${queryParams.toString()}` })
         const { deposits = [], pagination } = (response || {}) as any
         const transactions = deposits.map((d: any) => ({
-            id: d._id || d.id, type: d.type || '',
-            credits: d.credits || 0, amount: d.amount || 0,
-            date: d.createdAt || d.date || '', time: d.createdAt || d.time || '',
-            status: d.status || '', label: d.label || '', meta: d.meta || '',
+            id: d._id || d.id,
+            type: d.type || '',
+            credits: d.credits || 0,
+            amount: d.amount || 0,
+            amountUSD: d.amountUSD || 0,
+            date: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : '',
+            time: d.createdAt ? new Date(d.createdAt).toLocaleTimeString() : '',
+            status: d.status || '',
+            label: `${d.cryptoName || ''}${d.networkName ? ' / ' + d.networkName : ''}`,
+            meta: d.notes || d.txHash || '',
             userName: d.userId?.name || d.userName || 'Unknown',
             userEmail: d.userId?.email || d.userEmail || '',
         }))

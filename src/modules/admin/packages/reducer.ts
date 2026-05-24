@@ -12,7 +12,7 @@ export interface PricingPackage {
   count?: number
   dailyLimit?: number
   rateLimit?: number
-  active: boolean
+  status: string
   isPromo: boolean
   sortOrder: number
 }

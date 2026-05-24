@@ -1,10 +1,12 @@
 "use client"
 
-import { Bell, Search, Settings, User, Moon, Sun, Menu, LayoutDashboard, LogOut } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Bell, Search, Settings, User, Moon, Sun, Menu, LayoutDashboard, LogOut, ArrowRight } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import React from "react"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from "@/components/AuthProvider"
 import { cn } from "@/lib/utils"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -37,7 +39,73 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
     const navigate = useNavigate()
     const [isDark, setIsDark] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchIndex, setSearchIndex] = useState(0)
     const [notifications, setNotifications] = useState(3)
+    const searchInputRef = React.useRef<HTMLInputElement>(null)
+
+    const initials = useMemo(() => {
+        if (!user?.name) return 'AD'
+        return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    }, [user?.name])
+
+    const searchItems = useMemo(() => [
+        { label: 'Dashboard', path: '/admin', keywords: 'dashboard overview home' },
+        { label: 'Users', path: '/admin/users', keywords: 'users accounts members' },
+        { label: 'Packages', path: '/admin/packages', keywords: 'packages pricing plans subscription' },
+        { label: 'Wallet', path: '/admin/wallet', keywords: 'wallet transactions balance' },
+        { label: 'Deposit Addresses', path: '/admin/deposit-addresses', keywords: 'deposit addresses wallets crypto' },
+        { label: 'Topup History', path: '/admin/topup-history', keywords: 'topup history deposits payments' },
+        { label: 'All History', path: '/admin/history', keywords: 'history transactions records all' },
+        { label: 'Analytics', path: '/admin/analytics', keywords: 'analytics stats statistics insights' },
+        { label: 'Email Templates', path: '/admin/email', keywords: 'email templates mail' },
+        { label: 'System SMTP', path: '/admin/system/smtp', keywords: 'smtp mail server email settings' },
+        { label: 'Cache Control', path: '/admin/cache-control', keywords: 'cache control settings' },
+        { label: 'Solution Cache', path: '/admin/solutions', keywords: 'solutions cache captcha' },
+        { label: 'Bot Management', path: '/admin/ai-training/bots', keywords: 'bots ai training' },
+        { label: 'Upload Model', path: '/admin/upload-model', keywords: 'upload model ai' },
+        { label: 'Extensions', path: '/admin/extensions', keywords: 'extensions browser plugins' },
+        { label: 'Database', path: '/admin/database', keywords: 'database db storage' },
+        { label: 'Permissions', path: '/admin/permissions', keywords: 'permissions roles access' },
+        { label: '2FA', path: '/admin/2fa', keywords: '2fa two factor authentication security' },
+        { label: 'Settings', path: '/admin/settings', keywords: 'settings configuration general' },
+    ], [])
+
+    const filteredResults = useMemo(() => {
+        if (!searchQuery.trim()) return []
+        const q = searchQuery.toLowerCase()
+        return searchItems.filter(item =>
+            item.label.toLowerCase().includes(q) || item.keywords.includes(q)
+        )
+    }, [searchQuery, searchItems])
+
+    const safeIndex = Math.min(searchIndex, Math.max(0, filteredResults.length - 1))
+
+    const navigateToResult = (path: string) => {
+        navigate(path)
+        setIsSearchOpen(false)
+        setSearchQuery('')
+        setSearchIndex(0)
+    }
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setSearchIndex(i => Math.min(i + 1, filteredResults.length - 1))
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setSearchIndex(i => Math.max(i - 1, 0))
+        } else if (e.key === 'Enter') {
+            e.preventDefault()
+            if (filteredResults[safeIndex]) {
+                navigateToResult(filteredResults[safeIndex].path)
+            }
+        } else if (e.key === 'Escape') {
+            setIsSearchOpen(false)
+            setSearchQuery('')
+            setSearchIndex(0)
+        }
+    }
 
     const pageInfo = pageTitles[pathname] || { title: "Admin Panel", description: "Management Dashboard" }
 
@@ -123,9 +191,10 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-secondary/80 transition-all duration-300 group outline-none">
                                 <div className="relative">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-sm font-bold ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300">
-                                        AD
-                                    </div>
+                                    <Avatar className="w-8 h-8 ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300">
+                                        <AvatarImage src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || 'Admin')}&backgroundColor=4f46e5`} alt={user?.name || 'Admin'} />
+                                        <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-sm font-bold">{initials}</AvatarFallback>
+                                    </Avatar>
                                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />
                                 </div>
                                 <div className="hidden lg:block text-left">
@@ -170,25 +239,58 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
             </div>
 
             {isSearchOpen && (
-                <div className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border p-4 animate-in slide-in-from-top-2 duration-300">
-                    <div className="max-w-2xl mx-auto">
+                <div className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border shadow-lg animate-in slide-in-from-top-2 duration-200">
+                    <div className="max-w-2xl mx-auto p-4">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <input
+                                ref={searchInputRef}
                                 type="text"
-                                placeholder="Search users, analytics, packages..."
+                                placeholder="Search pages... (Dashboard, Users, Packages, Settings...)"
+                                value={searchQuery}
+                                onChange={e => { setSearchQuery(e.target.value); setSearchIndex(0) }}
+                                onKeyDown={handleSearchKeyDown}
                                 className="w-full pl-12 pr-4 py-3 bg-secondary/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
                                 autoFocus
                             />
                         </div>
-                        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                            <kbd className="px-2 py-1 bg-muted rounded border border-border">↑↓</kbd>
-                            <span>to navigate</span>
-                            <kbd className="px-2 py-1 bg-muted rounded border border-border">↵</kbd>
-                            <span>to select</span>
-                            <kbd className="px-2 py-1 bg-muted rounded border border-border">esc</kbd>
-                            <span>to close</span>
-                        </div>
+
+                        {filteredResults.length > 0 && (
+                            <div className="mt-2 border border-border rounded-xl bg-card overflow-hidden">
+                                {filteredResults.map((item, i) => (
+                                    <button
+                                        key={item.path}
+                                        onClick={() => navigateToResult(item.path)}
+                                        className={cn(
+                                            'w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors',
+                                            i === safeIndex
+                                                ? 'bg-primary/10 text-primary font-medium'
+                                                : 'hover:bg-secondary/50 text-foreground'
+                                        )}
+                                    >
+                                        <span className="flex-1">{item.label}</span>
+                                        {i === safeIndex && <ArrowRight className="w-4 h-4" />}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {searchQuery.trim() && filteredResults.length === 0 && (
+                            <div className="mt-2 p-4 text-center text-sm text-muted-foreground">
+                                No pages found for "<span className="text-foreground">{searchQuery}</span>"
+                            </div>
+                        )}
+
+                        {!searchQuery.trim() && (
+                            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                                <kbd className="px-2 py-1 bg-muted rounded border border-border">↑↓</kbd>
+                                <span>to navigate</span>
+                                <kbd className="px-2 py-1 bg-muted rounded border border-border">↵</kbd>
+                                <span>to select</span>
+                                <kbd className="px-2 py-1 bg-muted rounded border border-border">esc</kbd>
+                                <span>to close</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

@@ -28,7 +28,7 @@ function* updateCacheSettingSaga(action: any): Generator<any, void, any> {
         const { status } = yield call(API_CALL, {
             method: 'PATCH',
             url: '/admin/settings/site',
-            data: { [action.key]: action.value },
+            body: { [action.key]: action.value },
         })
         if (status === 200) {
             yield put(updateCacheSettingSuccess())

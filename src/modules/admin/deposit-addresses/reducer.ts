@@ -105,7 +105,14 @@ export default function adminDepositAddressesReducer(
       return { ...state, checkingBalance: true, balanceResult: null }
 
     case types.CHECK_BALANCE_SUCCESS:
-      return { ...state, checkingBalance: false, balanceResult: action.payload }
+      return {
+        ...state,
+        checkingBalance: false,
+        balanceResult: action.payload,
+        addresses: state.addresses.map(a =>
+          a._id === action.payload.id ? { ...a, lastBalance: action.payload.balance } : a
+        ),
+      }
 
     case types.CHECK_BALANCE_FAILURE:
       return { ...state, checkingBalance: false }

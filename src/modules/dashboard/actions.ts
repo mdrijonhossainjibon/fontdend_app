@@ -116,3 +116,17 @@ export const fetchExtensionsFailure = (error: string) => ({
     type: types.FETCH_EXTENSIONS_FAILURE,
     payload: error,
 });
+
+export const fetchOffersRequest = () => ({
+    type: types.FETCH_OFFERS_REQUEST,
+});
+
+export const fetchOffersSuccess = (payload: any[]) => ({
+    type: types.FETCH_OFFERS_SUCCESS,
+    payload,
+});
+
+export const fetchOffersFailure = (error: string) => ({
+    type: types.FETCH_OFFERS_FAILURE,
+    payload: error,
+});

@@ -15,10 +15,25 @@ function* fetchPackagesSaga(action: any) {
       params,
     })
 
-    const data = response as any
-    yield put(
-      actions.fetchPackagesSuccess(data.plans || [], data.stats || null),
-    )
+    const raw = (response as any)?.data || response || {}
+    const plans = (raw.plans || []).map((p: any) => ({
+      id: p._id || p.id,
+      code: p.code,
+      type: p.type,
+      price: p.priceDisplay || `$${p.price}`,
+      priceValue: p.price,
+      validity: p.validity,
+      validityDays: p.validityDays,
+      recognition: p.recognition,
+      count: p.count,
+      dailyLimit: p.dailyLimit,
+      rateLimit: p.rateLimit,
+      status: p.status,
+      isPromo: p.isPromo,
+      sortOrder: p.sortOrder,
+    }))
+    const stats = raw.stats || raw.data?.stats || null
+    yield put(actions.fetchPackagesSuccess(plans, stats))
   } catch (error: any) {
     yield put(actions.fetchPackagesFailure(error?.response?.data?.error || error.message))
   }
@@ -47,7 +62,7 @@ function* updatePackageSaga(action: any) {
     yield call(API_CALL, {
       method: 'PATCH',
       url: '/admin/pricing-plans',
-      data: action.payload.data,
+      body: action.payload.data,
     })
 
     yield put(actions.updatePackageSuccess())

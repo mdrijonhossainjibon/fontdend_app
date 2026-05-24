@@ -30,7 +30,7 @@ function* updateDepositAddressSaga(action: any) {
     yield call(API_CALL, {
       method: 'PATCH',
       url: '/admin/deposit-addresses',
-      data: { id, isActive },
+      body: { id, isActive },
     })
     yield put(actions.updateDepositAddressSuccess())
   } catch (error: any) {
@@ -57,7 +57,7 @@ function* checkBalanceSaga(action: any) {
     const { response } = yield call(API_CALL, {
       method: 'POST',
       url: '/admin/deposit-addresses/balance',
-      data: { id },
+      body: { id },
     })
     const data = (response?.data || response || {}) as any
     yield put(actions.checkBalanceSuccess({
@@ -77,7 +77,7 @@ function* sweepSaga(action: any) {
     const { response } = yield call(API_CALL, {
       method: 'POST',
       url: '/admin/crypto/sweep',
-      data: { addressIds, masterWalletId },
+      body: { addressIds, masterWalletId },
     })
     const data = (response?.data || response || {}) as any
     yield put(actions.sweepSuccess(data.results || []))
@@ -106,7 +106,7 @@ function* addMasterWalletSaga(action: any) {
     yield call(API_CALL, {
       method: 'POST',
       url: '/admin/wallets',
-      data: action.payload,
+      body: action.payload,
     })
     yield put(actions.addMasterWalletSuccess())
   } catch (error: any) {
