@@ -28,7 +28,25 @@ function* fetchPromoOffersSaga(): Generator<any, void, any> {
 
 function* createPromoOfferSaga(action: any): Generator<any, void, any> {
     try {
-        const { response } = yield call(API_CALL, { method: 'POST', url: '/admin/promo-offers', body: action.payload })
+        const { image, ...fields } = action.payload
+        let body: any = fields
+        let headers: Record<string, string> | undefined
+
+        if (image && image instanceof File) {
+            const formData = new FormData()
+            Object.entries(fields).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    formData.append(key, JSON.stringify(value))
+                } else if (value !== undefined && value !== null) {
+                    formData.append(key, String(value))
+                }
+            })
+            formData.append('image', image)
+            body = formData
+            headers = { 'Content-Type': 'multipart/form-data' }
+        }
+
+        const { response } = yield call(API_CALL, { method: 'POST', url: '/admin/promo-offers', body, headers })
         if (response.success) {
             yield put(createPromoOfferSuccess(response.data?.offer))
         } else {
@@ -41,9 +59,27 @@ function* createPromoOfferSaga(action: any): Generator<any, void, any> {
 
 function* updatePromoOfferSaga(action: any): Generator<any, void, any> {
     try {
-        const { response } = yield call(API_CALL, { method: 'PATCH', url: '/admin/promo-offers', body: action.payload })
+        const { image, ...fields } = action.payload
+        let body: any = fields
+        let headers: Record<string, string> | undefined
+
+        if (image && image instanceof File) {
+            const formData = new FormData()
+            Object.entries(fields).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    formData.append(key, JSON.stringify(value))
+                } else if (value !== undefined && value !== null) {
+                    formData.append(key, String(value))
+                }
+            })
+            formData.append('image', image)
+            body = formData
+            headers = { 'Content-Type': 'multipart/form-data' }
+        }
+
+        const { response } = yield call(API_CALL, { method: 'PATCH', url: '/admin/promo-offers', body, headers })
         if (response.success) {
-            yield put(updatePromoOfferSuccess(response.data?.offer))
+            yield put(updatePromoOfferSuccess(fields))
         } else {
             yield put(updatePromoOfferFailure(response.error || 'Failed to update promo offer'))
         }

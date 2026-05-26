@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { useDispatch, useSelector } from 'react-redux'
-import { Gift, Plus, Trash2, Eye, EyeOff, CheckCircle2, Shield, X, Search, Pencil } from "lucide-react"
+import { Gift, Plus, Trash2, Eye, EyeOff, CheckCircle2, Shield, X, Search, Pencil, Upload, ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { fetchPromoOffersRequest, createPromoOfferRequest, updatePromoOfferRequest, deletePromoOfferRequest } from '@/modules/admin/promo-offers/actions'
 import type { PromoOfferItem } from '@/modules/admin/promo-offers/reducer'
 
-const EMPTY_FORM = { title: '', badge: '', description: '', features: '', highlight: '', pricingPlanCode: '', isActive: true, sortOrder: '0' }
+const EMPTY_FORM = { title: '', badge: '', description: '', features: '', highlight: '', pricingPlanCode: '', isActive: true, sortOrder: '0', image: null as File | null, imagePreview: '' }
 
 export default function AdminPromoOffersPage() {
   const dispatch = useDispatch()
@@ -41,6 +41,7 @@ export default function AdminPromoOffersPage() {
       pricingPlanCode: form.pricingPlanCode.trim(),
       isActive: form.isActive,
       sortOrder: Number(form.sortOrder) || 0,
+      image: form.image || undefined,
     }))
     setShowCreate(false)
     setForm(EMPTY_FORM)
@@ -69,6 +70,8 @@ export default function AdminPromoOffersPage() {
       pricingPlanCode: offer.pricingPlanCode,
       isActive: offer.isActive,
       sortOrder: String(offer.sortOrder ?? 0),
+      image: null,
+      imagePreview: offer.image || '',
     })
   }
 
@@ -84,7 +87,9 @@ export default function AdminPromoOffersPage() {
       pricingPlanCode: form.pricingPlanCode.trim(),
       isActive: form.isActive,
       sortOrder: Number(form.sortOrder) || 0,
+      image: form.image || undefined,
     }))
+    setForm(EMPTY_FORM)
     setEditTarget(null)
     showToast('success', 'Offer updated')
   }
@@ -196,6 +201,40 @@ export default function AdminPromoOffersPage() {
                   placeholder="e.g. pro_monthly"
                   className="w-full h-11 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm font-mono"
                 />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Banner Image</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 border border-border hover:border-primary/50 cursor-pointer text-sm transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Choose
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) {
+                          setForm(p => ({ ...p, image: f, imagePreview: URL.createObjectURL(f) }))
+                        }
+                      }}
+                    />
+                  </label>
+                  {form.imagePreview && (
+                    <div className="relative w-16 h-10 rounded-lg overflow-hidden border border-border">
+                      <img src={form.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setForm(p => ({ ...p, image: null, imagePreview: '' }))}
+                        className="absolute top-0 right-0 p-0.5 bg-black/50 rounded-bl-lg"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  )}
+                  {!form.imagePreview && (
+                    <span className="text-xs text-muted-foreground"><ImageIcon className="w-3 h-3 inline mr-1" />No image</span>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

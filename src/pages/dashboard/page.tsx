@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/modules/dashboard/actions"
 
 import { useDashboardSocket } from "@/hooks/useDashboardSocket"
-import { Zap, Clock, TrendingUp, CheckCircle2, ArrowUpRight, Sparkles, Package, Key, Copy, RefreshCw, ToggleLeft, ToggleRight, Trash2, Star, Activity } from "lucide-react"
+import { Zap, Clock, TrendingUp, CheckCircle2, ArrowUpRight, Sparkles, Package, Key, Copy, RefreshCw, ToggleLeft, ToggleRight, Trash2, Star, Activity, ChevronLeft, ChevronRight } from "lucide-react"
 import { Link } from 'react-router-dom'
 import { SkeletonStats, SkeletonGrid, SkeletonCard } from "@/components/skeletons"
 
@@ -22,6 +22,8 @@ import { SkeletonStats, SkeletonGrid, SkeletonCard } from "@/components/skeleton
 export default function DashboardPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [countdown, setCountdown] = useState<string>("00:00:00")
+  const [activeOfferIndex, setActiveOfferIndex] = useState(0)
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
 
   const dispatch = useDispatch()
   const {
@@ -36,6 +38,33 @@ export default function DashboardPage() {
     offersLoading,
   } = useSelector((state: RootState) => state.dashboard)
 
+  const startAutoPlay = useCallback(() => {
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current)
+    autoPlayRef.current = setInterval(() => {
+      setActiveOfferIndex((prev) => (prev + 1) % (offers.length || 1))
+    }, 4000)
+  }, [offers.length])
+
+  const resetAutoPlay = useCallback(() => {
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current)
+    startAutoPlay()
+  }, [startAutoPlay])
+
+  const goToOffer = (index: number) => {
+    setActiveOfferIndex(index)
+    resetAutoPlay()
+  }
+
+  const prevOffer = () => {
+    setActiveOfferIndex((prev) => (prev === 0 ? offers.length - 1 : prev - 1))
+    resetAutoPlay()
+  }
+
+  const nextOffer = () => {
+    setActiveOfferIndex((prev) => (prev + 1) % offers.length)
+    resetAutoPlay()
+  }
+
   const autoRenew = activePackage?.autoRenew ?? true
 
   // Real-time dashboard updates via WebSocket
@@ -46,6 +75,14 @@ export default function DashboardPage() {
     dispatch(fetchDashboardDataRequest())
     dispatch(fetchOffersRequest())
   }, [dispatch])
+
+  // Auto-play slider
+  useEffect(() => {
+    if (offers.length > 1) {
+      startAutoPlay()
+    }
+    return () => { if (autoPlayRef.current) clearInterval(autoPlayRef.current) }
+  }, [offers.length, startAutoPlay])
 
   useEffect(() => {
     if (!activePackage?.endDate) return
@@ -155,68 +192,157 @@ export default function DashboardPage() {
           <p className="text-xs md:text-sm text-muted-foreground">{getCurrentDate()}</p>
         </div>
 
-        {/* Promotional Offers */}
-        {!offersLoading && offers.length > 0 && offers.map((offer: any, idx: number) => (
-          <div key={offer.id || idx} className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-primary/10 border border-purple-500/30 p-4 md:p-6 animate-in slide-in-from-top duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-bl-full"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-500/20 to-transparent rounded-tr-full"></div>
-
-            {offer.offerBadge && (
-              <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-xs font-bold text-white shadow-lg animate-pulse">
-                {offer.offerBadge}
-              </div>
+        {/* Promotional Offers Slider */}
+        {!offersLoading && offers.length > 0 && (() => {
+          const activeOffer = offers[activeOfferIndex]
+          const hasImage = !!(activeOffer?.imageUrl)
+          return (
+          <div
+            className="relative rounded-xl md:rounded-2xl border border-purple-500/30 overflow-hidden"
+            style={hasImage ? {
+              backgroundImage: `url(${activeOffer.imageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            } : {}}
+          >
+            {/* Overlay for text readability when image is present */}
+            {hasImage && (
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70 z-0" />
+            )}
+            {/* Fallback gradient when no image */}
+            {!hasImage && (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-primary/10 z-0" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-bl-full pointer-events-none z-0"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-500/20 to-transparent rounded-tr-full pointer-events-none z-0"></div>
+              </>
             )}
 
-            <div className="relative z-10">
-              <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-                      <Sparkles className="w-6 h-6 text-purple-500" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg md:text-xl font-bold text-foreground">{offer.offerTitle}</h3>
-                      {offer.offerDescription && (
-                        <p className="text-xs text-muted-foreground">{offer.offerDescription}</p>
-                      )}
-                    </div>
-                  </div>
+            {/* Slide track */}
+            <div className={`relative z-10 ${hasImage ? 'text-white' : ''}`}>
+              <div className="p-4 md:p-6">
+                {offers.map((offer: any, idx: number) => (
+                  <div
+                    key={offer.id || idx}
+                    className={`transition-all duration-500 ease-in-out ${
+                      idx === activeOfferIndex
+                        ? "opacity-100 translate-y-0 block"
+                        : "opacity-0 translate-y-4 hidden"
+                    }`}
+                  >
+                    {offer.offerBadge && (
+                      <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-xs font-bold text-white shadow-lg animate-pulse z-20">
+                        {offer.offerBadge}
+                      </div>
+                    )}
 
-                  {offer.offerFeatures && offer.offerFeatures.length > 0 && (
-                    <div className="mt-4 flex flex-wrap items-center gap-2 md:gap-4">
-                      {offer.offerFeatures.map((feature: string, fi: number) => (
-                        <div key={fi} className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          <span className="text-sm text-foreground">{feature}</span>
-                        </div>
-                      ))}
-                      {offer.offerHighlight && (
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 text-yellow-500" />
-                          <span className="text-sm font-semibold text-yellow-500">{offer.offerHighlight}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                      <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
+                              <Sparkles className="w-6 h-6 text-purple-500" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg md:text-xl font-bold text-foreground">{offer.offerTitle}</h3>
+                              {offer.offerDescription && (
+                                <p className="text-xs text-muted-foreground">{offer.offerDescription}</p>
+                              )}
+                            </div>
+                          </div>
 
-                <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
-                  <div className="text-left md:text-right">
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{offer.price}</p>
-                    <p className="text-xs text-muted-foreground">{offer.validity} validity</p>
-                  </div>
-                  <Link to={`/dashboard/pricing?offer=${offer.code}`} className="w-full md:w-auto">
-                    <button className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                      Upgrade Now
-                      <ArrowUpRight className="w-4 h-4" />
-                    </button>
-                  </Link>
-                </div>
+                          {offer.offerFeatures && offer.offerFeatures.length > 0 && (
+                            <div className="mt-4 flex flex-wrap items-center gap-2 md:gap-4">
+                              {offer.offerFeatures.map((feature: string, fi: number) => (
+                                <div key={fi} className="flex items-center gap-2">
+                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                  <span className="text-sm text-foreground">{feature}</span>
+                                </div>
+                              ))}
+                              {offer.offerHighlight && (
+                                <div className="flex items-center gap-2">
+                                  <Star className="w-4 h-4 text-yellow-500" />
+                                  <span className="text-sm font-semibold text-yellow-500">{offer.offerHighlight}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
+                          <div className="text-left md:text-right">
+                            <p className="text-2xl md:text-3xl font-bold text-foreground">{offer.price}</p>
+                            <p className="text-xs text-muted-foreground">{offer.validity} validity</p>
+                          </div>
+                          <Link to={`/dashboard/pricing?offer=${offer.code}`} className="w-full md:w-auto">
+                            <button className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+                              Upgrade Now
+                              <ArrowUpRight className="w-4 h-4" />
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                ))}
               </div>
             </div>
+
+            {/* Controls */}
+            {offers.length > 1 && (
+              <>
+                {/* Arrows */}
+                <button
+                  onClick={prevOffer}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-background/80 hover:bg-background border border-border shadow-md transition-all hover:scale-110"
+                  aria-label="Previous offer"
+                >
+                  <ChevronLeft className="w-4 h-4 text-foreground" />
+                </button>
+                <button
+                  onClick={nextOffer}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-background/80 hover:bg-background border border-border shadow-md transition-all hover:scale-110"
+                  aria-label="Next offer"
+                >
+                  <ChevronRight className="w-4 h-4 text-foreground" />
+                </button>
+
+                {/* Dots */}
+                <div className="flex items-center justify-center gap-1.5 pb-4">
+                  {offers.map((_: any, idx: number) => (
+                    <button
+                      key={idx}
+                      onClick={() => goToOffer(idx)}
+                      className={`rounded-full transition-all duration-300 ${
+                        idx === activeOfferIndex
+                          ? "w-6 h-2 bg-gradient-to-r from-purple-500 to-pink-500"
+                          : "w-2 h-2 bg-purple-500/30 hover:bg-purple-500/50"
+                      }`}
+                      aria-label={`Go to offer ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        ))}
+          )
+        })()}
+
+        {/* Loading skeleton for offers */}
+        {offersLoading && (
+          <div className="rounded-xl md:rounded-2xl bg-purple-500/5 border border-purple-500/20 p-4 md:p-6 animate-pulse">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/20" />
+              <div className="space-y-1.5">
+                <div className="h-4 bg-purple-500/20 rounded w-28" />
+                <div className="h-3 bg-purple-500/10 rounded w-40" />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-6 bg-purple-500/10 rounded-full w-20" />
+              ))}
+            </div>
+          </div>
+        )}
 
 
 

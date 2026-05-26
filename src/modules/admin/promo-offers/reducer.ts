@@ -23,6 +23,7 @@ export interface PromoOfferItem {
     pricingPlanCode: string
     isActive: boolean
     sortOrder: number
+    image: string
     createdAt: string
 }
 
