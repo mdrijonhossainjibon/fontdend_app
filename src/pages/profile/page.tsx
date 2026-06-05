@@ -1,4 +1,5 @@
 import { Header } from "@/components/header"
+import { Footer } from "@/components/landing/footer"
 import { ProfileCard } from "@/components/profile-card"
 import { ProfileStats } from "@/components/profile-stats"
 import { ProfileActivity } from "@/components/profile-activity"
@@ -33,6 +34,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { logoutRequest } from "@/modules/auth/actions"
 import type { RootState } from "@/modules/rootReducer"
 import { Footer } from "@/components/landing/footer"
-import { ShieldCheck, Scale, FileText, AlertCircle, RefreshCcw, ChevronDown, User, LogOut, LayoutDashboard, Settings } from "lucide-react"
+import { RotateCcw, Clock, CreditCard, AlertCircle, CheckCircle2, Mail, ChevronDown, User, LogOut, LayoutDashboard, Settings } from "lucide-react"
 
 function UserDropdown({ user, onLogout }: { user: any; onLogout: () => void }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -82,7 +82,7 @@ function UserDropdown({ user, onLogout }: { user: any; onLogout: () => void }) {
   )
 }
 
-export default function TermsPage() {
+export default function RefundPage() {
     const dispatch = useDispatch()
     const { user, loginSuccess } = useSelector((state: RootState) => state.auth)
     const isLoggedIn = !!localStorage.getItem("authToken") || loginSuccess
@@ -177,83 +177,98 @@ export default function TermsPage() {
                 {/* Header Section */}
                 <section className="relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center mb-16">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 blur-[120px] opacity-10 bg-primary/20 rounded-full" />
-                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">Terms of Service</h1>
-                    <p className="text-muted-foreground">Last updated: {lastUpdated}</p>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+                        <RotateCcw className="w-4 h-4" />
+                        Fair & Transparent
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">Refund Policy</h1>
+                    <p className="text-muted-foreground italic">Last updated: {lastUpdated}</p>
                 </section>
 
-                {/* Content Section */}
+                {/* Content */}
                 <section className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-                    <div className="bg-card/30 backdrop-blur-xl border border-border/50 rounded-[2rem] p-8 sm:p-12 shadow-2xl space-y-12">
+                    <div className="bg-card/30 backdrop-blur-xl border border-border/50 rounded-[2rem] p-8 sm:p-12 shadow-2xl space-y-10">
 
-                        {/* Introduction */}
+                        {/* Eligibility */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-primary mb-2">
-                                <FileText className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">1. Acceptance of Terms</h2>
+                                <CheckCircle2 className="w-6 h-6" />
+                                <h2 className="text-2xl font-bold">1. Refund Eligibility</h2>
                             </div>
                             <p className="text-muted-foreground leading-relaxed">
-                                By accessing and using CaptchaMaster ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our extension or API services. We provide an automated captcha-solving utility intended for personal and research productivity.
-                            </p>
-                        </div>
-
-                        {/* User Responsibilities */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <Scale className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">2. Proper Usage</h2>
-                            </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                You are responsible for ensuring that your use of CaptchaMaster complies with the terms of service of the websites you visit. Our service should NOT be used for:
+                                We offer refunds under the following conditions:
                             </p>
                             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                <li>Spamming or mass automated account creation.</li>
-                                <li>DDoS attacks or overwhelming server resources.</li>
-                                <li>Any illegal activities in your jurisdiction.</li>
-                                <li>Bypassing security measures for malicious intent.</li>
+                                <li>You purchased a package within the last 7 days.</li>
+                                <li>You have used less than 10% of the purchased credits.</li>
+                                <li>The service was unavailable for more than 24 consecutive hours (excluding scheduled maintenance).</li>
+                                <li>Duplicate or erroneous charges resulting from a technical error on our platform.</li>
                             </ul>
                         </div>
 
-                        {/* Service Availability */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <RefreshCcw className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">3. Service Modifications</h2>
-                            </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                We continuously improve our AI models. We reserve the right to modify, suspend, or discontinue any part of the Service at any time. While we strive for 99.9% uptime, we do not guarantee uninterrupted access to the Service.
-                            </p>
-                        </div>
-
-                        {/* Intellectual Property */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <ShieldCheck className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">4. Intellectual Property</h2>
-                            </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                The software, AI models, and technology underlying CaptchaMaster are the exclusive property of CaptchaMaster and its licensors. You are granted a limited, non-exclusive license to use the extension for its intended purpose.
-                            </p>
-                        </div>
-
-                        {/* Limitation of Liability */}
-                        <div className="space-y-4 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+                        {/* Non-Refundable */}
+                        <div className="space-y-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-6">
                             <div className="flex items-center gap-3 text-amber-500 mb-2">
                                 <AlertCircle className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">5. Limitation of Liability</h2>
+                                <h2 className="text-2xl font-bold">2. Non-Refundable Circumstances</h2>
+                            </div>
+                            <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                                <li>Credits that have already been consumed for captcha solving.</li>
+                                <li>Refund requests submitted more than 7 days after the purchase date.</li>
+                                <li>Accounts terminated due to violation of our Terms of Service.</li>
+                                <li>Change of mind after extensive usage of the service (more than 10% of credits consumed).</li>
+                                <li>Subscription renewals unless cancellation was requested before the renewal date.</li>
+                            </ul>
+                        </div>
+
+                        {/* Processing */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 text-primary mb-2">
+                                <Clock className="w-6 h-6" />
+                                <h2 className="text-2xl font-bold">3. Processing Time & Method</h2>
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed">
+                                Approved refunds are processed within 5-10 business days. Refunds are issued to the original payment method used during the purchase. Cryptocurrency payments are refunded at the original fiat equivalent at the time of purchase, not at the current exchange rate.
+                            </p>
+                        </div>
+
+                        {/* How to Request */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 text-primary mb-2">
+                                <Mail className="w-6 h-6" />
+                                <h2 className="text-2xl font-bold">4. How to Request a Refund</h2>
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed">
+                                To initiate a refund request, email us at <a href="mailto:support@captchamaster.com" className="text-primary hover:underline font-medium">support@captchamaster.com</a> with the following information:
+                            </p>
+                            <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                                <li>Your registered email address.</li>
+                                <li>The transaction ID or order reference number.</li>
+                                <li>The date and amount of the purchase.</li>
+                                <li>A brief explanation of why you are requesting a refund.</li>
+                            </ul>
+                        </div>
+
+                        {/* Chargebacks */}
+                        <div className="space-y-4 bg-destructive/5 border border-destructive/10 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-2">
+                                <AlertCircle className="w-6 h-6 text-destructive" />
+                                <h2 className="text-2xl font-bold">5. Chargebacks</h2>
                             </div>
                             <p className="text-sm text-muted-foreground leading-relaxed">
-                                CAPTCHA MASTER IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. IN NO EVENT SHALL WE BE LIABLE FOR ANY INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OF THE SERVICE, INCLUDING BUT NOT LIMITED TO ACCOUNT BANS FROM THIRD-PARTY WEBSITES.
+                                Filing a chargeback with your payment provider without first contacting us may result in immediate account suspension. We encourage you to reach out to our support team first — we are committed to resolving any issues fairly and promptly.
                             </p>
                         </div>
 
                         {/* Contact */}
                         <div className="text-center pt-8 border-t border-border/50">
-                            <p className="text-muted-foreground mb-4">Have questions about our terms?</p>
-                            <Link to="/contact">
-                                <button className="px-8 py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-xl transition-all">
-                                    Contact Legal Support
-                                </button>
-                            </Link>
+                            <p className="text-muted-foreground mb-4">Questions about our refund policy?</p>
+                            <a
+                                href="mailto:support@captchamaster.com"
+                                className="inline-block px-8 py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-xl transition-all"
+                            >
+                                Contact Support
+                            </a>
                         </div>
                     </div>
                 </section>

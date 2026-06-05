@@ -16,9 +16,6 @@ const initialState = {
         total: 0, page: 1, limit: 10,
         totalPages: 0, hasNextPage: false, hasPrevPage: false
     },
-    // Wallet Management
-    wallets: [],
-    walletLoading: false,
     // Email Templates
     emailTemplates: [],
     emailLoading: false,
@@ -144,33 +141,6 @@ const adminReducer = (state = initialState, action: any) => {
             };
         case types.DELETE_ADMIN_BOT_FAILURE:
             return { ...state, isSaving: false, error: action.payload };
-
-        // ── Wallet Management ───────────────────────────────────────────────
-        case types.FETCH_ADMIN_WALLETS_REQUEST:
-            return { ...state, walletLoading: true, error: null };
-        case types.FETCH_ADMIN_WALLETS_SUCCESS:
-            return {
-                ...state,
-                walletLoading: false,
-                wallets: action.payload,
-                error: null,
-            };
-        case types.FETCH_ADMIN_WALLETS_FAILURE:
-            return { ...state, walletLoading: false, error: action.payload };
-
-        case types.CREATE_ADMIN_WALLET_REQUEST:
-            return { ...state, walletLoading: true, error: null };
-        case types.CREATE_ADMIN_WALLET_SUCCESS:
-            return { ...state, walletLoading: false, error: null };
-        case types.CREATE_ADMIN_WALLET_FAILURE:
-            return { ...state, walletLoading: false, error: action.payload };
-
-        case types.DELETE_ADMIN_WALLET_REQUEST:
-            return { ...state, walletLoading: true, error: null };
-        case types.DELETE_ADMIN_WALLET_SUCCESS:
-            return { ...state, walletLoading: false, error: null };
-        case types.DELETE_ADMIN_WALLET_FAILURE:
-            return { ...state, walletLoading: false, error: action.payload };
 
         // ── Email Templates ─────────────────────────────────────────────────
         case types.FETCH_EMAIL_TEMPLATES_REQUEST:

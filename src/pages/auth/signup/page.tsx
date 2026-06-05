@@ -233,7 +233,7 @@ export default function SignupPage() {
               className="dark:border-white/20 border-border/60 data-[state=checked]:border-[#F0B90B] data-[state=checked]:bg-[#F0B90B] data-[state=checked]:text-black mt-0.5"
             />
             <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-tight">
-              I agree to the <Link to="/legal/terms" className="font-medium text-[#F0B90B] hover:underline transition-colors">Terms of Service</Link> and <Link to="/legal/privacy" className="font-medium text-[#F0B90B] hover:underline transition-colors">Privacy Policy</Link>
+              I agree to the <Link to="/terms" className="font-medium text-[#F0B90B] hover:underline transition-colors">Terms of Service</Link> and <Link to="/privacy" className="font-medium text-[#F0B90B] hover:underline transition-colors">Privacy Policy</Link>
             </Label>
           </div>
 
@@ -446,8 +446,8 @@ export default function SignupPage() {
         {/* ── Footer ── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-10 text-center text-xs tracking-wide dark:text-slate-600 text-slate-400 hidden lg:block">
           <div className="mb-4 flex items-center justify-center gap-6">
-            <Link to="/legal/terms" className="hover:text-[#F0B90B] transition-colors">Terms</Link>
-            <Link to="/legal/privacy" className="hover:text-[#F0B90B] transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-[#F0B90B] transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-[#F0B90B] transition-colors">Privacy</Link>
             <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-green-500" />Encrypted Access</span>
           </div>
           &copy; 2026 CAPTCHAⱮASTER. SECURE ACCESS GATEWAY.

@@ -567,8 +567,8 @@ export default function LoginPage() {
           className="mt-10 text-center text-xs tracking-wide dark:text-slate-600 text-slate-400 hidden lg:block"
         >
           <div className="mb-4 flex items-center justify-center gap-6">
-            <Link to="/legal/terms" className="hover:text-[#F0B90B] transition-colors">Terms of Service</Link>
-            <Link to="/legal/privacy" className="hover:text-[#F0B90B] transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-[#F0B90B] transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-[#F0B90B] transition-colors">Privacy Policy</Link>
             <a href="https://status.captchamaster.com" className="hover:text-[#F0B90B] transition-colors flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               Systems Online

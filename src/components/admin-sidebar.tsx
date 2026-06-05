@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   Users,
   BarChart3,
-  Shield,
   Settings,
   LogOut,
   ChevronLeft,
@@ -32,8 +31,8 @@ import {
   Smartphone,
   Key,
   Activity,
-  Wallet,
   History,
+  ShoppingCart,
   Puzzle,
   Upload,
   Gift,
@@ -52,8 +51,7 @@ const managementItems = [
   { href: "/admin/extensions", label: "Extensions", icon: Puzzle },
 
   { href: "/admin/solutions", label: "Solution Cache", icon: Database },
-  { href: "/admin/wallet", label: "Wallet", icon: Wallet },
-  { href: "/admin/deposit-addresses", label: "Deposit Wallets", icon: Shield },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/crypto", label: "Crypto Config", icon: Zap },
   { href: "/admin/topup-history", label: "Topup History", icon: History },
   { href: "/admin/history", label: "All History", icon: FileText },
@@ -65,6 +63,7 @@ const managementItems = [
 ]
 
 const systemItems = [
+  { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/permissions", label: "Permissions", icon: Lock },
   { href: "/admin/system/smtp", label: "SMTP Config", icon: Settings },
   { href: "/admin/email", label: "Email Templates", icon: Mail },

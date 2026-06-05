@@ -4,8 +4,7 @@ import adminSaga from './admin/saga';
 import adminPackagesSaga from './admin/packages/saga';
 import adminExtensionsSaga from './admin/extensions/saga';
 import adminSolutionsSaga from './admin/solutions/saga';
-import adminWalletsSaga from './admin/wallets/saga';
-import adminDepositAddressesSaga from './admin/deposit-addresses/saga';
+import adminOrdersSaga from './admin/orders/saga';
 import adminTopupHistorySaga from './admin/topup-history/saga';
 import adminHistorySaga from './admin/history/saga';
 import adminObjectClassesSaga from './admin/object-classes/saga';
@@ -34,8 +33,7 @@ export default function* rootSaga(): Generator {
         adminPackagesSaga(),
         adminExtensionsSaga(),
         adminSolutionsSaga(),
-        adminWalletsSaga(),
-        adminDepositAddressesSaga(),
+        adminOrdersSaga(),
         adminTopupHistorySaga(),
         adminHistorySaga(),
         adminObjectClassesSaga(),

@@ -61,9 +61,14 @@ function* clearAllSolutionsSaga(
     action: ReturnType<typeof actions.clearAllSolutionsRequest>,
 ) {
     try {
+        const params = new URLSearchParams()
+        params.append('clearAll', 'true')
+        if (action.payload.filters?.service) params.append('service', action.payload.filters.service)
+        if (action.payload.filters?.type) params.append('type', action.payload.filters.type)
+
         yield call(API_CALL, {
             method: 'DELETE',
-            url: '/admin/solutions?clearAll=true',
+            url: `/admin/solutions?${params.toString()}`,
         })
         yield put(actions.clearAllSolutionsSuccess())
         // Refetch with same filters

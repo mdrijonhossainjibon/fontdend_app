@@ -86,6 +86,8 @@ export function FiltersBar({
                             <option value="hcaptcha">hCaptcha</option>
                             <option value="awswaf">AWS WAF</option>
                             <option value="recaptcha">reCAPTCHA</option>
+                            <option value="kbs">KBS</option>
+                            <option value="trype">TRYPE</option>
                         </select>
                         <select value={typeFilter} onChange={e => onType(e.target.value)}
                             className="flex-1 min-w-[130px] px-3 py-2 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">

@@ -5,10 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Save, Loader2, Settings2, Shield, Wallet, Globe } from "lucide-react"
+import { Save, Loader2, Settings2, Shield, Wallet, Globe, CreditCard } from "lucide-react"
 import { Spin } from 'antd'
 import { RootState } from '@/modules/rootReducer'
 import * as actions from '@/modules/settings/actions'
+
+interface SettingItem {
+  label: string
+  key: string
+  value: any
+  toggle?: boolean
+  password?: boolean
+}
 
 export default function AdminSettings() {
   const dispatch = useDispatch()
@@ -34,7 +42,7 @@ export default function AdminSettings() {
     )
   }
 
-  const sections = [
+  const sections: { title: string; icon: JSX.Element; settings: SettingItem[] }[] = [
     {
       title: "General",
       icon: <Globe className="w-5 h-5 text-blue-500" />,
@@ -58,6 +66,14 @@ export default function AdminSettings() {
         { label: "2FA Required", key: "twoFARequired", value: settings.twoFARequired, toggle: true },
         { label: "IP Whitelist", key: "ipWhitelist", value: settings.ipWhitelist, toggle: true },
         { label: "Session Timeout", key: "sessionTimeout", value: settings.sessionTimeout },
+      ],
+    },
+    {
+      title: "Cryptomus Payment Gateway",
+      icon: <CreditCard className="w-5 h-5 text-purple-500" />,
+      settings: [
+        { label: "Merchant ID", key: "cryptomusMerchantId", value: settings.cryptomusMerchantId },
+        { label: "API Key", key: "cryptomusApiKey", value: settings.cryptomusApiKey, password: true },
       ],
     },
   ]
@@ -111,6 +127,7 @@ export default function AdminSettings() {
                         />
                       ) : (
                         <Input
+                          type={setting.password ? "password" : "text"}
                           value={setting.value as string}
                           onChange={(e) => handleUpdateField(setting.key, e.target.value)}
                           className="w-64 bg-secondary/50 border-border/50 focus:ring-primary/20"

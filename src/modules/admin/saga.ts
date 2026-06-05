@@ -1,4 +1,4 @@
-import { call, put, takeLatest, all } from 'redux-saga/effects';
+import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from './constants';
 import * as actions from './actions';
 import { API_CALL, APIResponse } from '@/lib/auth-fingerprint';
@@ -78,14 +78,6 @@ function* updateAdminUserSaga(action: any): Generator {
         if (response && response.success) {
             yield put(actions.updateAdminUserSuccess({ id: userId, name, balance, status: userStatus }));
             message.success('User updated successfully');
-            // Optimistic update done in reducer, and success message shown.
-            // Alternatively, we could refetch users if needed, but reducer update is faster.
-            // If the API returns the updated user, we should use that instead.
-            // Assuming response usually sends back updated data, but here user just set success.
-            // But the reducer uses action.payload, which is what we sent.
-            // The component also called fetchUsers() after update.
-            // Let's refetch users to be safe and consistent with the previous logic.
-            // Or better, just update the state locally as I did in the reducer.
         } else {
             yield put(actions.updateAdminUserFailure(response?.error || 'Failed to update user'));
             message.error(response?.error || 'Failed to update user');
@@ -187,73 +179,6 @@ function* deleteAdminBotSaga(action: any): Generator {
     }
 }
 
-function* fetchAdminWalletsSaga(): Generator {
-    try {
-        const { response, status }: APIResponse = yield call(API_CALL, {
-            method: 'GET',
-            url: '/admin/wallet'
-        });
-
-        if (response && response.success) {
-            yield put(actions.fetchAdminWalletsSuccess(response.wallets));
-        } else {
-            yield put(actions.fetchAdminWalletsFailure(response?.error || 'Failed to fetch wallets'));
-        }
-    } catch (error) {
-        yield put(actions.fetchAdminWalletsFailure('Failed to fetch admin wallets'));
-    }
-}
-
-function* createAdminWalletSaga(action: any): Generator {
-    try {
-        const walletEntries = Array.isArray(action.payload) ? action.payload : [action.payload];
-
-        const results: any[] = yield all(walletEntries.map((entry: any) =>
-            call(API_CALL, {
-                method: 'POST',
-                url: '/admin/wallet',
-                body: entry
-            })
-        ));
-
-        const successCount = results.filter(r => r.response && r.response.success).length;
-
-        if (successCount > 0) {
-            yield put(actions.createAdminWalletSuccess(results));
-            message.success(`Created ${successCount} wallet entries`);
-            yield put(actions.fetchAdminWalletsRequest());
-        } else {
-            yield put(actions.createAdminWalletFailure('Failed to create wallet entries'));
-            message.error('Failed to create wallet entries');
-        }
-    } catch (error) {
-        yield put(actions.createAdminWalletFailure('Error saving wallets'));
-        message.error('Error saving wallets');
-    }
-}
-
-function* deleteAdminWalletSaga(action: any): Generator {
-    try {
-        const id = action.payload;
-        const { response }: APIResponse = yield call(API_CALL, {
-            method: 'DELETE',
-            url: `/admin/wallet?id=${id}`
-        });
-
-        if (response && response.success) {
-            yield put(actions.deleteAdminWalletSuccess(id));
-            message.success('Wallet deleted');
-            yield put(actions.fetchAdminWalletsRequest());
-        } else {
-            yield put(actions.deleteAdminWalletFailure(response?.error || 'Failed to delete'));
-            message.error(response?.error || 'Failed to delete');
-        }
-    } catch (error) {
-        yield put(actions.deleteAdminWalletFailure('Error deleting wallet'));
-        message.error('Error deleting wallet');
-    }
-}
-
 // ── Email Templates ────────────────────────────────────────────────────────────
 function* fetchEmailTemplatesSaga(): Generator {
     try {
@@ -347,14 +272,10 @@ export default function* adminSaga() {
     yield takeLatest(types.FETCH_ADMIN_BOTS_REQUEST, fetchAdminBotsSaga);
     yield takeLatest(types.UPDATE_ADMIN_BOT_REQUEST, updateAdminBotSaga);
     yield takeLatest(types.DELETE_ADMIN_BOT_REQUEST, deleteAdminBotSaga);
-    // Wallets
-    yield takeLatest(types.FETCH_ADMIN_WALLETS_REQUEST, fetchAdminWalletsSaga);
-    yield takeLatest(types.CREATE_ADMIN_WALLET_REQUEST, createAdminWalletSaga);
-    yield takeLatest(types.DELETE_ADMIN_WALLET_REQUEST, deleteAdminWalletSaga);
+
     // Email Templates
     yield takeLatest(types.FETCH_EMAIL_TEMPLATES_REQUEST, fetchEmailTemplatesSaga);
     yield takeLatest(types.CREATE_EMAIL_TEMPLATE_REQUEST, createEmailTemplateSaga);
     yield takeLatest(types.UPDATE_EMAIL_TEMPLATE_REQUEST, updateEmailTemplateSaga);
     yield takeLatest(types.DELETE_EMAIL_TEMPLATE_REQUEST, deleteEmailTemplateSaga);
 }
-

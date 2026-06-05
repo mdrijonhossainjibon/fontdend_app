@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { motion, AnimatePresence } from 'framer-motion'
+import { logoutRequest } from '@/modules/auth/actions'
+import type { RootState } from '@/modules/rootReducer'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/landing/footer'
 import {
   Menu,
-  X,
   ChevronDown,
   ChevronLeft,
   Copy,
@@ -27,11 +30,12 @@ import {
   CheckCircle2,
   Sparkles,
   Settings,
+  User,
+  LogOut,
+  LayoutDashboard,
 } from 'lucide-react'
 
 /* ─────────────── Data ─────────────── */
-
-const navLinks = ['Home', 'Docs', 'Pricing', 'Support', 'Login']
 
 const sidebarSections = [
   { id: 'introduction', label: 'Introduction', icon: BookOpen },
@@ -309,14 +313,109 @@ function EndpointCard({ ep, index }: { ep: (typeof endpoints)[0]; index: number 
   )
 }
 
+/* ─────────────── User Dropdown ─────────────── */
+
+function UserDropdown({ user, onLogout }: { user: any; onLogout: () => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 p-1 rounded-full hover:bg-secondary/50 transition-all border border-transparent hover:border-border/50"
+      >
+        <img
+          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'User'}`}
+          alt="Avatar"
+          className="w-8 h-8 rounded-full border border-primary/20 bg-background"
+        />
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 mt-2 w-56 rounded-2xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden z-[110]"
+          >
+            <div className="p-4 border-b border-border/50 bg-secondary/20">
+              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Signed in as</p>
+              <p className="text-sm font-bold truncate">{user?.email || 'user@example.com'}</p>
+            </div>
+            <div className="p-2">
+              <Link
+                to="/dashboard"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-secondary/50 transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4 text-primary" />
+                Dashboard
+              </Link>
+              <Link
+                to="/settings"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-secondary/50 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-primary" />
+                Settings
+              </Link>
+            </div>
+            <div className="p-2 border-t border-border/50">
+              <button
+                onClick={() => { setIsOpen(false); onLogout() }}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 /* ─────────────── Main Component ─────────────── */
 
 export default function ApiDocsPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const dispatch = useDispatch()
+  const { user, loginSuccess } = useSelector((state: RootState) => state.auth)
+  const isLoggedIn = !!localStorage.getItem('authToken') || loginSuccess
+  const currentUser = user || JSON.parse(localStorage.getItem('user') || 'null')
+
+  const [isDark, setIsDark] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('introduction')
   const [heroVisible, setHeroVisible] = useState(false)
   const [activeSnippet, setActiveSnippet] = useState(0)
+
+  const handleLogout = () => {
+    dispatch(logoutRequest())
+  }
+
+  useEffect(() => { document.documentElement.classList.toggle('dark', isDark) }, [isDark])
+
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'API Docs', path: '/api-docs' },
+    { label: 'How It Works', path: '/how-it-works' },
+    { label: 'Contact', path: '/contact' },
+    { label: 'Login', path: '/auth/login' },
+  ]
 
   /* Scrollspy via IntersectionObserver */
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
@@ -359,89 +458,66 @@ export default function ApiDocsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/20 selection:text-primary">
-      {/* ════════ Navbar ════════ */}
-      <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border/30 shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-yellow-600 flex items-center justify-center text-xs font-bold text-black shadow-lg shadow-primary/30">
-                CM
-              </div>
-              <span className="text-lg font-bold tracking-tight">
-                Captcha<span className="text-primary">Ɱ</span>aster
-              </span>
-            </Link>
+    <div className="selection:bg-primary/30 min-h-screen bg-background text-foreground overflow-x-hidden transition-colors duration-300 pt-16">
+      {/* ── Inline styles ── */}
+      <style>{`
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: hsl(var(--primary) / 0.3); border-radius: 999px; }
+      `}</style>
 
-            {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const href = link === 'Docs' ? '/api-docs' : `/${link.toLowerCase()}`
-                const isActive = link === 'Docs'
-                return (
-                  <Link
-                    key={link}
-                    to={href}
-                    className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {link}
-                    {isActive && (
-                      <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-primary/80 to-yellow-500/80 rounded-full" />
-                    )}
-                  </Link>
-                )
-              })}
-              <Link to="/auth/login">
-                <Button
-                  size="sm"
-                  className="ml-3 bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold hover:from-primary/90 hover:to-yellow-500/90 shadow-lg shadow-primary/25"
-                >
-                  Get API Key
-                  <Sparkles className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
+      {/* ── Navbar ── */}
+      <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="text-lg font-bold tracking-tighter flex items-center gap-2.5">
+            <img src="/logo.png" alt="CaptchaⱮaster" className="w-7 h-7 rounded-lg shadow-lg shadow-amber-500/20" />
+            <span className="hidden sm:inline">Captcha<span className="bg-gradient-to-r from-primary via-yellow-400 to-yellow-500 bg-clip-text text-transparent">Ɱaster</span></span>
+          </Link>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+            {navItems.map((item) => (
+              item.label === 'Login' ? (
+                <Link key={item.label} to={item.path} className="hover:text-primary transition-colors">
+                  {item.label}
+                </Link>
+              ) : (
+                <Link key={item.label} to={item.path} className="hover:text-primary transition-colors">
+                  {item.label}
+                </Link>
+              )
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground" aria-label="Toggle dark mode">
+              {isDark ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+            {isLoggedIn ? (
+              <UserDropdown user={currentUser} onLogout={handleLogout} />
+            ) : (
+              <Link to="/auth/signup" className="px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold text-sm shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Get API Key
               </Link>
-            </div>
-
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            )}
+            {/* Mobile menu toggle */}
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-secondary/50 text-muted-foreground" aria-label="Menu">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
             </button>
           </div>
         </div>
-
-        {/* Mobile menu dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border/30 bg-background/95 backdrop-blur-xl">
-            <div className="px-4 py-3 space-y-1">
-              {navLinks.map((link) => {
-                const href = link === 'Docs' ? '/api-docs' : `/${link.toLowerCase()}`
-                const isActive = link === 'Docs'
-                return (
-                  <Link
-                    key={link}
-                    to={href}
-                    className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/30'
-                    }`}
-                  >
-                    {link}
-                  </Link>
-                )
-              })}
-              <Link to="/auth/login" className="block mt-2">
-                <Button className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold">
-                  Get API Key
-                  <Sparkles className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
-              </Link>
+        {/* Mobile nav */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
+            <div className="px-6 py-4 space-y-3">
+              {navItems.map((item) => (
+                <Link key={item.label} to={item.path} onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{item.label}</Link>
+              ))}
             </div>
           </div>
         )}
@@ -475,21 +551,25 @@ export default function ApiDocsPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold hover:from-primary/90 hover:to-yellow-500/90 shadow-xl shadow-primary/25 transition-all duration-300 hover:scale-105"
-              >
-                <Key className="w-5 h-5" />
-                Get Your API Key
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="gap-2 border-border/50 text-foreground hover:bg-secondary/30"
-              >
-                <BookOpen className="w-5 h-5" />
-                Read the Docs
-              </Button>
+              <Link to="/auth/signup">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold hover:from-primary/90 hover:to-yellow-500/90 shadow-xl shadow-primary/25 transition-all duration-300 hover:scale-105"
+                >
+                  <Key className="w-5 h-5" />
+                  Get Your API Key
+                </Button>
+              </Link>
+              <a href="#introduction">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 border-border/50 text-foreground hover:bg-secondary/30"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Read the Docs
+                </Button>
+              </a>
             </div>
 
             {/* Hero code snippet */}
@@ -587,14 +667,14 @@ export default function ApiDocsPage() {
               {/* Quick links */}
               <div className="mt-8 pt-6 border-t border-border/40 space-y-3">
                 <Link
-                  to="/pricing"
+                  to="/how-it-works"
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/30 transition-all"
                 >
                   <Zap className="w-4 h-4" />
-                  Pricing
+                  How It Works
                 </Link>
                 <Link
-                  to="/support"
+                  to="/contact"
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/30 transition-all"
                 >
                   <Shield className="w-4 h-4" />
@@ -957,11 +1037,13 @@ Authorization: Bearer cm_live_xxxxxxxxxxxx
                 <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 text-center">
                   <h3 className="text-xl font-bold text-foreground mb-2">Ready to integrate?</h3>
                   <p className="text-sm text-muted-foreground mb-4">Get your free API key and start solving in minutes.</p>
-                  <Button className="bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold hover:from-primary/90 hover:to-yellow-500/90 shadow-lg shadow-primary/25">
-                    <Key className="w-4 h-4" />
-                    Get Your Free API Key
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <Link to="/auth/signup">
+                    <Button className="bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold hover:from-primary/90 hover:to-yellow-500/90 shadow-lg shadow-primary/25">
+                      <Key className="w-4 h-4" />
+                      Get Your Free API Key
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </section>

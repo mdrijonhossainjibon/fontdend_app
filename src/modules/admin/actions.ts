@@ -106,22 +106,6 @@ export const deleteAdminBotFailure = (error: string) => ({
     payload: error,
 });
 
-// ── Wallet Management ────────────────────────────────────────────────────────
-
-export const fetchAdminWalletsRequest = () => ({
-    type: types.FETCH_ADMIN_WALLETS_REQUEST,
-});
-
-export const fetchAdminWalletsSuccess = (payload: any) => ({
-    type: types.FETCH_ADMIN_WALLETS_SUCCESS,
-    payload,
-});
-
-export const fetchAdminWalletsFailure = (error: string) => ({
-    type: types.FETCH_ADMIN_WALLETS_FAILURE,
-    payload: error,
-});
-
 // ── Email Templates ──────────────────────────────────────────────────────────
 
 export const fetchEmailTemplatesRequest = () => ({
@@ -183,32 +167,3 @@ export const deleteEmailTemplateFailure = (error: string) => ({
     payload: error,
 });
 
-export const createAdminWalletRequest = (payload: any) => ({
-    type: types.CREATE_ADMIN_WALLET_REQUEST,
-    payload,
-});
-
-export const createAdminWalletSuccess = (payload: any) => ({
-    type: types.CREATE_ADMIN_WALLET_SUCCESS,
-    payload,
-});
-
-export const createAdminWalletFailure = (error: string) => ({
-    type: types.CREATE_ADMIN_WALLET_FAILURE,
-    payload: error,
-});
-
-export const deleteAdminWalletRequest = (payload: string) => ({
-    type: types.DELETE_ADMIN_WALLET_REQUEST,
-    payload,
-});
-
-export const deleteAdminWalletSuccess = (payload: string) => ({
-    type: types.DELETE_ADMIN_WALLET_SUCCESS,
-    payload,
-});
-
-export const deleteAdminWalletFailure = (error: string) => ({
-    type: types.DELETE_ADMIN_WALLET_FAILURE,
-    payload: error,
-});

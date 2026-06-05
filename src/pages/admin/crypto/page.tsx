@@ -15,7 +15,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input, Switch, Select, Modal, Form, message, Tag, Space, Table, Divider, Button as AntButton, Tooltip } from "antd"
-import api from "@/lib/api"
+import { API_CALL } from "@/lib/auth-fingerprint"
+import { CryptoIcon } from "@/components/CryptoIcon"
 interface Network {
     id: string
     name: string
@@ -24,9 +25,6 @@ interface Network {
     confirmations: number
     minDeposit: string
     address: string
-    rpcUrl?: string
-    tokenAddress?: string
-    chainId?: number
     badge?: string
     badgeColor?: string
     isActive: boolean
@@ -58,10 +56,11 @@ export default function AdminCrypto() {
     const fetchConfigs = async () => {
         setLoading(true)
         try {
-            const res = await api.get('/api/crypto/config')
-            const result = res.data
-            if (result.success) {
-                setConfigs(result.data)
+            const { response, status } = await API_CALL({ method: 'GET', url: '/crypto/config' })
+            if (status === 200 && response.success) {
+                setConfigs(response.data)
+            } else {
+                messageApi.error(response?.error || "Failed to fetch configurations")
             }
         } catch (error) {
             messageApi.error("Failed to fetch configurations")
@@ -102,14 +101,13 @@ export default function AdminCrypto() {
                 })) || []
             }
 
-            const res = await api.post('/api/crypto/config', formattedValues)
-            const result = res.data
-            if (result.success) {
-                messageApi.success(result.message)
+            const { response, status } = await API_CALL({ method: 'POST', url: '/crypto/config', body: formattedValues })
+            if (status === 200 && response.success) {
+                messageApi.success(response.message)
                 setIsModalOpen(false)
                 fetchConfigs()
             } else {
-                messageApi.error(result.error)
+                messageApi.error(response?.error || "Save failed")
             }
         } catch (error) {
             messageApi.error("Failed to save configuration")
@@ -128,13 +126,12 @@ export default function AdminCrypto() {
             cancelText: 'Cancel',
             async onOk() {
                 try {
-                    const res = await api.delete(`/api/crypto/config?id=${id}`)
-                    const result = res.data
-                    if (result.success) {
+                    const { response, status } = await API_CALL({ method: 'DELETE', url: `/crypto/config?id=${id}` })
+                    if (status === 200 && response.success) {
                         messageApi.success("Crypto configuration deleted")
                         fetchConfigs()
                     } else {
-                        messageApi.error(result.error)
+                        messageApi.error(response?.error || "Delete failed")
                     }
                 } catch (error) {
                     messageApi.error("Failed to delete configuration")
@@ -149,12 +146,8 @@ export default function AdminCrypto() {
             key: 'coin',
             render: (_: any, record: CryptoConfig) => (
                 <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg ${record.bg} flex items-center justify-center border border-white/10`}>
-                        {record.id === 'sect' ? (
-                            <span className="text-sm font-bold text-cyan-400">S</span>
-                        ) : (
-                            <span className="text-sm font-bold text-yellow-500">{record.name[0]}</span>
-                        )}
+                    <div className="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center overflow-hidden">
+                        <CryptoIcon coinId={record.id} className="w-6 h-6" />
                     </div>
                     <div>
                         <p className="font-bold text-sm">{record.name}</p>
@@ -329,9 +322,6 @@ export default function AdminCrypto() {
                                             </Form.Item>
                                             <Form.Item {...restField} name={[name, 'confirmations']} label="Confirmations" rules={[{ required: true }]}>
                                                 <Input type="number" placeholder="1" />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'rpcUrl']} label="RPC URL (for auto-detect)">
-                                                <Input placeholder="https://..." />
                                             </Form.Item>
                                             <Form.Item {...restField} name={[name, 'fee']} label="Service Fee" rules={[{ required: true }]}>
                                                 <Input placeholder="1 USDT" />

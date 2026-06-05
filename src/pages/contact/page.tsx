@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { logoutRequest } from "@/modules/auth/actions"
 import type { RootState } from "@/modules/rootReducer"
 import { Footer } from "@/components/landing/footer"
-import { ShieldCheck, Scale, FileText, AlertCircle, RefreshCcw, ChevronDown, User, LogOut, LayoutDashboard, Settings } from "lucide-react"
+import { Mail, MessageSquare, MapPin, Phone, Clock, Send, ChevronDown, User, LogOut, LayoutDashboard, Settings } from "lucide-react"
 
 function UserDropdown({ user, onLogout }: { user: any; onLogout: () => void }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -82,7 +82,7 @@ function UserDropdown({ user, onLogout }: { user: any; onLogout: () => void }) {
   )
 }
 
-export default function TermsPage() {
+export default function ContactPage() {
     const dispatch = useDispatch()
     const { user, loginSuccess } = useSelector((state: RootState) => state.auth)
     const isLoggedIn = !!localStorage.getItem("authToken") || loginSuccess
@@ -90,12 +90,32 @@ export default function TermsPage() {
 
     const [isDark, setIsDark] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
+    const [formData, setFormData] = useState({ name: '', email: '', message: '' })
+    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
     const handleLogout = () => {
       dispatch(logoutRequest())
     }
 
     useEffect(() => { document.documentElement.classList.toggle("dark", isDark) }, [isDark])
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!formData.name || !formData.email || !formData.message) return
+      setFormStatus('sending')
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        })
+        if (!res.ok) throw new Error('Failed to send')
+        setFormStatus('sent')
+        setFormData({ name: '', email: '', message: '' })
+      } catch {
+        setFormStatus('error')
+      }
+    }
 
     const navItems = [
       { label: 'Home', path: '/' },
@@ -104,8 +124,6 @@ export default function TermsPage() {
       { label: 'Contact', path: '/contact' },
       { label: 'Login', path: '/auth/login' },
     ]
-
-    const lastUpdated = "February 09, 2026"
 
     return (
         <div className="selection:bg-primary/30 min-h-screen bg-background text-foreground overflow-x-hidden transition-colors duration-300">
@@ -177,84 +195,125 @@ export default function TermsPage() {
                 {/* Header Section */}
                 <section className="relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center mb-16">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 blur-[120px] opacity-10 bg-primary/20 rounded-full" />
-                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">Terms of Service</h1>
-                    <p className="text-muted-foreground">Last updated: {lastUpdated}</p>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+                        <MessageSquare className="w-4 h-4" />
+                        Get in Touch
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">Contact Us</h1>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Have questions about Captcha Master? We're here to help. Reach out to our team and we'll get back to you as soon as possible.
+                    </p>
                 </section>
 
-                {/* Content Section */}
-                <section className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-                    <div className="bg-card/30 backdrop-blur-xl border border-border/50 rounded-[2rem] p-8 sm:p-12 shadow-2xl space-y-12">
-
-                        {/* Introduction */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <FileText className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">1. Acceptance of Terms</h2>
+                {/* Contact Cards */}
+                <section className="px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto mb-16">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[
+                            {
+                                icon: <Mail className="w-6 h-6" />,
+                                title: "Email",
+                                description: "Drop us a line anytime",
+                                value: "support@captchamaster.com",
+                                link: "mailto:support@captchamaster.com",
+                            },
+                            {
+                                icon: <MessageSquare className="w-6 h-6" />,
+                                title: "Telegram",
+                                description: "Chat with us on Telegram",
+                                value: "@CaptchaMasterBD",
+                                link: "https://t.me/CaptchaMasterBangladesh",
+                            },
+                            {
+                                icon: <Clock className="w-6 h-6" />,
+                                title: "Response Time",
+                                description: "We typically reply within",
+                                value: "24 hours",
+                            },
+                        ].map((card, idx) => (
+                            <div
+                                key={idx}
+                                className="group bg-card/30 backdrop-blur-xl border border-border/50 hover:border-primary/30 rounded-3xl p-8 transition-all duration-300 text-center"
+                            >
+                                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                                    {card.icon}
+                                </div>
+                                <h3 className="text-lg font-bold mb-2">{card.title}</h3>
+                                <p className="text-sm text-muted-foreground mb-3">{card.description}</p>
+                                {card.link ? (
+                                    <a
+                                        href={card.link}
+                                        target={card.link.startsWith("http") ? "_blank" : undefined}
+                                        rel={card.link.startsWith("http") ? "noopener noreferrer" : undefined}
+                                        className="text-primary font-semibold hover:underline text-sm"
+                                    >
+                                        {card.value}
+                                    </a>
+                                ) : (
+                                    <p className="text-primary font-semibold text-sm">{card.value}</p>
+                                )}
                             </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                By accessing and using CaptchaMaster ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our extension or API services. We provide an automated captcha-solving utility intended for personal and research productivity.
-                            </p>
-                        </div>
+                        ))}
+                    </div>
+                </section>
 
-                        {/* User Responsibilities */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <Scale className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">2. Proper Usage</h2>
+                {/* Contact Form Section */}
+                <section className="px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto mb-16">
+                    <div className="bg-card/30 backdrop-blur-xl border border-border/50 rounded-[2rem] p-8 sm:p-10">
+                        <h2 className="text-2xl font-bold mb-2">Send us a message</h2>
+                        <p className="text-muted-foreground text-sm mb-8">
+                            Fill out the form below and we'll get back to you within 24 hours.
+                        </p>
+
+                        <form className="space-y-5" onSubmit={handleFormSubmit}>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Name</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    className="w-full px-4 py-3 rounded-2xl bg-background border border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all text-sm"
+                                    placeholder="Your name"
+                                    required
+                                />
                             </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                You are responsible for ensuring that your use of CaptchaMaster complies with the terms of service of the websites you visit. Our service should NOT be used for:
-                            </p>
-                            <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                <li>Spamming or mass automated account creation.</li>
-                                <li>DDoS attacks or overwhelming server resources.</li>
-                                <li>Any illegal activities in your jurisdiction.</li>
-                                <li>Bypassing security measures for malicious intent.</li>
-                            </ul>
-                        </div>
-
-                        {/* Service Availability */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <RefreshCcw className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">3. Service Modifications</h2>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Email</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                    className="w-full px-4 py-3 rounded-2xl bg-background border border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all text-sm"
+                                    placeholder="your@email.com"
+                                    required
+                                />
                             </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                We continuously improve our AI models. We reserve the right to modify, suspend, or discontinue any part of the Service at any time. While we strive for 99.9% uptime, we do not guarantee uninterrupted access to the Service.
-                            </p>
-                        </div>
-
-                        {/* Intellectual Property */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-primary mb-2">
-                                <ShieldCheck className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">4. Intellectual Property</h2>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Message</label>
+                                <textarea
+                                    rows={5}
+                                    value={formData.message}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                                    className="w-full px-4 py-3 rounded-2xl bg-background border border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all text-sm resize-none"
+                                    placeholder="How can we help you?"
+                                    required
+                                />
                             </div>
-                            <p className="text-muted-foreground leading-relaxed">
-                                The software, AI models, and technology underlying CaptchaMaster are the exclusive property of CaptchaMaster and its licensors. You are granted a limited, non-exclusive license to use the extension for its intended purpose.
-                            </p>
-                        </div>
-
-                        {/* Limitation of Liability */}
-                        <div className="space-y-4 p-6 rounded-2xl bg-primary/5 border border-primary/10">
-                            <div className="flex items-center gap-3 text-amber-500 mb-2">
-                                <AlertCircle className="w-6 h-6" />
-                                <h2 className="text-2xl font-bold">5. Limitation of Liability</h2>
-                            </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                CAPTCHA MASTER IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. IN NO EVENT SHALL WE BE LIABLE FOR ANY INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OF THE SERVICE, INCLUDING BUT NOT LIMITED TO ACCOUNT BANS FROM THIRD-PARTY WEBSITES.
-                            </p>
-                        </div>
-
-                        {/* Contact */}
-                        <div className="text-center pt-8 border-t border-border/50">
-                            <p className="text-muted-foreground mb-4">Have questions about our terms?</p>
-                            <Link to="/contact">
-                                <button className="px-8 py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-xl transition-all">
-                                    Contact Legal Support
-                                </button>
-                            </Link>
-                        </div>
+                            <button
+                                type="submit"
+                                disabled={formStatus === 'sending'}
+                                className="w-full px-6 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {formStatus === 'sending' ? (
+                                    <>Sending...</>
+                                ) : formStatus === 'sent' ? (
+                                    <>Message Sent! We'll get back to you soon.</>
+                                ) : formStatus === 'error' ? (
+                                    <>Failed to send. Please try again or email us directly.</>
+                                ) : (
+                                    <><Send className="w-4 h-4" />Send Message</>
+                                )}
+                            </button>
+                        </form>
                     </div>
                 </section>
             </main>

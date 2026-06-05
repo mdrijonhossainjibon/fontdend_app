@@ -21,6 +21,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        timeout: 300000, // 5 min for large file uploads
+        proxyTimeout: 300000,
       },
       '/uploads': {
         target: 'http://localhost:8000',

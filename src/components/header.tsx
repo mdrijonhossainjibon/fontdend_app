@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Clock, RefreshCw, AlertTriangle, Bell, User, MoreVertical, Puzzle, ArrowUpRight, Download, Code, Wallet, Loader2, Gift, LogOut, Shield, LayoutDashboard } from "lucide-react"
+import { Bell, User, MoreVertical, Puzzle, Code, Wallet, Loader2, Gift, LogOut, Shield, LayoutDashboard, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from 'react-router-dom'
-import { useDispatch, useSelector } from "react-redux"
+import { useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
-import { fetchDashboardDataRequest, fetchExtensionsRequest } from "@/modules/dashboard/actions"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,30 +18,21 @@ interface HeaderProps {
   onMenuToggle?: () => void
 }
 
-export function Header({ onMenuToggle }: HeaderProps = {}) {
-  const dispatch = useDispatch()
+const EXTENSIONS_DRIVE_URL = "https://drive.google.com/drive/folders/1fHPVBksUzNS5aXPZJtjtmg0jGcVzi-Rx"
 
-  const { userData, loading: isLoadingBalance, extensions } = useSelector((state: RootState) => state.dashboard)
+export function Header({ onMenuToggle }: HeaderProps = {}) {
+  const { userData, loading: isLoadingBalance } = useSelector((state: RootState) => state.dashboard)
   const balance = userData?.balance || 0
 
   const isAdmin = userData?.role === "admin"
-
- 
-  useEffect(() => {
-  
-      dispatch(fetchExtensionsRequest())
-   
-  }, [  dispatch])
-
- 
 
   return (
     <header className="w-full border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top bar with logo and navigation */}
         <div className="flex items-center justify-between h-16">
-          {/* Mobile Menu Button */}
-          <div className="flex items-center gap-3">
+          {/* Left Side: Logo + TG Group */}
+          <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden transition-all duration-300 group-hover:scale-105">
                 <img src="/logo.png" alt="CaptchaMaster Logo" className="w-full h-full object-contain" />
@@ -52,56 +41,39 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                 Captcha<span className="text-primary">Ɱaster</span>
               </span>
             </Link>
+            {/* Telegram Group */}
+            <a
+              href="https://t.me/CaptchaMasterBangladesh"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-muted-foreground hover:text-[#2AABEE] hover:bg-[#2AABEE]/5 transition-colors"
+              title="Join Telegram Group"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.121.099.155.233.17.33.016.099.036.324.02.499z"/>
+              </svg>
+              <span className="text-xs font-medium">Join TG Group</span>
+            </a>
           </div>
 
           {/* Right Section Content */}
           <div className="flex-1 flex items-center justify-end gap-6 transition-all duration-300">
             {/* Center Navigation Group */}
             <div className="hidden md:flex items-center gap-3">
-              {/* Extensions with Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors group">
-                  <Puzzle className="w-4 h-4 text-foreground" />
-                  <span className="text-sm font-medium text-foreground hidden lg:inline">Extensions</span>
-                  <ArrowUpRight className="w-3 h-3 text-muted-foreground group-hover:rotate-45 transition-transform" />
-                </button>
-
-                {/* Dropdown Menu */}
-                <div className="absolute top-full right-0 mt-2 w-64 p-2 rounded-xl bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl overflow-hidden">
-                  <div className="p-2 border-b border-border/50 bg-secondary/20 font-semibold text-[10px] text-muted-foreground uppercase tracking-wider">
-                    Available Extensions
-                  </div>
-                  {extensions.length === 0 && (
-                    <div className="p-4 text-center text-xs text-muted-foreground">
-                      No extensions available
-                    </div>
-                  )}
-                  {extensions.map((extension: any) => {
-                    return (
-                      <Link
-                        key={extension._id.toString()}
-                        to={extension.downloadUrl}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {extension.iconUrl ? (
-                            <img src={extension.iconUrl} alt={extension.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <Download className="w-4 h-4 text-primary" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{extension.name}</p>
-                          <p className="text-[11px] text-muted-foreground line-clamp-1">v{extension.version} • {extension.platform}</p>
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
+              {/* Extensions - Direct Google Drive Link */}
+              <a
+                href={EXTENSIONS_DRIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+              >
+                <Puzzle className="w-4 h-4 text-foreground" />
+                <span className="text-sm font-medium text-foreground hidden lg:inline">Extensions</span>
+                <ExternalLink className="w-3 h-3 text-muted-foreground" />
+              </a>
 
               {/* API Library */}
-              <Link to="/extensions/api" className="hidden md:flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors">
+              <Link to="/api-docs" className="hidden md:flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors">
                 <Code className="w-4 h-4 text-foreground" />
                 <span className="text-sm font-medium text-foreground hidden lg:inline">API Library</span>
               </Link>

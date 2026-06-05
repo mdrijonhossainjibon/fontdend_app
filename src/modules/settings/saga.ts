@@ -12,7 +12,7 @@ function* fetchSettingsSaga(): Generator {
         });
 
         if (status === 200) {
-            yield put(actions.fetchSettingsSuccess(response));
+            yield put(actions.fetchSettingsSuccess(response.settings || response));
         } else {
             yield put(actions.fetchSettingsFailure(response?.error || 'Failed to fetch settings'));
             message.error(response?.error || 'Failed to fetch settings');

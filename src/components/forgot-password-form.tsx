@@ -128,7 +128,7 @@ export function ForgotPasswordForm() {
 
         {/* Back to login link */}
         <Link
-          to="/login"
+          to="/auth/login"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 relative z-10"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -264,7 +264,7 @@ export function ForgotPasswordForm() {
         {/* Help link */}
         <p className="text-center text-sm text-muted-foreground mt-6 relative z-10">
           Remember your password?{" "}
-          <Link to="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
+          <Link to="/auth/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
             Sign in
           </Link>
         </p>

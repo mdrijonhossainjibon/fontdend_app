@@ -4,8 +4,7 @@ import adminReducer from './admin/reducer';
 import adminPackagesReducer from './admin/packages/reducer';
 import adminExtensionsReducer from './admin/extensions/reducer';
 import adminSolutionsReducer from './admin/solutions/reducer';
-import adminWalletsReducer from './admin/wallets/reducer';
-import adminDepositAddressesReducer from './admin/deposit-addresses/reducer';
+import adminOrdersReducer from './admin/orders/reducer';
 import adminTopupHistoryReducer from './admin/topup-history/reducer';
 import adminHistoryReducer from './admin/history/reducer';
 import adminObjectClassesReducer from './admin/object-classes/reducer';
@@ -34,8 +33,7 @@ const rootReducer = combineReducers({
     adminPackages: adminPackagesReducer,
     adminExtensions: adminExtensionsReducer,
     adminSolutions: adminSolutionsReducer,
-    adminWallets: adminWalletsReducer,
-    adminDepositAddresses: adminDepositAddressesReducer,
+    adminOrders: adminOrdersReducer,
     adminTopupHistory: adminTopupHistoryReducer,
     adminHistory: adminHistoryReducer,
     adminObjectClasses: adminObjectClassesReducer,

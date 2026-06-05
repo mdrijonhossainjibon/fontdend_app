@@ -15,6 +15,23 @@ interface TableProps {
 }
 
 export function SolutionsTable({ solutions, loading, pagination, onRowClick, onDelete }: TableProps) {
+    const timeAgo = (dateString: string) => {
+        const now = new Date();
+        const date = new Date(dateString);
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        let interval = Math.floor(seconds / 31536000);
+        if (interval >= 1) return interval + "y";
+        interval = Math.floor(seconds / 2592000);
+        if (interval >= 1) return interval + "m"; // month
+        interval = Math.floor(seconds / 86400);
+        if (interval >= 1) return interval + "d";
+        interval = Math.floor(seconds / 3600);
+        if (interval >= 1) return interval + "h";
+        interval = Math.floor(seconds / 60);
+        if (interval >= 1) return interval + "m"; // minute
+        return Math.floor(seconds) + "s";
+    }
     const handleDownload = (sol: Solution, e: React.MouseEvent) => {
         e.stopPropagation()
         const images = [...(sol.imageData || []), ...(sol.examples || [])]
@@ -55,7 +72,7 @@ export function SolutionsTable({ solutions, loading, pagination, onRowClick, onD
                         <table className="w-full min-w-[640px]">
                             <thead>
                                 <tr className="border-b border-border text-left">
-                                    {["Question", "Service", "Type", "Preview", "Images", "Cached At", ""].map(h => (
+                                    {["Question", "Service", "Type", "Preview", "Images", "Cached At", "Age", ""].map(h => (
                                         <th key={h} className="py-2.5 px-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
                                     ))}
                                 </tr>
@@ -120,6 +137,9 @@ export function SolutionsTable({ solutions, loading, pagination, onRowClick, onD
                                             </td>
                                             <td className="py-2.5 px-3 text-[11px] text-muted-foreground whitespace-nowrap">
                                                 {new Date(sol.createdAt).toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-[11px] font-medium text-primary whitespace-nowrap">
+                                                {timeAgo(sol.createdAt)}
                                             </td>
                                             <td className="py-2.5 px-3" onClick={e => e.stopPropagation()}>
                                                 <div className="flex items-center gap-1">

@@ -1,7 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link } from 'react-router-dom'
+import { useDispatch, useSelector } from "react-redux"
+import { motion, AnimatePresence } from "framer-motion"
+import { logoutRequest } from "@/modules/auth/actions"
+import type { RootState } from "@/modules/rootReducer"
 import {
   Zap,
   Shield,
@@ -21,9 +25,13 @@ import {
   Server,
   Eye,
   Fingerprint,
+  ChevronDown,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Settings,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Navbar } from "@/components/landing/navbar"
 import { Footer } from "@/components/landing/footer"
 
 const mainFeatures = [
@@ -131,15 +139,110 @@ const advancedFeatures = [
 ]
 
 const comparisonData = [
-  { feature: "Average Solve Time", sparkai: "< 2 seconds", others: "5-15 seconds" },
-  { feature: "Success Rate", sparkai: "99.5%", others: "85-95%" },
-  { feature: "Captcha Types Supported", sparkai: "10+", others: "3-5" },
-  { feature: "API Response Time", sparkai: "< 100ms", others: "500ms+" },
-  { feature: "24/7 Support", sparkai: "Yes", others: "Limited" },
-  { feature: "Free Tier", sparkai: "1,000 solves/month", others: "100-500" },
+  { feature: "Average Solve Time", ours: "< 2 seconds", others: "5-15 seconds" },
+  { feature: "Success Rate", ours: "99.5%", others: "85-95%" },
+  { feature: "Captcha Types Supported", ours: "10+", others: "3-5" },
+  { feature: "API Response Time", ours: "< 100ms", others: "500ms+" },
+  { feature: "24/7 Support", ours: "Yes", others: "Limited" },
+  { feature: "Free Tier", ours: "1,000 solves/month", others: "100-500" },
 ]
 
+function UserDropdown({ user, onLogout }: { user: any; onLogout: () => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 p-1 rounded-full hover:bg-secondary/50 transition-all border border-transparent hover:border-border/50"
+      >
+        <img
+          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'User'}`}
+          alt="Avatar"
+          className="w-8 h-8 rounded-full border border-primary/20 bg-background"
+        />
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 mt-2 w-56 rounded-2xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden z-[110]"
+          >
+            <div className="p-4 border-b border-border/50 bg-secondary/20">
+              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Signed in as</p>
+              <p className="text-sm font-bold truncate">{user?.email || 'user@example.com'}</p>
+            </div>
+            <div className="p-2">
+              <Link
+                to="/dashboard"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-secondary/50 transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4 text-primary" />
+                Dashboard
+              </Link>
+              <Link
+                to="/settings"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-secondary/50 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-primary" />
+                Settings
+              </Link>
+            </div>
+            <div className="p-2 border-t border-border/50">
+              <button
+                onClick={() => { setIsOpen(false); onLogout() }}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default function FeaturesPage() {
+  const dispatch = useDispatch()
+  const { user, loginSuccess } = useSelector((state: RootState) => state.auth)
+  const isLoggedIn = !!localStorage.getItem("authToken") || loginSuccess
+  const currentUser = user || JSON.parse(localStorage.getItem("user") || "null")
+
+  const [isDark, setIsDark] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const handleLogout = () => {
+    dispatch(logoutRequest())
+  }
+
+  useEffect(() => { document.documentElement.classList.toggle("dark", isDark) }, [isDark])
+
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'API Docs', path: '/api-docs' },
+    { label: 'How It Works', path: '/how-it-works' },
+    { label: 'Contact', path: '/contact' },
+    { label: 'Login', path: '/auth/login' },
+  ]
+
   const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -161,8 +264,70 @@ export default function FeaturesPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="selection:bg-primary/30 min-h-screen bg-background overflow-x-hidden transition-colors duration-300">
+      {/* ── Inline styles ── */}
+      <style>{`
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: hsl(var(--primary) / 0.3); border-radius: 999px; }
+      `}</style>
+
+      {/* ── Navbar ── */}
+      <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="text-lg font-bold tracking-tighter flex items-center gap-2.5">
+            <img src="/logo.png" alt="CaptchaⱮaster" className="w-7 h-7 rounded-lg shadow-lg shadow-amber-500/20" />
+            <span className="hidden sm:inline">Captcha<span className="bg-gradient-to-r from-primary via-yellow-400 to-yellow-500 bg-clip-text text-transparent">Ɱaster</span></span>
+          </Link>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+            {navItems.map((item) => (
+              item.label === 'Login' ? (
+                <Link key={item.label} to={item.path} className="hover:text-primary transition-colors">
+                  {item.label}
+                </Link>
+              ) : (
+                <Link key={item.label} to={item.path} className="hover:text-primary transition-colors">
+                  {item.label}
+                </Link>
+              )
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground" aria-label="Toggle dark mode">
+              {isDark ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+            {isLoggedIn ? (
+              <UserDropdown user={currentUser} onLogout={handleLogout} />
+            ) : (
+              <Link to="/auth/signup" className="px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-yellow-500 text-black font-semibold text-sm shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Get API Key
+              </Link>
+            )}
+            {/* Mobile menu toggle */}
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-secondary/50 text-muted-foreground" aria-label="Menu">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
+            </button>
+          </div>
+        </div>
+        {/* Mobile nav */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
+            <div className="px-6 py-4 space-y-3">
+              {navItems.map((item) => (
+                <Link key={item.label} to={item.path} onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{item.label}</Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 relative overflow-hidden">
@@ -183,18 +348,18 @@ export default function FeaturesPage() {
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
               Industry-leading AI technology, unmatched speed, and enterprise-grade security. Discover why thousands of
-              developers choose SparkAI.
+              developers choose CaptchaMaster.
             </p>
             <div className="flex items-center justify-center gap-4">
-              <Link to="/extension">
+              <Link to="/auth/signup">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 h-12 px-8">
                   Get Started Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/pricing">
+              <Link to="/how-it-works">
                 <Button size="lg" variant="outline" className="h-12 px-8 bg-transparent">
-                  View Pricing
+                  How It Works
                 </Button>
               </Link>
             </div>
@@ -284,7 +449,7 @@ export default function FeaturesPage() {
             <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
               Comparison
             </span>
-            <h2 className="text-4xl font-bold text-foreground mb-4">Why SparkAI Wins</h2>
+            <h2 className="text-4xl font-bold text-foreground mb-4">Why CaptchaMaster Wins</h2>
             <p className="text-xl text-muted-foreground">See how we stack up against the competition.</p>
           </div>
 
@@ -295,7 +460,7 @@ export default function FeaturesPage() {
           >
             <div className="grid grid-cols-3 bg-secondary/50 p-4 font-semibold text-foreground">
               <div>Feature</div>
-              <div className="text-center text-primary">SparkAI</div>
+              <div className="text-center text-primary">CaptchaMaster</div>
               <div className="text-center text-muted-foreground">Others</div>
             </div>
             {comparisonData.map((row, index) => (
@@ -306,7 +471,7 @@ export default function FeaturesPage() {
                 }`}
               >
                 <div className="text-foreground">{row.feature}</div>
-                <div className="text-center font-semibold text-primary">{row.sparkai}</div>
+                <div className="text-center font-semibold text-primary">{row.ours}</div>
                 <div className="text-center text-muted-foreground">{row.others}</div>
               </div>
             ))}
@@ -320,10 +485,10 @@ export default function FeaturesPage() {
           <div className="p-12 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl border border-primary/20">
             <h2 className="text-4xl font-bold text-foreground mb-4">Ready to Get Started?</h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of developers who trust SparkAI for their captcha solving needs.
+              Join thousands of developers who trust CaptchaMaster for their captcha solving needs.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Link to="/extension">
+              <Link to="/extensions">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 h-12 px-8">
                   Start Free Trial
                   <ArrowRight className="ml-2 w-5 h-5" />

@@ -65,3 +65,43 @@ export const fetchHistoryFailure = (error: string) => ({
     type: types.FETCH_HISTORY_FAILURE,
     payload: error,
 })
+
+// Cryptomus Deposit
+export const createCryptomusInvoiceRequest = (payload: { amount: number; currency?: string; network?: string | null }) => ({
+    type: types.CREATE_CRYPTOMUS_INVOICE_REQUEST,
+    payload,
+})
+
+export const createCryptomusInvoiceSuccess = (payload: { url: string; invoiceId: string; walletAddress?: string; network?: string; paymentAmount?: number }) => ({
+    type: types.CREATE_CRYPTOMUS_INVOICE_SUCCESS,
+    payload,
+})
+
+export const createCryptomusInvoiceFailure = (error: string) => ({
+    type: types.CREATE_CRYPTOMUS_INVOICE_FAILURE,
+    payload: error,
+})
+
+export const resetCryptomusStatus = () => ({
+    type: types.RESET_CRYPTOMUS_STATUS,
+})
+
+// Cryptomus Payment Polling
+export const startCryptomusPolling = (invoiceId: string) => ({
+    type: types.POLL_CRYPTOMUS_STATUS_START,
+    payload: invoiceId,
+})
+
+export const stopCryptomusPolling = () => ({
+    type: types.POLL_CRYPTOMUS_STATUS_STOP,
+})
+
+export const updateCryptomusStatus = (payload: { status: string; data?: any }) => ({
+    type: types.POLL_CRYPTOMUS_STATUS_UPDATE,
+    payload,
+})
+
+export const pollCryptomusPaymentDetails = (payload: { address?: string; network?: string; payerCurrency?: string }) => ({
+    type: types.POLL_CRYPTOMUS_PAYMENT_DETAILS,
+    payload,
+})

@@ -9,6 +9,8 @@ const initialState = {
         twoFARequired: true,
         ipWhitelist: false,
         sessionTimeout: "30 minutes",
+        cryptomusMerchantId: "",
+        cryptomusApiKey: "",
     },
     loading: false,
     saving: false,
