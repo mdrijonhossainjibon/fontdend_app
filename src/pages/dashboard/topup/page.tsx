@@ -1068,9 +1068,7 @@ function CryptomusDepositTab() {
                       if (!net) return <span className="text-muted-foreground">Select network</span>
                       return (
                         <>
-                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-bold text-primary">{net.id.slice(0, 2).toUpperCase()}</span>
-                          </div>
+                          <CryptoIcon coinId={getNetworkCoinId(net.name)} className="w-7 h-7" name={net.name} />
                           <div className="flex-1">
                             <span className="text-sm font-semibold block">{net.name}</span>
                             <span className="text-[10px] text-muted-foreground">Fee: {net.fee} · {net.time}</span>
@@ -1129,9 +1127,7 @@ function CryptomusDepositTab() {
                               selectedNetwork === net.id && "bg-primary/10 border border-primary/20"
                             )}
                           >
-                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-primary">{net.id.slice(0, 2).toUpperCase()}</span>
-                            </div>
+                            <CryptoIcon coinId={getNetworkCoinId(net.name)} className="w-7 h-7" name={net.name} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-semibold">{net.name}</span>
