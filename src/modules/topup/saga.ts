@@ -11,8 +11,8 @@ function* fetchActivePackageSaga(): Generator {
             url: '/topup/active-package',
         })
         if (status === 200 && (response as any).success) {
-            const { balance, activePackage } = response as any
-            yield put(actions.fetchActivePackageSuccess({ balance, activePackage }))
+            const { balance, activePackage, pendingDeposit } = response as any
+            yield put(actions.fetchActivePackageSuccess({ balance, activePackage, pendingDeposit }))
         } else {
             yield put(
                 actions.fetchActivePackageFailure((response as any)?.error || 'Failed to load package info')
@@ -152,6 +152,24 @@ function* pollCryptomusStatusSaga(action: ReturnType<typeof actions.startCryptom
     }
 }
 
+// ── Fetch Invoice ──
+function* fetchInvoiceSaga(action: ReturnType<typeof actions.fetchInvoiceRequest>): Generator {
+    try {
+        const invoiceId = action.payload as string
+        const { response, status }: APIResponse = yield call(API_CALL, {
+            method: 'GET',
+            url: `/topup/invoice/${invoiceId}`,
+        })
+        if (status === 200 && (response as any).success) {
+            yield put(actions.fetchInvoiceSuccess((response as any).data))
+        } else {
+            yield put(actions.fetchInvoiceFailure((response as any)?.error || 'Invoice not found'))
+        }
+    } catch (error: any) {
+        yield put(actions.fetchInvoiceFailure(error.message))
+    }
+}
+
 // ── Root Saga ──
 export default function* topupSaga() {
     yield takeLatest(types.FETCH_ACTIVE_PACKAGE_REQUEST, fetchActivePackageSaga)
@@ -160,4 +178,5 @@ export default function* topupSaga() {
     yield takeLatest(types.FETCH_HISTORY_REQUEST, fetchHistorySaga)
     yield takeLatest(types.CREATE_CRYPTOMUS_INVOICE_REQUEST, createCryptomusInvoiceSaga)
     yield takeLatest(types.POLL_CRYPTOMUS_STATUS_START, pollCryptomusStatusSaga)
+    yield takeLatest(types.FETCH_INVOICE_REQUEST, fetchInvoiceSaga)
 }

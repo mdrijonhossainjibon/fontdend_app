@@ -105,3 +105,23 @@ export const pollCryptomusPaymentDetails = (payload: { address?: string; network
     type: types.POLL_CRYPTOMUS_PAYMENT_DETAILS,
     payload,
 })
+
+// Invoice
+export const fetchInvoiceRequest = (invoiceId: string) => ({
+    type: types.FETCH_INVOICE_REQUEST,
+    payload: invoiceId,
+})
+
+export const fetchInvoiceSuccess = (payload: any) => ({
+    type: types.FETCH_INVOICE_SUCCESS,
+    payload,
+})
+
+export const fetchInvoiceFailure = (error: string) => ({
+    type: types.FETCH_INVOICE_FAILURE,
+    payload: error,
+})
+
+export const resetInvoice = () => ({
+    type: types.RESET_INVOICE,
+})

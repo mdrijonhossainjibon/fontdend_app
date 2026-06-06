@@ -4,27 +4,13 @@ import { Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { cn } from "@/lib/utils"
 import {
-  Sparkles,
   LayoutDashboard,
-  Shield,
   CreditCard,
-  Settings,
-  User,
-  History,
   Zap,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Crown,
-  HelpCircle,
-  Bell,
-  Download,
   Package,
   Users,
-  Share2,
   X,
 } from "lucide-react"
-import { useAuth } from "@/components/AuthProvider"
 import { Button } from "@/components/ui/button"
 
 const mainNavItems = [
@@ -44,7 +30,6 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ isMobileMenuOpen = false, onCloseMobileMenu }: DashboardSidebarProps = {}) {
-  const { user } = useAuth()
   const location = useLocation()
   const pathname = location.pathname
   const [isVisible, setIsVisible] = useState(false)
@@ -197,69 +182,6 @@ export function DashboardSidebar({ isMobileMenuOpen = false, onCloseMobileMenu }
         <NavSection title="Main" items={mainNavItems} startIndex={0} />
  
       </nav>
-
-      {/* Referral Card */}
-      <div className="px-3 py-4">
-        <div className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-4 transition-all duration-300 hover:border-primary/40">
-          <div className="relative z-10 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/20 text-primary">
-                <Share2 className="w-4 h-4" />
-              </div>
-              <span className="text-sm font-bold text-foreground">Invite & Earn</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Earn <span className="text-primary font-bold">15% commission</span> on every credit purchase.
-            </p>
-            <Link
-              to="/dashboard/referrals"
-              className="mt-1 text-[11px] font-bold text-primary flex items-center gap-1 group-hover:gap-2 transition-all"
-            >
-              Get Invite Link <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-          {/* Decorative background circle */}
-          <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
-        </div>
-      </div>
-
-      {/* User section */}
-      <div className="p-3 border-t border-border">
-        <div
-          className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 transition-all duration-300"
-        >
-          {/* Avatar */}
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
-              <User className="w-5 h-5 text-primary" />
-            </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {user?.name || "User"}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {user?.role === 'admin' ? "Admin Member" : "Pro Member"}
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              localStorage.removeItem('authToken')
-              localStorage.removeItem('user')
-              fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-                window.location.href = '/'
-              })
-            }}
-            className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-            title="Logout"
-          >
-            <LogOut className="w-4 h-4 text-inherit" />
-          </button>
-        </div>
-      </div>
 
       {/* Decorative elements */}
       <div className="absolute bottom-20 left-4 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />

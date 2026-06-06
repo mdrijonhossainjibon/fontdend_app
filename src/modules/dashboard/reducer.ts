@@ -51,6 +51,17 @@ const dashboardReducer = (state = initialState, action: any) => {
                 generatingKey: action.payload.slotName,
             };
         case types.GENERATE_KEY_SUCCESS:
+            return {
+                ...state,
+                generatingKey: null,
+                apiKeys: action.payload
+                    ? state.apiKeys.map((k: any) =>
+                        k.status === 'empty' && !k.id
+                            ? { ...action.payload, isMaster: false }
+                            : k
+                      )
+                    : state.apiKeys,
+            };
         case types.GENERATE_KEY_FAILURE:
             return {
                 ...state,
@@ -60,13 +71,20 @@ const dashboardReducer = (state = initialState, action: any) => {
         case types.DELETE_KEY_REQUEST:
             return {
                 ...state,
-                loading: true,
             };
         case types.DELETE_KEY_SUCCESS:
+            return {
+                ...state,
+                apiKeys: state.apiKeys.map((k: any, i: number) =>
+                    k.id === action.payload
+                        ? { name: `Slot ${i + 1}`, key: '', fullKey: '', status: 'empty', lastUsed: '', usageCount: 0, isMaster: k.isMaster }
+                        : k
+                ),
+            };
         case types.DELETE_KEY_FAILURE:
             return {
                 ...state,
-                loading: false,
+                error: action.payload,
             };
 
         case types.REGENERATE_KEY_REQUEST:
@@ -75,6 +93,15 @@ const dashboardReducer = (state = initialState, action: any) => {
                 regeneratingKey: action.payload.name,
             };
         case types.REGENERATE_KEY_SUCCESS:
+            return {
+                ...state,
+                regeneratingKey: null,
+                apiKeys: state.apiKeys.map((key: any) =>
+                    key.id === action.payload?.id
+                        ? { ...key, ...action.payload, isMaster: key.isMaster }
+                        : key
+                ),
+            };
         case types.REGENERATE_KEY_FAILURE:
             return {
                 ...state,

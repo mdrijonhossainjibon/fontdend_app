@@ -24,6 +24,7 @@ import {
   XCircle,
   Search,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -43,6 +44,23 @@ import {
 import { fetchCryptoConfigRequest } from "@/modules/crypto/actions"
 import { CryptoIcon } from "@/components/CryptoIcon"
 import { QRCodeSVG } from 'qrcode.react'
+
+// ─── helpers ───
+function getNetworkCoinId(networkName: string): string {
+  const n = (networkName || '').toLowerCase()
+  if (n.includes('bsc') || n.includes('bnb') || n.includes('binance')) return 'bnb'
+  if (n.includes('eth') || n === 'ethereum') return 'eth'
+  if (n.includes('polygon') || n.includes('matic')) return 'matic'
+  if (n.includes('arbitrum')) return 'eth'
+  if (n.includes('optimism')) return 'eth'
+  if (n.includes('avalanche') || n.includes('avax')) return 'avax'
+  if (n.includes('tron') || n.includes('trc20')) return 'trx'
+  if (n.includes('solana') || n.includes('sol')) return 'sol'
+  if (n.includes('bitcoin') || n === 'btc') return 'btc'
+  if (n.includes('litecoin') || n === 'ltc') return 'ltc'
+  if (n.includes('doge')) return 'doge'
+  return 'btc'
+}
 
 // ─── Credit Packages ───
 const creditPackages = [
@@ -75,21 +93,25 @@ function BuyCreditsTab() {
     return () => clearTimeout(t)
   }, [])
 
-  useEffect(() => {
-    dispatch(fetchActivePackageRequest())
-  }, [dispatch])
-
   const showToast = (type: 'success' | 'error', text: string) => {
     setToastMsg({ type, text })
     setTimeout(() => setToastMsg(null), 4000)
   }
 
   const handleBuy = () => {
+    if (activePackage?.pendingDeposit) {
+      showToast('error', 'Please complete or wait for your pending deposit to expire.')
+      return
+    }
     const pkg = creditPackages[selectedPackage]
     dispatch(buyCreditsRequest({ credits: pkg.credits + pkg.bonus, price: pkg.price }))
   }
 
   const handleRedeem = () => {
+    if (activePackage?.pendingDeposit) {
+      showToast('error', 'Please complete or wait for your pending deposit to expire.')
+      return
+    }
     if (!redeemCode.trim()) return
     dispatch(redeemCodeRequest({ code: redeemCode.trim() }))
     setRedeemCode('')
@@ -124,7 +146,31 @@ function BuyCreditsTab() {
       ) : (
         <>
           {/* Active Package Info */}
-          {activePackage?.activePackage ? (
+          {activePackage?.pendingDeposit ? (
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent border border-yellow-500/20 mb-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-yellow-500/20 flex items-center justify-center">
+                    <Clock className="w-7 h-7 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pending Deposit</p>
+                    <p className="text-lg font-bold">{activePackage.pendingDeposit.amountUSD} USD</p>
+                    <p className="text-xs text-muted-foreground">
+                      {activePackage.pendingDeposit.cryptoName} ({activePackage.pendingDeposit.networkName})
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Expires</p>
+                  <p className="text-lg font-bold text-yellow-500">
+                    {new Date(activePackage.pendingDeposit.expiresAt).toLocaleTimeString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Please complete the deposit</p>
+                </div>
+              </div>
+            </div>
+          ) : activePackage?.activePackage ? (
             <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 mb-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -205,7 +251,7 @@ function BuyCreditsTab() {
             <div className="flex flex-col items-center gap-3 mb-8">
               <Button
                 onClick={handleBuy}
-                disabled={buying || activePackage.balance < pkg.price}
+                disabled={buying || activePackage.balance < pkg.price || !!activePackage?.pendingDeposit}
                 className="h-14 px-8 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2 text-base font-semibold w-full md:w-auto"
               >
                 {buying ? (
@@ -244,7 +290,7 @@ function BuyCreditsTab() {
                 onChange={(e) => setRedeemCode(e.target.value)}
                 placeholder="Enter your code..."
                 className="flex-1 h-12 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm"
-                disabled={!activePackage?.activePackage}
+                disabled={!activePackage?.activePackage || !!activePackage?.pendingDeposit}
               />
               <Button
                 onClick={handleRedeem}
@@ -355,6 +401,31 @@ function HistoryTab() {
     return { icon: ArrowUp, bg: "bg-orange-500/10", color: "text-orange-500" }
   }
 
+  // Parse deposit label like "BNB (BSC) Top-up" → { crypto: "BNB", coinId: "bnb", network: "BSC" }
+  const parseDepositLabel = (label: string) => {
+    if (!label) return null
+    const m = label.match(/^([^\s(]+)\s*(?:\(([^)]+)\))?\s*(.*)$/)
+    if (!m) return null
+    const crypto = m[1]
+    const network = m[2] || ''
+    const coinId = crypto.toLowerCase()
+    return { crypto, network, coinId }
+  }
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      pending:   { label: 'Pending',   cls: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
+      confirming:{ label: 'Confirming',cls: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
+      completed: { label: 'Completed', cls: 'bg-green-500/10 text-green-600 border-green-500/20' },
+      failed:    { label: 'Failed',    cls: 'bg-red-500/10 text-red-600 border-red-500/20' },
+      expired:   { label: 'Expired',   cls: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
+      rejected:  { label: 'Rejected',  cls: 'bg-red-500/10 text-red-600 border-red-500/20' },
+      approved:  { label: 'Approved',  cls: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+    }
+    const s = map[status] || { label: status, cls: 'bg-muted text-muted-foreground border-border' }
+    return <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", s.cls)}>{s.label}</span>
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -420,18 +491,37 @@ function HistoryTab() {
               const typeIcon = getTypeIcon(tx.type)
               const isPositive = tx.credits > 0
               const Icon = typeIcon.icon
+              const depositInfo = tx.type === 'deposit' ? parseDepositLabel(tx.label) : null
+              const isPending = tx.status === 'pending' || tx.status === 'confirming'
+              const isDepositTx = tx.type === 'deposit'
+
               return (
                 <div
                   key={tx.id}
-                  className={cn("flex items-center gap-4 p-4 hover:bg-secondary/30 transition-colors", isVisible ? "opacity-100" : "opacity-0")}
+                  className={cn("flex items-center gap-3 p-4 hover:bg-secondary/30 transition-colors", isVisible ? "opacity-100" : "opacity-0")}
                   style={{ transitionDelay: `${index * 40}ms` }}
                 >
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", typeIcon.bg)}>
-                    <Icon className={cn("w-5 h-5", typeIcon.color)} />
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 relative", typeIcon.bg)}>
+                    {(depositInfo && depositInfo.crypto) ? (
+                      <CryptoIcon coinId={depositInfo.coinId} className="w-5 h-5" name={depositInfo.crypto} />
+                    ) : (
+                      <Icon className={cn("w-5 h-5", typeIcon.color)} />
+                    )}
+                    {isPending && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-yellow-400 rounded-full border-2 border-card animate-pulse" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium truncate">{getTypeLabel(tx)}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <p className="text-sm font-medium truncate">{getTypeLabel(tx)}</p>
+                        {depositInfo && depositInfo.network && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0 hidden sm:inline">
+                            {depositInfo.network}
+                          </span>
+                        )}
+                        {tx.status && statusBadge(tx.status)}
+                      </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         {isPositive ? <ArrowDown className="w-3.5 h-3.5 text-green-500" /> : <ArrowUp className="w-3.5 h-3.5 text-red-500" />}
                         <p className={cn("text-sm font-bold", isPositive ? "text-green-500" : "text-foreground")}>
@@ -440,12 +530,25 @@ function HistoryTab() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between gap-2 mt-0.5">
-                      <p className="text-xs text-muted-foreground truncate">
-                        {tx.label || ''}
-                        {tx.amount && ` · $${tx.amount}`}
-                        {tx.meta && ` · ${tx.meta}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground shrink-0">{tx.date} {tx.time}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <p className="text-xs text-muted-foreground truncate">
+                          {depositInfo && depositInfo.crypto ? depositInfo.crypto : (tx.label || '')}
+                          {tx.amount && ` · $${tx.amount}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isDepositTx && tx.invoiceId && (tx.status === 'pending' || tx.status === 'confirming') && (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs rounded-lg gap-1 bg-amber-500 hover:bg-amber-600 text-white"
+                            onClick={() => window.open(`/topup?invoice=${tx.invoiceId}`, '_blank')}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Pay Now
+                          </Button>
+                        )}
+                        <p className="text-xs text-muted-foreground">{tx.date} {tx.time}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -463,10 +566,12 @@ const depositAmounts = [2, 5, 10, 25, 50, 100]
 
 function CryptomusDepositTab() {
   const dispatch = useDispatch()
+  const topupState = useSelector((state: RootState) => state.topup)
+  const pendingDeposit = topupState.activePackage?.pendingDeposit
   const {
     cryptomusCreating, cryptomusUrl, cryptomusInvoiceId, cryptomusError,
     cryptomusStatus, cryptomusWalletAddress, cryptomusNetwork, cryptomusPaymentAmount,
-  } = useSelector((state: RootState) => state.topup)
+  } = topupState
   const { configs: cryptoConfigs, loading: configsLoading } = useSelector(
     (state: RootState) => state.crypto
   )
@@ -485,11 +590,34 @@ function CryptomusDepositTab() {
   const [copied, setCopied] = useState(false)
   const [expiryTime, setExpiryTime] = useState<number | null>(null)
   const [countdown, setCountdown] = useState('')
+  const [pendingCountdown, setPendingCountdown] = useState('')
 
   useEffect(() => {
     const t = setTimeout(() => setIsVisible(true), 100)
     return () => clearTimeout(t)
   }, [])
+
+  // Countdown for pending deposit
+  useEffect(() => {
+    if (!pendingDeposit?.expiresAt) return
+    const tick = () => {
+      const now = Date.now()
+      const end = new Date(pendingDeposit.expiresAt).getTime()
+      const diff = end - now
+      if (diff <= 0) {
+        setPendingCountdown('Expired')
+        // Trigger backend to mark deposit as failed in DB
+        dispatch(fetchActivePackageRequest())
+        return
+      }
+      const m = Math.floor(diff / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setPendingCountdown(`${m}:${s.toString().padStart(2, '0')}`)
+    }
+    tick()
+    const timer = setInterval(tick, 1000)
+    return () => clearInterval(timer)
+  }, [pendingDeposit?.expiresAt, dispatch])
 
   // Fetch crypto configs on mount
   useEffect(() => {
@@ -596,6 +724,95 @@ function CryptomusDepositTab() {
   }
 
   const currentStatus = cryptomusStatus ? statusConfig[cryptomusStatus] : null
+
+  if (pendingDeposit && pendingCountdown !== 'Expired') {
+    const networkCoin = getNetworkCoinId(pendingDeposit.networkName || '')
+
+    return (
+      <div className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
+        <div className="max-w-xl mx-auto space-y-4">
+          {/* ── Status Header ── */}
+          <div className="relative rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] via-amber-500/[0.04] to-transparent p-5 overflow-hidden">
+            <div className="absolute -top-8 right-4 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
+            <div className="relative flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6 text-amber-400 animate-pulse" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold">Awaiting Payment</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Complete your deposit to receive credits
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-lg font-bold tabular-nums">${pendingDeposit.amountUSD.toFixed(2)}</div>
+                {pendingCountdown && (
+                  <div className="flex items-center gap-1 text-xs text-amber-400 font-medium mt-0.5 justify-end">
+                    <Clock className="w-3 h-3" />
+                    <span className="tabular-nums font-mono">{pendingCountdown}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── QR + Network Info ── */}
+          <div className="rounded-2xl bg-card border border-border overflow-hidden">
+            {/* QR */}
+            {pendingDeposit.address && (
+              <div className="flex justify-center py-6 px-4 bg-muted/30">
+                <div className="p-3 bg-white rounded-2xl shadow-lg ring-1 ring-black/10">
+                  <QRCodeSVG value={pendingDeposit.address} size={160} level="M" />
+                </div>
+              </div>
+            )}
+
+            {/* Network + Coin Badges */}
+            <div className="px-4 py-3 flex items-center justify-center gap-3 border-t border-border bg-muted/20">
+              {pendingDeposit.cryptoName && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background border border-border">
+                  <CryptoIcon coinId={pendingDeposit.cryptoName.toLowerCase()} className="w-5 h-5" name={pendingDeposit.cryptoName} />
+                  <span className="text-xs font-semibold">{pendingDeposit.cryptoName.toUpperCase()}</span>
+                </div>
+              )}
+              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+              {pendingDeposit.networkName && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background border border-border">
+                  <CryptoIcon coinId={networkCoin} className="w-5 h-5" name={pendingDeposit.networkName} />
+                  <span className="text-xs font-semibold">{pendingDeposit.networkName.toUpperCase()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Address */}
+            {pendingDeposit.address && (
+              <div className="p-4 border-t border-border">
+                <p className="text-[11px] text-muted-foreground mb-2 text-center uppercase tracking-wider">Send to this address</p>
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                  <code className="flex-1 text-xs font-mono break-all text-foreground/80 select-all leading-relaxed">
+                    {pendingDeposit.address}
+                  </code>
+                  <Button
+                    variant={copied ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => { navigator.clipboard.writeText(pendingDeposit.address); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+                    className="h-8 rounded-lg gap-1.5 shrink-0 text-xs"
+                  >
+                    {copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="text-[11px] text-muted-foreground text-center px-2">
+            Send <span className="font-semibold text-foreground">${pendingDeposit.amountUSD.toFixed(2)}</span> in {pendingDeposit.cryptoName} via {pendingDeposit.networkName} network. Payment detected automatically.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // Invoice created view — inline payment with QR code
   if (cryptomusInvoiceId) {
@@ -1113,6 +1330,7 @@ function CryptomusDepositTab() {
 
 // ─── Main Page ───
 export default function DashboardTopupPage() {
+  const dispatch = useDispatch()
   const [searchParams] = useSearchParams()
   const tabParam = searchParams.get("tab")
   const [activeTab, setActiveTab] = useState(tabParam === "credits" || tabParam === "history" ? tabParam : "crypto")
@@ -1122,6 +1340,10 @@ export default function DashboardTopupPage() {
     const t = setTimeout(() => setIsVisible(true), 50)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    dispatch(fetchActivePackageRequest())
+  }, [dispatch])
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">

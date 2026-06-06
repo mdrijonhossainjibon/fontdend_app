@@ -5,6 +5,7 @@ import {
     fetchOrdersRequest,
     approveOrderRequest,
     rejectOrderRequest,
+    clearOrdersRequest,
 } from '@/modules/admin/orders/actions'
 import { OrdersContent } from './content'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,6 +20,7 @@ import {
     XCircle,
     AlertTriangle,
     DollarSign,
+    Trash2,
 } from 'lucide-react'
 
 export default function OrdersPage() {
@@ -61,6 +63,12 @@ export default function OrdersPage() {
         dispatch(rejectOrderRequest(id))
     }
 
+    const handleClearAll = () => {
+        if (window.confirm('Are you sure you want to clear all orders? This action cannot be undone.')) {
+            dispatch(clearOrdersRequest({ status: filterStatus || undefined }))
+        }
+    }
+
     const statCards = [
         { label: 'Total Orders', value: stats?.total ?? 0, icon: CreditCard, color: 'text-blue-600' },
         { label: 'Completed', value: stats?.completed ?? 0, icon: CheckCircle, color: 'text-green-600' },
@@ -74,6 +82,16 @@ export default function OrdersPage() {
         <div>
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 mb-6">
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleClearAll}
+                    disabled={loading}
+                    className="gap-2"
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Clear All
+                </Button>
                 <Button
                     variant="outline"
                     size="sm"

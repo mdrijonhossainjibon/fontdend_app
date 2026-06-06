@@ -37,8 +37,7 @@ function* generateKeySaga(action: any): Generator {
         });
 
         if (status === 200) {
-            yield put(actions.generateKeySuccess());
-            yield put(actions.fetchDashboardDataRequest());
+            yield put(actions.generateKeySuccess(response.apiKey));
         } else {
             yield put(actions.generateKeyFailure(response?.error || 'Failed to generate key'));
         }
@@ -56,8 +55,7 @@ function* deleteKeySaga(action: any): Generator {
         });
 
         if (status === 200) {
-            yield put(actions.deleteKeySuccess());
-            yield put(actions.fetchDashboardDataRequest());
+            yield put(actions.deleteKeySuccess(action.payload.id));
         } else {
             yield put(actions.deleteKeyFailure(response?.error || 'Failed to delete key'));
         }
@@ -68,14 +66,13 @@ function* deleteKeySaga(action: any): Generator {
 
 function* regenerateKeySaga(action: any): Generator {
     try {
-        const { response, status }: APIResponse = yield (call)(API_CALL, {
+        const { response, status }: APIResponse = yield (call as any)(API_CALL, {
             method: 'PUT',
             url: `/dashboard/api-keys/${action.payload.id}`,
         });
 
         if (status === 200) {
-            yield put(actions.regenerateKeySuccess());
-            yield put(actions.fetchDashboardDataRequest());
+            yield put(actions.regenerateKeySuccess(response.apiKey));
         } else {
             yield put(actions.regenerateKeyFailure(response?.error || 'Failed to regenerate key'));
         }
@@ -111,7 +108,6 @@ function* cancelPackageSaga(): Generator {
 
         if (status === 200) {
             yield put(actions.cancelPackageSuccess());
-            yield put(actions.fetchDashboardDataRequest());
         } else {
             yield put(actions.cancelPackageFailure(response?.error || 'Failed to cancel package'));
         }

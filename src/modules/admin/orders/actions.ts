@@ -44,3 +44,18 @@ export const rejectOrderFailure = (error: string) => ({
     type: types.REJECT_ORDER_FAILURE,
     payload: error,
 });
+
+export const clearOrdersRequest = (filters?: any) => ({
+    type: types.CLEAR_ORDERS_REQUEST,
+    payload: filters,
+});
+
+export const clearOrdersSuccess = (payload: any) => ({
+    type: types.CLEAR_ORDERS_SUCCESS,
+    payload,
+});
+
+export const clearOrdersFailure = (error: string) => ({
+    type: types.CLEAR_ORDERS_FAILURE,
+    payload: error,
+});

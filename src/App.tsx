@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import PrivateRoute from '@/components/PrivateRoute'
 import PublicRoute from '@/components/PublicRoute'
+import AdminRoute from '@/components/AdminRoute'
 
 // Landing
 const LandingPage = lazy(() => import('@/pages/page'))
@@ -20,6 +21,9 @@ const DashboardHistory = lazy(() => import('@/pages/dashboard/history/page'))
 const DashboardPricing = lazy(() => import('@/pages/dashboard/pricing/page'))
 const DashboardReferrals = lazy(() => import('@/pages/dashboard/referrals/page'))
 const DashboardTopup = lazy(() => import('@/pages/dashboard/topup/page'))
+
+// Standalone invoice
+const TopupInvoicePage = lazy(() => import('@/pages/topup-invoice/page'))
 
 // Admin
 const AdminLayout = lazy(() => import('@/pages/admin/layout'))
@@ -100,8 +104,11 @@ export default function App() {
           <Route path="topup" element={<DashboardTopup />} />
         </Route>
 
+        {/* Direct topup route (from history Pay Now) */}
+        <Route path="/topup" element={<PrivateRoute><TopupInvoicePage /></PrivateRoute>} />
+
         {/* Admin routes (private) */}
-        <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
           <Route index element={<AdminPage />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />

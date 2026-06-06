@@ -20,6 +20,9 @@ const statusColors: Record<string, string> = {
     pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
     confirming: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
     failed: 'bg-red-500/10 text-red-600 border-red-500/20',
+    expired: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+    rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
+    approved: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
 }
 
 const statusLabels: Record<string, string> = {
@@ -27,6 +30,9 @@ const statusLabels: Record<string, string> = {
     pending: 'Pending',
     confirming: 'Confirming',
     failed: 'Failed',
+    expired: 'Expired',
+    rejected: 'Rejected',
+    approved: 'Approved',
 }
 
 function truncate(s: string, len: number) {
@@ -37,6 +43,38 @@ function truncate(s: string, len: number) {
 function formatDate(d: string) {
     if (!d) return '-'
     return new Date(d).toLocaleString()
+}
+
+function timeAgo(dateString: string) {
+    if (!dateString) return '-'
+    const now = new Date()
+    const date = new Date(dateString)
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    let interval = Math.floor(seconds / 31536000)
+    if (interval >= 1) return interval + 'y ago'
+    interval = Math.floor(seconds / 2592000)
+    if (interval >= 1) return interval + 'mo ago'
+    interval = Math.floor(seconds / 86400)
+    if (interval >= 1) return interval + 'd ago'
+    interval = Math.floor(seconds / 3600)
+    if (interval >= 1) return interval + 'h ago'
+    interval = Math.floor(seconds / 60)
+    if (interval >= 1) return interval + 'm ago'
+    return Math.floor(seconds) + 's ago'
+}
+
+function getNetworkIcon(networkName: string): string {
+    const net = (networkName || '').toLowerCase()
+    if (net.includes('bsc') || net.includes('bnb') || net.includes('binance')) return 'bnb'
+    if (net.includes('eth') || net === 'ethereum') return 'eth'
+    if (net.includes('polygon') || net.includes('matic')) return 'matic'
+    if (net.includes('arbitrum')) return 'eth'
+    if (net.includes('optimism')) return 'eth'
+    if (net.includes('avalanche') || net.includes('avax')) return 'avax'
+    if (net.includes('tron') || net.includes('trc20')) return 'trx'
+    if (net.includes('solana') || net.includes('sol')) return 'sol'
+    return 'btc' // fallback
 }
 
 function getExplorerUrl(networkName: string, txHash: string) {
@@ -89,11 +127,13 @@ export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersCo
                             <tr className="border-b border-border bg-muted/50">
                                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Order ID</th>
                                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">User</th>
+                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Currency</th>
                                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Amount</th>
-                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Network</th>
+                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Network Name</th>
                                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tx Hash</th>
                                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
+                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Created</th>
+                                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Expires</th>
                                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
                             </tr>
                         </thead>
@@ -122,20 +162,20 @@ export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersCo
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 <CryptoIcon coinId={order.cryptoName} className="w-5 h-5" />
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium">
-                                                        {order.amount} {order.cryptoName}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        ${order.amountUSD?.toFixed(2) || '0.00'}
-                                                    </span>
-                                                </div>
+                                                <span className="font-medium">{order.cryptoName}</span>
                                             </div>
                                         </td>
+                                        <td className="px-4 py-3 font-medium">
+                                            {order.amount}
+                                            <span className="text-xs text-muted-foreground ml-1">
+                                                (${order.amountUSD?.toFixed(2) || '0.00'})
+                                            </span>
+                                        </td>
                                         <td className="px-4 py-3">
-                                            <Badge variant="outline" className="text-xs">
-                                                {order.networkName}
-                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <CryptoIcon coinId={getNetworkIcon(order.networkName)} className="w-5 h-5" />
+                                                <span className="text-sm">{order.networkName || '-'}</span>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             {order.txHash ? (
@@ -167,31 +207,32 @@ export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersCo
                                             </Badge>
                                         </td>
                                         <td className="px-4 py-3 text-xs text-muted-foreground">
-                                            {formatDate(order.createdAt)}
+                                            {timeAgo(order.createdAt)}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                                            {order.expiresAt ? timeAgo(order.expiresAt) : '-'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {(order.status === 'pending' || order.status === 'confirming') && (
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-500/10"
-                                                        onClick={() => setConfirmDialog({ type: 'approve', id: order._id })}
-                                                        title="Approve"
-                                                    >
-                                                        <CheckCircle className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-500/10"
-                                                        onClick={() => setConfirmDialog({ type: 'reject', id: order._id })}
-                                                        title="Reject"
-                                                    >
-                                                        <XCircle className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                                                    onClick={() => setConfirmDialog({ type: 'approve', id: order._id })}
+                                                    title="Approve"
+                                                >
+                                                    <CheckCircle className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                                                    onClick={() => setConfirmDialog({ type: 'reject', id: order._id })}
+                                                    title="Reject"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 )

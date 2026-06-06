@@ -14,13 +14,26 @@ import {
 } from "@/modules/dashboard/actions"
 
 import { useDashboardSocket } from "@/hooks/useDashboardSocket"
-import { Zap, Clock, TrendingUp, CheckCircle2, ArrowUpRight, Sparkles, Package, Key, Copy, RefreshCw, ToggleLeft, ToggleRight, Trash2, Star, Activity, ChevronLeft, ChevronRight } from "lucide-react"
+import { Zap, Clock, TrendingUp, CheckCircle2, ArrowUpRight, Sparkles, Package, Key, Copy, RefreshCw, ToggleLeft, ToggleRight, Trash2, Star, Activity, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react"
 import { Link } from 'react-router-dom'
 import { SkeletonStats, SkeletonGrid, SkeletonCard } from "@/components/skeletons"
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog"
 
 
 export default function DashboardPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [regenerateTarget, setRegenerateTarget] = useState<any>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [countdown, setCountdown] = useState<string>("00:00:00")
   const [activeOfferIndex, setActiveOfferIndex] = useState(0)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -151,14 +164,24 @@ export default function DashboardPage() {
   }
 
   const handleDeleteKey = (id: string, keyName: string) => {
-    if (!confirm(`Are you sure you want to delete ${keyName}? This action cannot be undone.`)) return
-    dispatch(deleteKeyRequest(id))
+    setDeleteTarget({ id, name: keyName })
+  }
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    dispatch(deleteKeyRequest(deleteTarget.id))
+    setDeleteTarget(null)
   }
 
   const handleRegenerateKey = (key: any) => {
     if (regeneratingKey) return
-    if (!confirm(`Regenerating ${key.name} will revoke the current key immediately. Continue?`)) return
-    dispatch(regenerateKeyRequest(key))
+    setRegenerateTarget(key)
+  }
+
+  const confirmRegenerate = () => {
+    if (!regenerateTarget) return
+    dispatch(regenerateKeyRequest(regenerateTarget))
+    setRegenerateTarget(null)
   }
 
   const handleToggleAutoRenew = () => {
@@ -729,6 +752,51 @@ export default function DashboardPage() {
           }
         }
       `}</style>
+
+      <AlertDialog open={!!regenerateTarget} onOpenChange={(open) => !open && setRegenerateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-amber-500/10">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <AlertDialogTitle>Regenerate API Key?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="mt-2">
+              Regenerating <strong>{regenerateTarget?.name}</strong> will revoke the current key immediately.
+              Any services using this key will stop working until you update them with the new key.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRegenerate} className="bg-amber-500 hover:bg-amber-600 text-white">
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-red-500/10">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <AlertDialogTitle>Delete API Key?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="mt-2">
+              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600 text-white">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

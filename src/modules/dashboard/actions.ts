@@ -19,8 +19,9 @@ export const generateKeyRequest = (name: string, slotName: string) => ({
     payload: { name, slotName },
 });
 
-export const generateKeySuccess = () => ({
+export const generateKeySuccess = (apiKey?: any) => ({
     type: types.GENERATE_KEY_SUCCESS,
+    payload: apiKey,
 });
 
 export const generateKeyFailure = (error: string) => ({
@@ -33,8 +34,9 @@ export const deleteKeyRequest = (id: string) => ({
     payload: { id },
 });
 
-export const deleteKeySuccess = () => ({
+export const deleteKeySuccess = (id?: string) => ({
     type: types.DELETE_KEY_SUCCESS,
+    payload: id,
 });
 
 export const deleteKeyFailure = (error: string) => ({
@@ -47,8 +49,9 @@ export const regenerateKeyRequest = (key: any) => ({
     payload: key,
 });
 
-export const regenerateKeySuccess = () => ({
+export const regenerateKeySuccess = (apiKey?: any) => ({
     type: types.REGENERATE_KEY_SUCCESS,
+    payload: apiKey,
 });
 
 export const regenerateKeyFailure = (error: string) => ({

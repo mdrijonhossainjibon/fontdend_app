@@ -9,7 +9,7 @@ export interface OrderRecord {
         username?: string;
     } | null;
     type: string;
-    status: 'pending' | 'confirming' | 'completed' | 'failed';
+    status: 'pending' | 'confirming' | 'completed' | 'failed' | 'expired' | 'rejected' | 'approved';
     amount: number;
     amountUSD: number;
     cryptoName: string;
@@ -23,6 +23,7 @@ export interface OrderRecord {
     notes?: string;
     createdAt: string;
     updatedAt: string;
+    expiresAt?: string;
 }
 
 export interface OrderStats {
@@ -79,7 +80,7 @@ const ordersReducer = (state = initialState, action: any): OrdersState => {
             return {
                 ...state,
                 orders: state.orders.map((o) =>
-                    o._id === action.payload._id ? { ...o, status: 'completed' as const } : o
+                    o._id === action.payload._id ? { ...o, status: 'approved' as const } : o
                 ),
                 error: null,
             };
@@ -92,7 +93,7 @@ const ordersReducer = (state = initialState, action: any): OrdersState => {
             return {
                 ...state,
                 orders: state.orders.map((o) =>
-                    o._id === action.payload._id ? { ...o, status: 'failed' as const } : o
+                    o._id === action.payload._id ? { ...o, status: 'rejected' as const } : o
                 ),
                 error: null,
             };

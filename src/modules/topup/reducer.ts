@@ -1,5 +1,14 @@
 import * as types from './constants'
 
+export interface PendingDepositInfo {
+    amountUSD: number
+    cryptoName: string
+    networkName: string
+    address: string
+    createdAt: string
+    expiresAt: string
+}
+
 export interface ActivePackageInfo {
     balance: number
     activePackage: {
@@ -8,6 +17,7 @@ export interface ActivePackageInfo {
         credits: number
         creditsUsed: number
     } | null
+    pendingDeposit: PendingDepositInfo | null
 }
 
 export interface RedeemResult {
@@ -34,6 +44,12 @@ export interface TransactionItem {
     meta: string
     date: string
     time: string
+    status?: string
+    invoiceId?: string
+    address?: string
+    cryptoName?: string
+    networkName?: string
+    expiresAt?: string | null
 }
 
 export interface TopupState {
@@ -60,6 +76,10 @@ export interface TopupState {
 
     cryptomusStatus: string | null
     cryptomusStatusData: any
+
+    invoice: any | null
+    invoiceLoading: boolean
+    invoiceError: string | null
 }
 
 const initialState: TopupState = {
@@ -86,6 +106,10 @@ const initialState: TopupState = {
 
     cryptomusStatus: null,
     cryptomusStatusData: null,
+
+    invoice: null,
+    invoiceLoading: false,
+    invoiceError: null,
 }
 
 const topupReducer = (state = initialState, action: any): TopupState => {
@@ -147,6 +171,16 @@ const topupReducer = (state = initialState, action: any): TopupState => {
             }
         case types.POLL_CRYPTOMUS_STATUS_STOP:
             return { ...state, cryptomusStatus: null, cryptomusStatusData: null }
+
+        // Invoice
+        case types.FETCH_INVOICE_REQUEST:
+            return { ...state, invoiceLoading: true, invoiceError: null, invoice: null }
+        case types.FETCH_INVOICE_SUCCESS:
+            return { ...state, invoiceLoading: false, invoice: action.payload }
+        case types.FETCH_INVOICE_FAILURE:
+            return { ...state, invoiceLoading: false, invoiceError: action.payload }
+        case types.RESET_INVOICE:
+            return { ...state, invoice: null, invoiceLoading: false, invoiceError: null }
 
         default:
             return state

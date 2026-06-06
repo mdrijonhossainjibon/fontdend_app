@@ -51,7 +51,6 @@ function* approveOrderSaga(action: any): Generator {
         if (response && response.success) {
             yield put(actions.approveOrderSuccess(response.deposit));
             message.success('Order approved successfully');
-            yield put(actions.fetchOrdersRequest());
         } else {
             yield put(actions.approveOrderFailure(response?.error || 'Failed to approve'));
             message.error(response?.error || 'Failed to approve');
@@ -73,7 +72,6 @@ function* rejectOrderSaga(action: any): Generator {
         if (response && response.success) {
             yield put(actions.rejectOrderSuccess(response.deposit));
             message.success('Order rejected');
-            yield put(actions.fetchOrdersRequest());
         } else {
             yield put(actions.rejectOrderFailure(response?.error || 'Failed to reject'));
             message.error(response?.error || 'Failed to reject');
@@ -84,8 +82,34 @@ function* rejectOrderSaga(action: any): Generator {
     }
 }
 
+function* clearOrdersSaga(action: any): Generator {
+    try {
+        const params = new URLSearchParams();
+        params.append('clearAll', 'true');
+        if (action.payload?.status) params.append('status', action.payload.status);
+
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'DELETE',
+            url: `/admin/deposits?${params.toString()}`
+        });
+
+        if (response && response.success) {
+            yield put(actions.clearOrdersSuccess(response));
+            message.success('Orders cleared successfully');
+            yield put(actions.fetchOrdersRequest());
+        } else {
+            yield put(actions.clearOrdersFailure(response?.error || 'Failed to clear orders'));
+            message.error(response?.error || 'Failed to clear orders');
+        }
+    } catch (error) {
+        yield put(actions.clearOrdersFailure('Failed to clear orders'));
+        message.error('Failed to clear orders');
+    }
+}
+
 export default function* ordersSaga() {
     yield takeLatest(types.FETCH_ORDERS_REQUEST, fetchOrdersSaga);
     yield takeLatest(types.APPROVE_ORDER_REQUEST, approveOrderSaga);
     yield takeLatest(types.REJECT_ORDER_REQUEST, rejectOrderSaga);
+    yield takeLatest(types.CLEAR_ORDERS_REQUEST, clearOrdersSaga);
 }
