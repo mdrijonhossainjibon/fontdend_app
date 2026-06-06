@@ -5,6 +5,10 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+        - VITE_API_URL=${VITE_API_URL}
+        - VITE_DEV_PORT=${VITE_DEV_PORT}
+    env_file:
+      - .env
     restart: unless-stopped
     environment:
-      - BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8888}
