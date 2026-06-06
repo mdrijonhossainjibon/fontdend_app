@@ -10,5 +10,3 @@ services:
     env_file:
       - .env
     restart: unless-stopped
-    environment:
-      - BACKEND_URL=${BACKEND_URL:-http://localhost:8888}
