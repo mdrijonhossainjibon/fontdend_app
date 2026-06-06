@@ -28,4 +28,4 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:80/ || exit 1
 
-CMD ["/bin/sh", "-c", "export BACKEND_URL=${BACKEND_URL:-http://localhost:8888} && envsubst '${BACKEND_URL}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "sed \"s|__BACKEND_URL__|${BACKEND_URL:-http://localhost:8888}|g\" /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
