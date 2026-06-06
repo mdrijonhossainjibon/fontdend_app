@@ -111,7 +111,7 @@ export function DashboardHistoryContent() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
+    <div className="px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
       {/* Header */}
       <div className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
         <div className="flex items-center justify-between mb-2">
@@ -197,7 +197,7 @@ export function DashboardHistoryContent() {
       <div className={cn("rounded-2xl bg-card border border-border overflow-hidden transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
         style={{ transitionDelay: "300ms" }}>
         {/* Header */}
-        <div className="grid grid-cols-12 gap-4 p-4 bg-secondary/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="grid grid-cols-12 gap-2 md:gap-4 px-0 py-3 bg-secondary/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
           <div className="col-span-3">Transaction</div>
           <div className="col-span-2">Amount</div>
           <div className="col-span-2">Credits</div>
@@ -225,7 +225,7 @@ export function DashboardHistoryContent() {
               const isNegative = item.type === 'usage'
               return (
                 <div key={item.id || idx}
-                  className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-secondary/30 transition-colors"
+                  className="grid grid-cols-12 gap-2 md:gap-4 px-0 py-3 items-center hover:bg-secondary/30 transition-colors"
                   style={{
                     opacity: isVisible ? 1 : 0,
                     transform: isVisible ? "translateX(0)" : "translateX(-10px)",
