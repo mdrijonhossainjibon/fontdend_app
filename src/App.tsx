@@ -21,6 +21,7 @@ const DashboardHistory = lazy(() => import('@/pages/dashboard/history/page'))
 const DashboardPricing = lazy(() => import('@/pages/dashboard/pricing/page'))
 const DashboardReferrals = lazy(() => import('@/pages/dashboard/referrals/page'))
 const DashboardTopup = lazy(() => import('@/pages/dashboard/topup/page'))
+const DashboardRedeem = lazy(() => import('@/pages/dashboard/redeem/page'))
 
 // Standalone invoice
 const TopupInvoicePage = lazy(() => import('@/pages/topup-invoice/page'))
@@ -102,6 +103,7 @@ export default function App() {
           <Route path="pricing" element={<DashboardPricing />} />
           <Route path="referrals" element={<DashboardReferrals />} />
           <Route path="topup" element={<DashboardTopup />} />
+          <Route path="redeem" element={<DashboardRedeem />} />
         </Route>
 
         {/* Direct topup route (from history Pay Now) */}

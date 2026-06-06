@@ -11,12 +11,14 @@ import {
   Users,
   X,
   History,
+  Gift,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/topup", label: "Buy Credits", icon: CreditCard },
+  { href: "/dashboard/topup", label: "Top Up", icon: CreditCard },
+  { href: "/dashboard/redeem", label: "Redeem Code", icon: Gift },
   { href: "/dashboard/history", label: "Transaction History", icon: History },
   { href: "/dashboard/activities", label: "Activities", icon: Zap },
   { href: "/dashboard/pricing", label: "Pricing", icon: Package },

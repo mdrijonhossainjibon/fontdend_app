@@ -1,424 +1,326 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { RootState } from "@/modules/rootReducer"
+import { fetchHistoryRequest } from "@/modules/topup/actions"
 import {
   History,
   Search,
-  Filter,
-  Download,
+  ArrowUpRight,
+  ArrowDown,
   CheckCircle2,
-  AlertCircle,
+  XCircle,
   Clock,
-  Calendar,
+  AlertCircle,
+  RefreshCw,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
-  Eye,
-  RefreshCw,
+  CreditCard,
+  Coins,
+  Gift,
 } from "lucide-react"
+import { CryptoIcon } from "@/components/CryptoIcon"
+import { cn } from "@/lib/utils"
 
-const historyData = [
-  {
-    id: 1,
-    type: "reCAPTCHA v2",
-    website: "example.com",
-    status: "success",
-    duration: "1.1s",
-    credits: 2,
-    timestamp: "2024-01-15 14:32:45",
-  },
-  {
-    id: 2,
-    type: "hCaptcha",
-    website: "shop.io",
-    status: "success",
-    duration: "0.9s",
-    credits: 2,
-    timestamp: "2024-01-15 14:30:12",
-  },
-  {
-    id: 3,
-    type: "Turnstile",
-    website: "app.vercel.com",
-    status: "success",
-    duration: "0.8s",
-    credits: 1,
-    timestamp: "2024-01-15 14:28:33",
-  },
-  {
-    id: 4,
-    type: "FunCaptcha",
-    website: "gaming.net",
-    status: "failed",
-    duration: "-",
-    credits: 0,
-    timestamp: "2024-01-15 14:25:18",
-  },
-  {
-    id: 5,
-    type: "reCAPTCHA v3",
-    website: "dashboard.io",
-    status: "success",
-    duration: "1.3s",
-    credits: 3,
-    timestamp: "2024-01-15 14:22:45",
-  },
-  {
-    id: 6,
-    type: "GeeTest v4",
-    website: "crypto.exchange",
-    status: "success",
-    duration: "2.1s",
-    credits: 4,
-    timestamp: "2024-01-15 14:18:22",
-  },
-  {
-    id: 7,
-    type: "reCAPTCHA v2",
-    website: "social.app",
-    status: "success",
-    duration: "1.0s",
-    credits: 2,
-    timestamp: "2024-01-15 14:15:10",
-  },
-  {
-    id: 8,
-    type: "hCaptcha",
-    website: "news.site",
-    status: "failed",
-    duration: "-",
-    credits: 0,
-    timestamp: "2024-01-15 14:12:05",
-  },
-  {
-    id: 9,
-    type: "Turnstile",
-    website: "blog.dev",
-    status: "success",
-    duration: "0.7s",
-    credits: 1,
-    timestamp: "2024-01-15 14:08:33",
-  },
-  {
-    id: 10,
-    type: "reCAPTCHA v2",
-    website: "mail.service",
-    status: "success",
-    duration: "1.2s",
-    credits: 2,
-    timestamp: "2024-01-15 14:05:18",
-  },
-]
+function getNetworkCoinId(networkName: string): string {
+  const n = (networkName || '').toLowerCase()
+  if (n.includes('bsc') || n.includes('bnb') || n.includes('binance')) return 'bnb'
+  if (n.includes('eth') || n === 'ethereum') return 'eth'
+  if (n.includes('polygon') || n.includes('matic')) return 'matic'
+  if (n.includes('tron') || n.includes('trc20')) return 'trx'
+  if (n.includes('solana') || n.includes('sol')) return 'sol'
+  if (n.includes('bitcoin') || n === 'btc') return 'btc'
+  if (n.includes('litecoin') || n === 'ltc') return 'ltc'
+  if (n.includes('doge')) return 'doge'
+  return 'btc'
+}
 
-const filterTabs = ["All", "Success", "Failed"]
-const captchaTypes = ["All Types", "reCAPTCHA v2", "reCAPTCHA v3", "hCaptcha", "Turnstile", "FunCaptcha", "GeeTest v4"]
+const ITEMS_PER_PAGE = 10
 
 export function DashboardHistoryContent() {
+  const dispatch = useDispatch()
+  const { history, historyLoading } = useSelector((state: RootState) => state.topup)
+
   const [isVisible, setIsVisible] = useState(false)
-  const [activeFilter, setActiveFilter] = useState("All")
-  const [selectedType, setSelectedType] = useState("All Types")
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("All")
+  const [typeFilter, setTypeFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
-  const [selectedItem, setSelectedItem] = useState<number | null>(null)
 
   useEffect(() => {
     setIsVisible(true)
-  }, [])
+    dispatch(fetchHistoryRequest())
+  }, [dispatch])
 
-  const filteredData = historyData.filter((item) => {
-    const matchesFilter =
-      activeFilter === "All" ||
-      (activeFilter === "Success" && item.status === "success") ||
-      (activeFilter === "Failed" && item.status === "failed")
-    const matchesType = selectedType === "All Types" || item.type === selectedType
-    const matchesSearch =
-      item.website.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesFilter && matchesType && matchesSearch
-  })
+  const transactions = history?.transactions || []
+  const stats = history?.stats
 
-  const stats = {
-    total: historyData.length,
-    success: historyData.filter((i) => i.status === "success").length,
-    failed: historyData.filter((i) => i.status === "failed").length,
-    avgTime: "1.1s",
+  const filteredData = useMemo(() => {
+    return transactions.filter((item) => {
+      if (statusFilter !== "All" && (item.status || 'completed') !== statusFilter.toLowerCase()) return false
+      if (typeFilter !== "All" && item.type !== typeFilter) return false
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        return (
+          item.label?.toLowerCase().includes(q) ||
+          item.type?.toLowerCase().includes(q) ||
+          item.invoiceId?.toLowerCase().includes(q)
+        )
+      }
+      return true
+    })
+  }, [transactions, statusFilter, typeFilter, searchQuery])
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE))
+  const paginatedData = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'topup': return { icon: ArrowDown, bg: 'bg-green-500/10', color: 'text-green-500' }
+      case 'redeem': return { icon: Gift, bg: 'bg-purple-500/10', color: 'text-purple-500' }
+      case 'purchase': return { icon: CreditCard, bg: 'bg-blue-500/10', color: 'text-blue-500' }
+      case 'usage': return { icon: ArrowUpRight, bg: 'bg-amber-500/10', color: 'text-amber-500' }
+      default: return { icon: Coins, bg: 'bg-primary/10', color: 'text-primary' }
+    }
+  }
+
+  const typeLabels: Record<string, string> = {
+    topup: 'Top Up',
+    deposit: 'Deposit',
+    redeem: 'Code Redeemed',
+    purchase: 'Purchase',
+    usage: 'Usage',
+  }
+
+  const statusBadge = (status?: string) => {
+    const s = status || 'completed'
+    switch (s) {
+      case 'paid':
+      case 'completed':
+        return { label: 'Completed', class: 'bg-green-500/10 text-green-500' }
+      case 'pending':
+        return { label: 'Pending', class: 'bg-amber-500/10 text-amber-500' }
+      case 'expired':
+        return { label: 'Expired', class: 'bg-red-500/10 text-red-500' }
+      case 'failed':
+        return { label: 'Failed', class: 'bg-destructive/10 text-destructive' }
+      default:
+        return { label: s, class: 'bg-secondary text-muted-foreground' }
+    }
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-6 lg:p-8">
       {/* Header */}
-      <div
-        className="mb-8"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? "translateY(0)" : "translateY(20px)",
-          transition: "all 0.5s ease-out",
-        }}
-      >
-        <div className="flex items-center justify-between">
+      <div className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
               <History className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Solving History</h1>
-              <p className="text-muted-foreground">View and export your captcha solving activity</p>
+              <h1 className="text-2xl md:text-3xl font-bold">Transaction History</h1>
+              <p className="text-sm text-muted-foreground">Your deposit and credit history</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-            <Download className="w-4 h-4" />
-            Export CSV
+          <button
+            onClick={() => dispatch(fetchHistoryRequest())}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border text-sm font-medium hover:bg-secondary/50 transition-colors"
+          >
+            <RefreshCw className={cn("w-4 h-4", historyLoading && "animate-spin")} />
+            Refresh
           </button>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? "translateY(0)" : "translateY(20px)",
-          transition: "all 0.5s ease-out",
-          transitionDelay: "100ms",
-        }}
-      >
+      {/* Stats */}
+      <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
+        style={{ transitionDelay: "100ms" }}>
         <div className="p-4 rounded-xl bg-card border border-border">
-          <p className="text-sm text-muted-foreground mb-1">Total Requests</p>
-          <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+          <p className="text-xs text-muted-foreground mb-1">Total Spent</p>
+          <p className="text-xl font-bold">${(stats?.totalSpent || 0).toFixed(2)}</p>
         </div>
         <div className="p-4 rounded-xl bg-card border border-border">
-          <p className="text-sm text-muted-foreground mb-1">Successful</p>
-          <p className="text-2xl font-bold text-green-500">{stats.success}</p>
+          <p className="text-xs text-muted-foreground mb-1">Credits Added</p>
+          <p className="text-xl font-bold text-green-500">+{stats?.totalCreditsAdded || 0}</p>
         </div>
         <div className="p-4 rounded-xl bg-card border border-border">
-          <p className="text-sm text-muted-foreground mb-1">Failed</p>
-          <p className="text-2xl font-bold text-destructive">{stats.failed}</p>
+          <p className="text-xs text-muted-foreground mb-1">Credits Used</p>
+          <p className="text-xl font-bold text-amber-500">{stats?.totalCreditsUsed || 0}</p>
         </div>
         <div className="p-4 rounded-xl bg-card border border-border">
-          <p className="text-sm text-muted-foreground mb-1">Avg. Time</p>
-          <p className="text-2xl font-bold text-primary">{stats.avgTime}</p>
+          <p className="text-xs text-muted-foreground mb-1">Transactions</p>
+          <p className="text-xl font-bold">{stats?.transactionCount || 0}</p>
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div
-        className="flex flex-col md:flex-row gap-4 mb-6"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? "translateY(0)" : "translateY(20px)",
-          transition: "all 0.5s ease-out",
-          transitionDelay: "200ms",
-        }}
-      >
-        {/* Search */}
+      {/* Filters */}
+      <div className={cn("flex flex-col md:flex-row gap-3 mb-6 transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
+        style={{ transitionDelay: "200ms" }}>
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by website or type..."
+            placeholder="Search by label, type, or invoice..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
+            className="w-full pl-10 pr-4 h-11 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
           />
         </div>
-
-        {/* Filter Tabs */}
         <div className="flex items-center gap-2 p-1 rounded-xl bg-secondary">
-          {filterTabs.map((tab) => (
+          {["All", "Completed", "Pending", "Failed"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveFilter(tab)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                activeFilter === tab
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              onClick={() => { setStatusFilter(tab); setCurrentPage(1) }}
+              className={cn("px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                statusFilter === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
             >
               {tab}
             </button>
           ))}
         </div>
-
-        {/* Type Filter */}
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="appearance-none pl-10 pr-10 py-3 rounded-xl bg-card border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all cursor-pointer"
-          >
-            {captchaTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Refresh Button */}
-        <button className="p-3 rounded-xl bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
-          <RefreshCw className="w-5 h-5" />
-        </button>
+        <select
+          value={typeFilter}
+          onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1) }}
+          className="h-11 px-4 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="All">All Types</option>
+          <option value="topup">Top Up</option>
+          <option value="redeem">Code Redeem</option>
+          <option value="usage">Usage</option>
+        </select>
       </div>
 
-      {/* History Table */}
-      <div
-        className="rounded-2xl bg-card border border-border overflow-hidden"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? "translateY(0)" : "translateY(20px)",
-          transition: "all 0.5s ease-out",
-          transitionDelay: "300ms",
-        }}
-      >
-        {/* Table Header */}
-        <div className="grid grid-cols-12 gap-4 p-4 bg-secondary/50 border-b border-border text-sm font-medium text-muted-foreground">
-          <div className="col-span-3 flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-            Captcha Type <ArrowUpDown className="w-3 h-3" />
-          </div>
-          <div className="col-span-2">Website</div>
-          <div className="col-span-2 flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-            Status <ArrowUpDown className="w-3 h-3" />
-          </div>
-          <div className="col-span-1">Duration</div>
-          <div className="col-span-1">Credits</div>
-          <div className="col-span-2 flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-            Timestamp <ArrowUpDown className="w-3 h-3" />
-          </div>
-          <div className="col-span-1 text-right">Action</div>
+      {/* Table */}
+      <div className={cn("rounded-2xl bg-card border border-border overflow-hidden transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
+        style={{ transitionDelay: "300ms" }}>
+        {/* Header */}
+        <div className="grid grid-cols-12 gap-4 p-4 bg-secondary/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="col-span-3">Transaction</div>
+          <div className="col-span-2">Amount</div>
+          <div className="col-span-2">Credits</div>
+          <div className="col-span-2">Status</div>
+          <div className="col-span-3">Date</div>
         </div>
 
-        {/* Table Body */}
-        <div className="divide-y divide-border">
-          {filteredData.map((item, index) => (
-            <div
-              key={item.id}
-              className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-secondary/30 transition-colors cursor-pointer ${
-                selectedItem === item.id ? "bg-primary/5" : ""
-              }`}
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible ? "translateX(0)" : "translateX(-10px)",
-                transition: "all 0.3s ease-out",
-                transitionDelay: `${400 + index * 50}ms`,
-              }}
-              onClick={() => setSelectedItem(selectedItem === item.id ? null : item.id)}
-            >
-              <div className="col-span-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 rounded-lg ${
-                      item.type.includes("reCAPTCHA")
-                        ? "bg-blue-500/10"
-                        : item.type.includes("hCaptcha")
-                          ? "bg-amber-500/10"
-                          : item.type.includes("Turnstile")
-                            ? "bg-orange-500/10"
-                            : "bg-purple-500/10"
-                    }`}
-                  >
-                    <Clock
-                      className={`w-4 h-4 ${
-                        item.type.includes("reCAPTCHA")
-                          ? "text-blue-500"
-                          : item.type.includes("hCaptcha")
-                            ? "text-amber-500"
-                            : item.type.includes("Turnstile")
-                              ? "text-orange-500"
-                              : "text-purple-500"
-                      }`}
-                    />
-                  </div>
-                  <span className="font-medium text-foreground">{item.type}</span>
-                </div>
-              </div>
-              <div className="col-span-2 text-muted-foreground truncate">{item.website}</div>
-              <div className="col-span-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                    item.status === "success" ? "bg-green-500/10 text-green-500" : "bg-destructive/10 text-destructive"
-                  }`}
-                >
-                  {item.status === "success" ? (
-                    <CheckCircle2 className="w-3 h-3" />
-                  ) : (
-                    <AlertCircle className="w-3 h-3" />
-                  )}
-                  {item.status === "success" ? "Solved" : "Failed"}
-                </span>
-              </div>
-              <div className="col-span-1 text-muted-foreground">{item.duration}</div>
-              <div className="col-span-1">
-                <span className="text-primary font-medium">{item.credits}</span>
-              </div>
-              <div className="col-span-2 text-muted-foreground text-sm flex items-center gap-2">
-                <Calendar className="w-3 h-3" />
-                {item.timestamp}
-              </div>
-              <div className="col-span-1 text-right">
-                <button className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
-                  <Eye className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredData.length === 0 && (
+        {/* Body */}
+        {historyLoading ? (
           <div className="p-12 text-center">
-            <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium text-foreground mb-1">No results found</p>
-            <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Loading history...</p>
+          </div>
+        ) : paginatedData.length === 0 ? (
+          <div className="p-12 text-center">
+            <History className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-base font-medium mb-1">No transactions found</p>
+            <p className="text-sm text-muted-foreground">{searchQuery ? 'Try adjusting your search' : 'Your deposits will appear here'}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {paginatedData.map((item, idx) => {
+              const typeInfo = getTypeIcon(item.type)
+              const statusInfo = statusBadge(item.status)
+              const isNegative = item.type === 'usage'
+              return (
+                <div key={item.id || idx}
+                  className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-secondary/30 transition-colors"
+                  style={{
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible ? "translateX(0)" : "translateX(-10px)",
+                    transition: "all 0.3s ease-out",
+                    transitionDelay: `${400 + idx * 50}ms`,
+                  }}
+                >
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-3">
+                      <div className={cn("p-2 rounded-lg shrink-0", typeInfo.bg)}>
+                        <typeInfo.icon className={cn("w-4 h-4", typeInfo.color)} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{item.label || typeLabels[item.type] || item.type}</p>
+                        {item.meta && <p className="text-[10px] text-muted-foreground truncate">{item.meta}</p>}
+                        {item.invoiceId && <p className="text-[10px] text-muted-foreground font-mono">#{item.invoiceId.slice(0, 12)}...</p>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    {item.amount != null && item.amount > 0 ? (
+                      <div className="flex items-center gap-2">
+                        {item.cryptoName && (
+                          <CryptoIcon coinId={getNetworkCoinId(item.cryptoName)} className="w-5 h-5" name={item.cryptoName} />
+                        )}
+                        <span className={cn("text-sm font-semibold", isNegative ? "text-amber-500" : "text-green-500")}>
+                          {isNegative ? '-' : '+'}${item.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    {item.credits != null ? (
+                      <span className={cn("text-sm font-semibold", isNegative ? "text-amber-500" : "text-green-500")}>
+                        {isNegative ? '-' : '+'}{item.credits}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", statusInfo.class)}>
+                      {statusInfo.label === 'Completed' ? <CheckCircle2 className="w-3 h-3" /> :
+                       statusInfo.label === 'Pending' ? <Clock className="w-3 h-3" /> :
+                       <AlertCircle className="w-3 h-3" />}
+                      {statusInfo.label}
+                    </span>
+                  </div>
+                  <div className="col-span-3">
+                    <p className="text-sm text-muted-foreground">{item.date}</p>
+                    {item.time && <p className="text-[10px] text-muted-foreground">{item.time}</p>}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
 
       {/* Pagination */}
-      <div
-        className="flex items-center justify-between mt-6"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? "translateY(0)" : "translateY(20px)",
-          transition: "all 0.5s ease-out",
-          transitionDelay: "500ms",
-        }}
-      >
-        <p className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{filteredData.length}</span> of{" "}
-          <span className="font-medium text-foreground">{historyData.length}</span> results
-        </p>
-
-        <div className="flex items-center gap-2">
-          <button
-            className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          {[1, 2, 3].map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                currentPage === page
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
-              }`}
-            >
-              {page}
+      {filteredData.length > 0 && (
+        <div className={cn("flex items-center justify-between mt-6 transition-all duration-500", isVisible ? "opacity-100" : "opacity-0")}
+          style={{ transitionDelay: "500ms" }}>
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>–
+            <span className="font-medium text-foreground">{Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)}</span> of{' '}
+            <span className="font-medium text-foreground">{filteredData.length}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+              className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50">
+              <ChevronLeft className="w-5 h-5" />
             </button>
-          ))}
-
-          <button
-            className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
-            onClick={() => setCurrentPage((p) => p + 1)}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const start = Math.max(1, currentPage - 2)
+              const page = start + i
+              if (page > totalPages) return null
+              return (
+                <button key={page} onClick={() => setCurrentPage(page)}
+                  className={cn("w-10 h-10 rounded-lg text-sm font-medium transition-all",
+                    currentPage === page ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+                  )}>
+                  {page}
+                </button>
+              )
+            })}
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+              className="p-2 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all disabled:opacity-50">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
