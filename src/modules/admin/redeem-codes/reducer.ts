@@ -24,6 +24,15 @@ export interface RedeemCodeItem {
     isActive: boolean
     createdAt: string
     createdBy: { _id: string; name: string; email: string } | null
+    packageId?: string | null
+    package?: {
+        code: string
+        name?: string
+        type: string
+        price?: number
+        validityDays?: number
+        credits?: number
+    } | null
 }
 
 export interface RedeemCodesState {

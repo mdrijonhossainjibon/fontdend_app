@@ -416,15 +416,16 @@ export default function UploadModelContent() {
                         })
                         resolve()
                     } else {
+                        const errMsg = typeof data.error === 'object' ? data.message || data.error?.message || 'Bot rejected upload' : data.error || data.message || 'Bot rejected upload'
                         setState({
                             phase: "error",
                             progress: 0,
-                            message: data.error || "Bot rejected upload",
+                            message: errMsg,
                             botResult: null,
                         })
                         toast({
                             title: "Upload Failed",
-                            description: data.error || "Something went wrong on the bot.",
+                            description: errMsg,
                             variant: "destructive",
                         })
                         reject()

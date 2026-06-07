@@ -26,6 +26,7 @@ import {
   Mail,
   Database,
   GitBranch,
+  ArrowRightLeft,
   AlertCircle,
   CreditCard,
   Smartphone,
@@ -67,7 +68,8 @@ const systemItems = [
   { href: "/admin/permissions", label: "Permissions", icon: Lock },
   { href: "/admin/system/smtp", label: "SMTP Config", icon: Settings },
   { href: "/admin/email", label: "Email Templates", icon: Mail },
-  { href: "/admin/database", label: "Database", icon: Database }
+  { href: "/admin/database", label: "Database", icon: Database },
+  { href: "/admin/database/transfer", label: "Database Transfer", icon: ArrowRightLeft }
 ]
 
 

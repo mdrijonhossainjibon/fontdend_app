@@ -15,13 +15,15 @@ import {
   ArrowRight,
   Ticket,
   Coins,
+  Package,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 export default function RedeemCodePage() {
   const dispatch = useDispatch()
-  const { redeeming, redeemResult } = useSelector((state: RootState) => state.topup)
+  const { redeeming, redeemResult, error } = useSelector((state: RootState) => state.topup)
 
   const [code, setCode] = useState("")
   const [isVisible, setIsVisible] = useState(false)
@@ -33,10 +35,18 @@ export default function RedeemCodePage() {
   useEffect(() => {
     if (redeemResult) {
       setCode("")
-      const t = setTimeout(() => dispatch(clearRedeemResult()), 5000)
+      const t = setTimeout(() => dispatch(clearRedeemResult()), 6000)
       return () => clearTimeout(t)
     }
   }, [redeemResult, dispatch])
+
+  // Auto-clear error after 6s using same action (it clears both redeemResult and error)
+  useEffect(() => {
+    if (error) {
+      const t = setTimeout(() => dispatch(clearRedeemResult()), 6000)
+      return () => clearTimeout(t)
+    }
+  }, [error, dispatch])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,6 +112,21 @@ export default function RedeemCodePage() {
               )}
             </Button>
 
+            {/* Error */}
+            {error && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-full bg-red-500/20 shrink-0 mt-0.5">
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-red-500">Redeem Failed</p>
+                    <p className="text-xs text-muted-foreground mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Success */}
             {redeemResult && (
               <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -111,13 +136,34 @@ export default function RedeemCodePage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-green-500">Code Redeemed!</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Code <span className="font-mono font-bold text-foreground">{redeemResult.code}</span> added{' '}
-                      <span className="font-bold text-green-500">+{redeemResult.creditsAdded} credits</span> to your account.
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Total balance: <span className="font-semibold text-foreground">{redeemResult.totalCredits} credits</span>
-                    </p>
+
+                    {redeemResult.package ? (
+                      <>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Code <span className="font-mono font-bold text-foreground">{redeemResult.code}</span> unlocked{' '}
+                          <span className="font-bold text-purple-500">{redeemResult.package.code}</span> package!
+                        </p>
+                        {redeemResult.package.type && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            <Package className="w-3 h-3 inline mr-1" />
+                            Type: {redeemResult.package.type}
+                            {redeemResult.package.validityDays && (
+                              <><Clock className="w-3 h-3 inline ml-2 mr-1" />{redeemResult.package.validityDays} days</>
+                            )}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Code <span className="font-mono font-bold text-foreground">{redeemResult.code}</span> added{' '}
+                          <span className="font-bold text-green-500">+{redeemResult.creditsAdded} credits</span> to your account.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Total balance: <span className="font-semibold text-foreground">{redeemResult.totalCredits} credits</span>
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

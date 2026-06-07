@@ -1,23 +1,38 @@
 import React, { useState, useEffect } from "react"
 import { useDispatch, useSelector } from 'react-redux'
-import { Gift, Plus, Trash2, Eye, EyeOff, Copy, CheckCircle2, Shield, X, RotateCw, Search, Pencil, RefreshCw } from "lucide-react"
+import { Gift, Plus, Trash2, Eye, EyeOff, Copy, CheckCircle2, Shield, X, RotateCw, Search, Pencil, RefreshCw, Sparkles, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { fetchRedeemCodesRequest, createRedeemCodeRequest, updateRedeemCodeRequest, deleteRedeemCodeRequest } from '@/modules/admin/redeem-codes/actions'
+import { fetchPricingPlansRequest } from '@/modules/admin/pricing-plans/actions'
 import type { RedeemCodeItem } from '@/modules/admin/redeem-codes/reducer'
+import type { PricingPlanItem } from '@/modules/admin/pricing-plans/reducer'
+
+function generateCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
+}
 
 export default function AdminRedeemCodesPage() {
   const dispatch = useDispatch()
   const { codes, loading, creating, saving } = useSelector((state: any) => state.adminRedeemCodes)
+  const { plans } = useSelector((state: any) => state.adminPricingPlans)
 
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<RedeemCodeItem | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [form, setForm] = useState({ code: '', credits: '1000', maxUses: '1', expiresAt: '' })
+  const [form, setForm] = useState({ code: '', credits: '1000', maxUses: '1', expiresAt: '', packageId: '' })
   const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set())
 
-  useEffect(() => { dispatch(fetchRedeemCodesRequest()) }, [dispatch])
+  useEffect(() => {
+    dispatch(fetchRedeemCodesRequest())
+    dispatch(fetchPricingPlansRequest())
+  }, [dispatch])
 
   const showToast = (type: 'success' | 'error', text: string) => {
     setToast({ type, text })
@@ -28,16 +43,24 @@ export default function AdminRedeemCodesPage() {
     c.code.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleGenerate = () => {
+    setForm(p => ({ ...p, code: generateCode() }))
+  }
+
   const handleCreate = () => {
-    if (!form.code.trim() || !form.credits) return
-    dispatch(createRedeemCodeRequest({
+    if (!form.code.trim()) return
+    const payload: any = {
       code: form.code.trim(),
       credits: Number(form.credits),
       maxUses: Number(form.maxUses),
       expiresAt: form.expiresAt || null,
-    }))
+    }
+    if (form.packageId) {
+      payload.packageId = form.packageId
+    }
+    dispatch(createRedeemCodeRequest(payload))
     setShowCreate(false)
-    setForm({ code: '', credits: '1000', maxUses: '1', expiresAt: '' })
+    setForm({ code: '', credits: '1000', maxUses: '1', expiresAt: '', packageId: '' })
     showToast('success', `Code created!`)
   }
 
@@ -65,17 +88,24 @@ export default function AdminRedeemCodesPage() {
       credits: String(code.credits),
       maxUses: String(code.maxUses),
       expiresAt: code.expiresAt ? code.expiresAt.split('T')[0] : '',
+      packageId: code.packageId || '',
     })
   }
 
   const handleEdit = () => {
     if (!editTarget || !form.credits) return
-    dispatch(updateRedeemCodeRequest({
+    const payload: any = {
       id: editTarget.id,
       credits: Number(form.credits),
       maxUses: Number(form.maxUses),
       expiresAt: form.expiresAt || null,
-    }))
+    }
+    if (form.packageId) {
+      payload.packageId = form.packageId
+    } else {
+      payload.packageId = null
+    }
+    dispatch(updateRedeemCodeRequest(payload))
     setEditTarget(null)
     showToast('success', 'Code updated')
   }
@@ -98,6 +128,8 @@ export default function AdminRedeemCodesPage() {
     if (!code.expiresAt) return false
     return new Date(code.expiresAt) < new Date()
   }
+
+  const selectedPlan = plans?.find((p: PricingPlanItem) => p._id === form.packageId || p.id === form.packageId)
 
   const modalOpen = showCreate || editTarget
 
@@ -157,26 +189,71 @@ export default function AdminRedeemCodesPage() {
               </button>
             </div>
             <div className="space-y-4">
+              {/* Code field with generate button */}
               <div>
                 <label className="text-sm font-medium mb-1 block">Code</label>
-                <input
-                  value={form.code}
-                  onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                  placeholder="e.g. SUMMER50"
-                  disabled={!!editTarget}
-                  className="w-full h-11 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm uppercase tracking-wider font-mono font-bold disabled:opacity-50"
-                />
+                <div className="flex gap-2">
+                  <input
+                    value={form.code}
+                    onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                    placeholder="e.g. SUMMER50"
+                    disabled={!!editTarget}
+                    className="flex-1 h-11 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm uppercase tracking-wider font-mono font-bold disabled:opacity-50"
+                  />
+                  {!editTarget && (
+                    <button
+                      type="button"
+                      onClick={handleGenerate}
+                      className="px-3 h-11 rounded-xl bg-secondary/50 border border-border hover:bg-secondary/80 transition-colors"
+                      title="Generate random code"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Package selector */}
               <div>
-                <label className="text-sm font-medium mb-1 block">Credits *</label>
+                <label className="text-sm font-medium mb-1 block">Package (optional)</label>
+                <select
+                  value={form.packageId}
+                  onChange={e => setForm(p => ({ ...p, packageId: e.target.value }))}
+                  className="w-full h-11 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm"
+                >
+                  <option value="">— Credits only —</option>
+                  {plans?.map((plan: PricingPlanItem) => (
+                    <option key={plan._id} value={plan._id}>
+                      {plan.code} — {plan.priceDisplay} ({plan.type})
+                    </option>
+                  ))}
+                </select>
+                {selectedPlan && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <Package className="w-3 h-3 inline mr-1" />
+                    {selectedPlan.code} — {selectedPlan.validity} validity, {selectedPlan.recognition} recognition
+                  </p>
+                )}
+              </div>
+
+              {/* Credits (hide hint if package selected) */}
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Credits {form.packageId ? '(overridden by package)' : '*'}
+                </label>
                 <input
                   type="number"
                   value={form.credits}
                   onChange={e => setForm(p => ({ ...p, credits: e.target.value }))}
-                  className="w-full h-11 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm"
+                  className={cn(
+                    "w-full h-11 px-4 rounded-xl bg-secondary/50 border border-border focus:border-primary/50 focus:outline-none text-sm",
+                    form.packageId && "opacity-50"
+                  )}
                   min={1}
+                  disabled={!!form.packageId}
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Max Uses</label>
@@ -200,7 +277,7 @@ export default function AdminRedeemCodesPage() {
               </div>
               <Button
                 onClick={editTarget ? handleEdit : handleCreate}
-                disabled={creating || saving || !form.credits}
+                disabled={creating || saving || !form.code.trim() || (!form.credits && !form.packageId)}
                 className="w-full h-12 rounded-xl gap-2 mt-2"
               >
                 {(creating || saving) ? (
@@ -233,6 +310,7 @@ export default function AdminRedeemCodesPage() {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left p-4 font-medium text-muted-foreground">Code</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Package</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Credits</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Uses</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Expires</th>
@@ -259,6 +337,18 @@ export default function AdminRedeemCodesPage() {
                             <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                           </button>
                         </div>
+                      </td>
+                      <td className="p-4">
+                        {code.packageId ? (
+                          <div className="flex items-center gap-1.5">
+                            <Package className="w-3.5 h-3.5 text-purple-500" />
+                            <span className="text-purple-500 font-medium text-xs">
+                              {code.package?.code || code.packageId.slice(-6)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
                       </td>
                       <td className="p-4 font-semibold">{(code.credits ?? 0).toLocaleString()}</td>
                       <td className="p-4">

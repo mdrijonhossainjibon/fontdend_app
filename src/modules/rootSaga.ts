@@ -18,6 +18,7 @@ import adminPricingPlansSaga from './admin/pricing-plans/saga';
 import adminUserPackagesSaga from './admin/user-packages/saga';
 import adminUserDetailsSaga from './admin/user-details/saga';
 import adminPermissionsSaga from './admin/permissions/saga';
+import adminDatabaseTransferSaga from './admin/database-transfer/saga';
 import dashboardSaga from './dashboard/saga';
 import aiTrainingSaga from './ai-training/saga';
 import authSaga from './auth/saga';
@@ -47,6 +48,7 @@ export default function* rootSaga(): Generator {
         adminUserPackagesSaga(),
         adminUserDetailsSaga(),
         adminPermissionsSaga(),
+        adminDatabaseTransferSaga(),
         dashboardSaga(),
         aiTrainingSaga(),
         authSaga(),

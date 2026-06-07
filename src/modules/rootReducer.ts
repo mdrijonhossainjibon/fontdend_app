@@ -18,6 +18,7 @@ import adminPromoOffersReducer from './admin/promo-offers/reducer';
 import adminUserPackagesReducer from './admin/user-packages/reducer';
 import adminUserDetailsReducer from './admin/user-details/reducer';
 import adminPermissionsReducer from './admin/permissions/reducer';
+import adminDatabaseTransferReducer from './admin/database-transfer/reducer';
 import dashboardReducer from './dashboard/reducer';
 import aiTrainingReducer from './ai-training/reducer';
 import authReducer from './auth/reducer';
@@ -47,6 +48,7 @@ const rootReducer = combineReducers({
     adminUserPackages: adminUserPackagesReducer,
     adminUserDetails: adminUserDetailsReducer,
     adminPermissions: adminPermissionsReducer,
+    adminDatabaseTransfer: adminDatabaseTransferReducer,
     dashboard: dashboardReducer,
     aiTraining: aiTrainingReducer,
     settings: settingsReducer,

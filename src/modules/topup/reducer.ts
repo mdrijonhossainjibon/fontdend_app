@@ -24,6 +24,14 @@ export interface RedeemResult {
     creditsAdded: number
     totalCredits: number
     code: string
+    package?: {
+        code: string
+        name?: string
+        type: string
+        credits: number
+        validityDays: number
+        recognition?: string
+    } | null
 }
 
 export interface HistoryStats {
@@ -132,13 +140,13 @@ const topupReducer = (state = initialState, action: any): TopupState => {
 
         // Redeem Code
         case types.REDEEM_CODE_REQUEST:
-            return { ...state, redeeming: true }
+            return { ...state, redeeming: true, error: null, redeemResult: null }
         case types.REDEEM_CODE_SUCCESS:
             return { ...state, redeeming: false, redeemResult: action.payload }
         case types.REDEEM_CODE_FAILURE:
             return { ...state, redeeming: false, error: action.payload }
         case types.CLEAR_REDEEM_RESULT:
-            return { ...state, redeemResult: null }
+            return { ...state, redeemResult: null, error: null }
 
         // History
         case types.FETCH_HISTORY_REQUEST:

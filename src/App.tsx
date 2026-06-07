@@ -46,6 +46,7 @@ const AdminSettings = lazy(() => import('@/pages/admin/settings/page'))
 const AdminNotifications = lazy(() => import('@/pages/admin/notifications/page'))
 const AdminEmail = lazy(() => import('@/pages/admin/email/page'))
 const AdminDatabase = lazy(() => import('@/pages/admin/database/page'))
+const AdminDatabaseTransfer = lazy(() => import('@/pages/admin/database/transfer/page'))
 const AdminUploadModel = lazy(() => import('@/pages/admin/upload-model/page'))
 const AdminBots = lazy(() => import('@/pages/admin/bots/page'))
 const AdminBotEndpoints = lazy(() => import('@/pages/admin/ai-training/bot-endpoints/page'))
@@ -129,6 +130,7 @@ export default function App() {
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="email" element={<AdminEmail />} />
           <Route path="database" element={<AdminDatabase />} />
+          <Route path="database/transfer" element={<AdminDatabaseTransfer />} />
           <Route path="upload-model" element={<AdminUploadModel />} />
           <Route path="bots" element={<AdminBots />} />
           <Route path="ai-training/bot-endpoints" element={<AdminBotEndpoints />} />
