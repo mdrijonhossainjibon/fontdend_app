@@ -12,10 +12,9 @@ import {
   cancelPackageRequest,
   fetchOffersRequest,
 } from "@/modules/dashboard/actions"
-import { fetchHistoryRequest } from "@/modules/topup/actions"
 
 import { useDashboardSocket } from "@/hooks/useDashboardSocket"
-import { Zap, Clock, TrendingUp, CheckCircle2, ArrowUpRight, Sparkles, Package, Key, Copy, RefreshCw, ToggleLeft, ToggleRight, Trash2, Star, Activity, ChevronLeft, ChevronRight, AlertTriangle, History, Search, Gift, Coins, ArrowDown } from "lucide-react"
+import { Zap, Clock, TrendingUp, CheckCircle2, ArrowUpRight, Sparkles, Package, Key, Copy, RefreshCw, ToggleLeft, ToggleRight, Trash2, Star, Activity, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react"
 import { Link } from 'react-router-dom'
 import { cn } from "@/lib/utils"
 import { SkeletonStats, SkeletonGrid, SkeletonCard } from "@/components/skeletons"
@@ -47,35 +46,13 @@ export default function DashboardPage() {
     activePackage,
     apiKeys: dashboardApiKeys,
     loading,
-    generatingKey,
+    generatingKeys,
     regeneratingKey,
     offers,
     offersLoading,
   } = useSelector((state: RootState) => state.dashboard)
 
-  const { history, historyLoading } = useSelector((state: RootState) => state.topup)
-  const transactions = history?.transactions?.slice(0, 5) || []
-
-  useEffect(() => {
-    dispatch(fetchHistoryRequest())
-  }, [dispatch])
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'topup': return { icon: ArrowDown, bg: 'bg-green-500/10', color: 'text-green-500' }
-      case 'redeem': return { icon: Gift, bg: 'bg-purple-500/10', color: 'text-purple-500' }
-      default: return { icon: Coins, bg: 'bg-primary/10', color: 'text-primary' }
-    }
-  }
-  const typeLabels: Record<string, string> = { topup: 'Top Up', deposit: 'Deposit', redeem: 'Code Redeemed', purchase: 'Purchase', usage: 'Usage' }
-  const statusBadge = (status?: string) => {
-    const s = status || 'completed'
-    if (s === 'paid' || s === 'completed') return { label: 'Completed', class: 'bg-green-500/10 text-green-500' }
-    if (s === 'pending') return { label: 'Pending', class: 'bg-amber-500/10 text-amber-500' }
-    return { label: s, class: 'bg-secondary text-muted-foreground' }
-  }
-
-  const startAutoPlay = useCallback(() => {
+const startAutoPlay = useCallback(() => {
     if (autoPlayRef.current) clearInterval(autoPlayRef.current)
     autoPlayRef.current = setInterval(() => {
       setActiveOfferIndex((prev) => (prev + 1) % (offers.length || 1))
@@ -183,7 +160,7 @@ export default function DashboardPage() {
     const finalName = slotName.startsWith('Slot') ? (slotName === 'Slot 2' ? 'API Key 2' : (slotName === 'Slot 3' ? 'API Key 3' : 'Master Key')) : slotName
     const nameToCreate = slotName === 'Slot 1' ? 'Master Key' : finalName
 
-    if (generatingKey) return
+    if (generatingKeys.includes(slotName)) return
     dispatch(generateKeyRequest(nameToCreate, slotName))
   }
 
@@ -657,9 +634,6 @@ export default function DashboardPage() {
                     </div>
                     <h2 className="text-lg font-semibold text-foreground">API Keys</h2>
                   </div>
-                  <Link to="/dashboard/api-keys" className="text-sm text-primary hover:underline flex items-center gap-1">
-                    Manage <ArrowUpRight className="w-4 h-4" />
-                  </Link>
                 </div>
 
                 <div className="space-y-3">
@@ -676,10 +650,10 @@ export default function DashboardPage() {
                           </div>
                           <button
                             onClick={() => handleGenerateKey(key.name)}
-                            disabled={generatingKey === key.name}
+                            disabled={generatingKeys.includes(key.name)}
                             className="px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5"
                           >
-                            {generatingKey === key.name ? (
+                            {generatingKeys.includes(key.name) ? (
                               <>
                                 <RefreshCw className="w-3 h-3 animate-spin" />
                                 Generating...
@@ -748,57 +722,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Recent Transactions */}
-              <div className="p-4 md:p-6 rounded-xl md:rounded-2xl bg-card border border-border animate-in fade-in duration-500"
-                style={{ animationDelay: '500ms' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-primary/10">
-                      <History className="w-5 h-5 text-primary" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-foreground">Recent Transactions</h2>
-                  </div>
-                  <Link to="/dashboard/history" className="text-sm text-primary hover:underline flex items-center gap-1">
-                    View All <ArrowUpRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                {historyLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : transactions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <History className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No recent transactions</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {transactions.map((item: any, idx: number) => {
-                      const typeInfo = getTypeIcon(item.type)
-                      const statusInfo = statusBadge(item.status)
-                      return (
-                        <div key={item.id || idx} className="flex items-center justify-between p-3 rounded-xl hover:bg-secondary/30 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className={cn("p-2 rounded-lg", typeInfo.bg)}>
-                              <typeInfo.icon className={cn("w-4 h-4", typeInfo.color)} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">{item.label || typeLabels[item.type] || item.type}</p>
-                              <p className="text-xs text-muted-foreground">{item.date}</p>
-                            </div>
-                          </div>
-                          <div className="text-right flex items-center gap-3">
-                            <span className={cn("text-sm font-semibold", item.type === 'usage' ? 'text-amber-500' : 'text-green-500')}>
-                              {item.type === 'usage' ? '-' : '+'}${(item.amount || 0).toFixed(2)}
-                            </span>
-                            <span className={cn("text-xs px-2 py-0.5 rounded-full", statusInfo.class)}>{statusInfo.label}</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
             </>
           )}
         </div>

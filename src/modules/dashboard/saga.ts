@@ -37,12 +37,12 @@ function* generateKeySaga(action: any): Generator {
         });
 
         if (status === 200) {
-            yield put(actions.generateKeySuccess(response.apiKey));
+            yield put(actions.generateKeySuccess(response.apiKey, action.payload.slotName));
         } else {
-            yield put(actions.generateKeyFailure(response?.error || 'Failed to generate key'));
+            yield put(actions.generateKeyFailure(response?.error || 'Failed to generate key', action.payload.slotName));
         }
     } catch (error: any) {
-        yield put(actions.generateKeyFailure(error.message || 'An error occurred'));
+        yield put(actions.generateKeyFailure(error.message || 'An error occurred', action.payload.slotName));
     }
 }
 

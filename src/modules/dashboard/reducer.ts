@@ -7,7 +7,7 @@ const initialState: any = {
     apiKeys: [],
     loading: false,
     error: null,
-    generatingKey: null,
+    generatingKeys: [],
     regeneratingKey: null,
     activities: [],
     activitiesLoading: false,
@@ -48,15 +48,17 @@ const dashboardReducer = (state = initialState, action: any) => {
         case types.GENERATE_KEY_REQUEST:
             return {
                 ...state,
-                generatingKey: action.payload.slotName,
+                generatingKeys: action.payload.slotName
+                    ? [...state.generatingKeys, action.payload.slotName]
+                    : state.generatingKeys,
             };
         case types.GENERATE_KEY_SUCCESS:
             return {
                 ...state,
-                generatingKey: null,
+                generatingKeys: state.generatingKeys.filter((s: string) => s !== action.meta?.slotName),
                 apiKeys: action.payload
                     ? state.apiKeys.map((k: any) =>
-                        k.status === 'empty' && !k.id
+                        k.status === 'empty' && !k.id && k.name === action.meta?.slotName
                             ? { ...action.payload, isMaster: false }
                             : k
                       )
@@ -65,7 +67,8 @@ const dashboardReducer = (state = initialState, action: any) => {
         case types.GENERATE_KEY_FAILURE:
             return {
                 ...state,
-                generatingKey: null,
+                generatingKeys: state.generatingKeys.filter((s: string) => s !== action.meta?.slotName),
+                error: action.payload,
             };
 
         case types.DELETE_KEY_REQUEST:

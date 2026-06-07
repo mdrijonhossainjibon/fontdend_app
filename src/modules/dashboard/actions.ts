@@ -19,14 +19,16 @@ export const generateKeyRequest = (name: string, slotName: string) => ({
     payload: { name, slotName },
 });
 
-export const generateKeySuccess = (apiKey?: any) => ({
+export const generateKeySuccess = (apiKey?: any, slotName?: string) => ({
     type: types.GENERATE_KEY_SUCCESS,
     payload: apiKey,
+    meta: { slotName },
 });
 
-export const generateKeyFailure = (error: string) => ({
+export const generateKeyFailure = (error: string, slotName?: string) => ({
     type: types.GENERATE_KEY_FAILURE,
     payload: error,
+    meta: { slotName },
 });
 
 export const deleteKeyRequest = (id: string) => ({
