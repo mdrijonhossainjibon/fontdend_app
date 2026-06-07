@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import { CryptoIcon } from '@/components/CryptoIcon'
@@ -26,6 +26,7 @@ function getNetworkCoinId(networkName: string): string {
 
 export default function TopupInvoicePage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const invoiceId = searchParams.get('invoice') || ''
   const dispatch = useDispatch()
 
@@ -118,7 +119,7 @@ export default function TopupInvoicePage() {
         <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 flex items-center justify-center"><XCircle className="w-8 h-8 text-red-400" /></div>
         <h2 className="text-xl font-bold">Invoice Not Found</h2>
         <p className="text-sm text-muted-foreground">{invoiceError || 'This invoice may have been removed or expired.'}</p>
-        <Button variant="outline" onClick={() => window.close()} className="rounded-xl">Close</Button>
+        <Button variant="outline" onClick={() => navigate('/dashboard/history')} className="rounded-xl">Go Back</Button>
       </div>
     </div>
   )
@@ -129,7 +130,7 @@ export default function TopupInvoicePage() {
       {/* Top bar */}
       <header className="sticky top-0 z-20 bg-background/70 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Button variant="ghost" size="sm" className="gap-2 rounded-xl -ml-2" onClick={() => window.close()}>
+          <Button variant="ghost" size="sm" className="gap-2 rounded-xl -ml-2" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -324,7 +325,7 @@ export default function TopupInvoicePage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col">
       <header className="sticky top-0 z-20 bg-background/70 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
-          <Button variant="ghost" size="sm" className="gap-2 rounded-xl -ml-2" onClick={() => window.close()}>
+          <Button variant="ghost" size="sm" className="gap-2 rounded-xl -ml-2" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
         </div>
@@ -403,7 +404,7 @@ export default function TopupInvoicePage() {
             </div>
           </div>
 
-          <Button variant="outline" onClick={() => window.close()} className="rounded-xl">Close</Button>
+          <Button variant="outline" onClick={() => navigate('/dashboard/history')} className="rounded-xl">Go Back</Button>
         </div>
       </main>
     </div>

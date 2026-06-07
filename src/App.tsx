@@ -15,7 +15,6 @@ const ForgotPasswordPage = lazy(() => import('@/pages/auth/forgot-password/page'
 // Dashboard
 const DashboardLayout = lazy(() => import('@/pages/dashboard/layout'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/page'))
-const DashboardActivities = lazy(() => import('@/pages/dashboard/activities/page'))
 const DashboardApiKeys = lazy(() => import('@/pages/dashboard/api-keys/page'))
 const DashboardHistory = lazy(() => import('@/pages/dashboard/history/page'))
 const DashboardPricing = lazy(() => import('@/pages/dashboard/pricing/page'))
@@ -98,7 +97,6 @@ export default function App() {
         {/* Dashboard routes (private) */}
         <Route path="/dashboard" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
           <Route index element={<DashboardPage />} />
-          <Route path="activities" element={<DashboardActivities />} />
           <Route path="api-keys" element={<DashboardApiKeys />} />
           <Route path="history" element={<DashboardHistory />} />
           <Route path="pricing" element={<DashboardPricing />} />

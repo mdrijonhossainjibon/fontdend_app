@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
   CreditCard,
-  Zap,
   Package,
   Users,
   X,
@@ -20,7 +19,6 @@ const mainNavItems = [
   { href: "/dashboard/topup", label: "Top Up", icon: CreditCard },
   { href: "/dashboard/redeem", label: "Redeem Code", icon: Gift },
   { href: "/dashboard/history", label: "Transaction History", icon: History },
-  { href: "/dashboard/activities", label: "Activities", icon: Zap },
   { href: "/dashboard/pricing", label: "Pricing", icon: Package },
   { href: "/dashboard/referrals", label: "Invite & Earn", icon: Users },
 ]
@@ -131,7 +129,7 @@ export function DashboardSidebar({ isMobileMenuOpen = false, onCloseMobileMenu }
     <aside
       className={cn(
         "fixed left-0 h-screen z-40 flex flex-col transition-all duration-300 ease-in-out",
-        "bg-card/80 backdrop-blur-xl border-r border-border",
+        "bg-card border-r border-border",
         // Desktop: always visible, fixed width
         "lg:top-0",
         "lg:w-64",

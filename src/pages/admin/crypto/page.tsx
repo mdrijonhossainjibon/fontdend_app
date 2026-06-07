@@ -10,12 +10,14 @@ import {
     CheckCircle2,
     Loader2,
     AlertCircle,
-    Trash2
+    Trash2,
+    RefreshCw
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input, Switch, Select, Modal, Form, message, Tag, Space, Table, Divider, Button as AntButton, Tooltip } from "antd"
+import { Input, Switch, Modal, Form, message, Tag, Space, Table, Divider, Button as AntButton, Tooltip, AutoComplete } from "antd"
 import { API_CALL } from "@/lib/auth-fingerprint"
+
 import { CryptoIcon } from "@/components/CryptoIcon"
 interface Network {
     id: string
@@ -48,8 +50,6 @@ export default function AdminCrypto() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingConfig, setEditingConfig] = useState<CryptoConfig | null>(null)
     const [form] = Form.useForm()
-
-    // Add Ant Design Hooks
     const [modal, modalContextHolder] = Modal.useModal()
     const [messageApi, messageContextHolder] = message.useMessage()
 
@@ -95,6 +95,7 @@ export default function AdminCrypto() {
             // Ensure confirmations is a number for each network
             const formattedValues = {
                 ...values,
+                icon: values.name?.toLowerCase() || '',
                 networks: values.networks?.map((net: any) => ({
                     ...net,
                     confirmations: Number(net.confirmations)
@@ -102,12 +103,13 @@ export default function AdminCrypto() {
             }
 
             const { response, status } = await API_CALL({ method: 'POST', url: '/crypto/config', body: formattedValues })
-            if (status === 200 && response.success) {
-                messageApi.success(response.message)
+            if (status === 200 || status === 201) {
+                const msg = response?.message || response?.data?.message || 'Saved successfully'
+                messageApi.success(msg)
                 setIsModalOpen(false)
                 fetchConfigs()
             } else {
-                messageApi.error(response?.error || "Save failed")
+                messageApi.error(response?.error || response?.message || "Save failed")
             }
         } catch (error) {
             messageApi.error("Failed to save configuration")
@@ -127,11 +129,11 @@ export default function AdminCrypto() {
             async onOk() {
                 try {
                     const { response, status } = await API_CALL({ method: 'DELETE', url: `/crypto/config?id=${id}` })
-                    if (status === 200 && response.success) {
-                        messageApi.success("Crypto configuration deleted")
+                    if (status === 200) {
+                        messageApi.success(response?.message || "Crypto configuration deleted")
                         fetchConfigs()
                     } else {
-                        messageApi.error(response?.error || "Delete failed")
+                        messageApi.error(response?.error || response?.message || "Delete failed")
                     }
                 } catch (error) {
                     messageApi.error("Failed to delete configuration")
@@ -218,19 +220,26 @@ export default function AdminCrypto() {
                     </h1>
                     <p className="text-muted-foreground mt-1">Manage supported cryptocurrencies and their networks.</p>
                 </div>
-                <AntButton
-                    type="primary"
-                    size="large"
-                    icon={<Plus className="w-4 h-4" />}
-                    onClick={() => {
-                        setEditingConfig(null)
-                        form.resetFields()
-                        setIsModalOpen(true)
-                    }}
-                    className="bg-yellow-500 hover:bg-yellow-600 border-none text-black font-bold h-12 rounded-xl"
-                >
-                    Add New Crypto
-                </AntButton>
+                <div className="flex items-center gap-2">
+                    <AntButton
+                        type="default"
+                        size="large"
+                        icon={<RefreshCw className="w-4 h-4" />}
+                        onClick={fetchConfigs}
+                        className="h-12 rounded-xl"
+                    >
+                        Reload
+                    </AntButton>
+                    <AntButton
+                        type="primary"
+                        size="large"
+                        icon={<Plus className="w-4 h-4" />}
+                        onClick={handleAddNew}
+                        className="bg-yellow-500 hover:bg-yellow-600 border-none text-black font-bold h-12 rounded-xl"
+                    >
+                        Add New Crypto
+                    </AntButton>
+                </div>
             </div>
 
             <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
@@ -275,18 +284,9 @@ export default function AdminCrypto() {
                         <Form.Item name="fullName" label="Full Name" rules={[{ required: true }]}>
                             <Input placeholder="Tether USD" />
                         </Form.Item>
-                        <Form.Item name="icon" label="Icon Name" rules={[{ required: true }]}>
-                            <Input placeholder="usdt" />
-                        </Form.Item>
-                        <Form.Item name="color" label="Brand Color (text-xxx)" rules={[{ required: true }]}>
-                            <Input placeholder="text-green-500" />
-                        </Form.Item>
-                        <Form.Item name="bg" label="Background CSS (bg-xxx)" rules={[{ required: true }]}>
-                            <Input placeholder="bg-green-500/10" />
-                        </Form.Item>
-                        <Form.Item name="borderGlow" label="Border Glow CSS (shadow-xxx)" rules={[{ required: true }]}>
-                            <Input placeholder="shadow-green-500/20" />
-                        </Form.Item>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Form.Item name="isActive" label="Is Active" valuePropName="checked">
                             <Switch />
                         </Form.Item>
@@ -295,7 +295,12 @@ export default function AdminCrypto() {
                     <Divider>Networks</Divider>
 
                     <Form.List name="networks">
-                        {(fields, { add, remove }) => (
+                        {(fields, { add, remove }) => {
+                            // Collect existing network suggestions from all configs
+                            const allNetIds = [...new Set(configs.flatMap(c => c.networks.map(n => n.id)))]
+                            const allNetNames = [...new Set(configs.flatMap(c => c.networks.map(n => n.name)))]
+
+                            return (
                             <div className="space-y-4">
                                 {fields.map(({ key, name, ...restField }) => (
                                     <div key={key} className="p-4 border rounded-xl bg-secondary/20 relative group">
@@ -307,30 +312,24 @@ export default function AdminCrypto() {
                                             onClick={() => remove(name)}
                                             icon={<Trash2 className="w-4 h-4" />}
                                         />
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-2 gap-3">
                                             <Form.Item {...restField} name={[name, 'id']} label="Net ID" rules={[{ required: true }]}>
-                                                <Input placeholder="bsc" />
+                                                <AutoComplete
+                                                    placeholder="bsc"
+                                                    options={allNetIds.map(id => ({ value: id }))}
+                                                    filterOption={(input, option) =>
+                                                        (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                                                    }
+                                                />
                                             </Form.Item>
                                             <Form.Item {...restField} name={[name, 'name']} label="Net Name" rules={[{ required: true }]}>
-                                                <Input placeholder="BNB Smart Chain" />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'address']} label="Default Address" rules={[{ required: true }]}>
-                                                <Input placeholder="0x..." />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'time']} label="Processing Time" rules={[{ required: true }]}>
-                                                <Input placeholder="5-10 mins" />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'confirmations']} label="Confirmations" rules={[{ required: true }]}>
-                                                <Input type="number" placeholder="1" />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'fee']} label="Service Fee" rules={[{ required: true }]}>
-                                                <Input placeholder="1 USDT" />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'minDeposit']} label="Min Deposit" rules={[{ required: true }]}>
-                                                <Input placeholder="10 USDT" />
-                                            </Form.Item>
-                                            <Form.Item {...restField} name={[name, 'isActive']} label="Active" valuePropName="checked">
-                                                <Switch size="small" />
+                                                <AutoComplete
+                                                    placeholder="BNB Smart Chain"
+                                                    options={allNetNames.map(n => ({ value: n }))}
+                                                    filterOption={(input, option) =>
+                                                        (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                                                    }
+                                                />
                                             </Form.Item>
                                         </div>
                                     </div>
@@ -339,7 +338,8 @@ export default function AdminCrypto() {
                                     Add Network
                                 </AntButton>
                             </div>
-                        )}
+                            )
+                        }}
                     </Form.List>
 
                     <Form.Item className="mt-8 mb-0 flex justify-end">

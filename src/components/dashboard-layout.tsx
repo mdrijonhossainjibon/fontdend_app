@@ -10,7 +10,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-card">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
         <div className="flex items-center justify-between p-4">
@@ -56,8 +56,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       />
 
       {/* Main Content */}
-      <main className="min-h-screen transition-all duration-300 pt-16 lg:pt-0 lg:ml-64">
-        {children}
+      <main className="min-h-screen transition-all duration-300 pt-16 lg:pt-0 bg-card">
+        <div className="w-full px-4 md:px-6">
+          {children}
+        </div>
       </main>
     </div>
   )
