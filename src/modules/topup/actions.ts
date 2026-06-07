@@ -125,3 +125,16 @@ export const fetchInvoiceFailure = (error: string) => ({
 export const resetInvoice = () => ({
     type: types.RESET_INVOICE,
 })
+
+// ── Check Pending Deposit ──
+export const checkPendingDepositRequest = () => ({
+    type: types.CHECK_PENDING_DEPOSIT_REQUEST,
+})
+export const checkPendingDepositSuccess = (pendingDeposit: any) => ({
+    type: types.CHECK_PENDING_DEPOSIT_SUCCESS,
+    payload: pendingDeposit,
+})
+export const checkPendingDepositFailure = (error: string) => ({
+    type: types.CHECK_PENDING_DEPOSIT_FAILURE,
+    payload: error,
+})

@@ -5,8 +5,6 @@ import { Link } from 'react-router-dom'
 import {
   Coins,
   CheckCircle2,
-  Copy,
-  Clock,
   Shield,
   ChevronDown,
   Search,
@@ -14,6 +12,7 @@ import {
   XCircle,
   ArrowLeft,
   ArrowUpRight,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -21,7 +20,7 @@ import { Empty } from "antd"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import {
-  fetchActivePackageRequest,
+  checkPendingDepositRequest,
   createCryptomusInvoiceRequest,
   resetCryptomusStatus,
   startCryptomusPolling,
@@ -30,6 +29,9 @@ import {
 import { fetchCryptoConfigRequest } from "@/modules/crypto/actions"
 import { CryptoIcon } from "@/components/CryptoIcon"
 import { QRCodeSVG } from 'qrcode.react'
+import DepositInvoiceCard from '@/components/DepositInvoiceCard'
+
+const depositAmounts = [2, 5, 10, 25, 50, 100]
 
 function getNetworkCoinId(networkName: string): string {
   const n = (networkName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -47,12 +49,10 @@ function getNetworkCoinId(networkName: string): string {
   return 'btc'
 }
 
-const depositAmounts = [2, 5, 10, 25, 50, 100]
-
 export default function DashboardTopupPage() {
   const dispatch = useDispatch()
   const topupState = useSelector((state: RootState) => state.topup)
-  const pendingDeposit = topupState.activePackage?.pendingDeposit
+  const pendingDeposit = topupState.pendingDeposit || topupState.activePackage?.pendingDeposit
   const {
     cryptomusCreating, cryptomusUrl, cryptomusInvoiceId, cryptomusError,
     cryptomusStatus, cryptomusWalletAddress, cryptomusNetwork, cryptomusPaymentAmount,
@@ -91,7 +91,7 @@ export default function DashboardTopupPage() {
       const diff = end - now
       if (diff <= 0) {
         setPendingCountdown('Expired')
-        dispatch(fetchActivePackageRequest())
+        dispatch(checkPendingDepositRequest())
         return
       }
       const m = Math.floor(diff / 60000)
@@ -105,6 +105,7 @@ export default function DashboardTopupPage() {
 
   useEffect(() => {
     dispatch(fetchCryptoConfigRequest())
+    dispatch(checkPendingDepositRequest())
   }, [dispatch])
 
   useEffect(() => {
@@ -211,160 +212,38 @@ export default function DashboardTopupPage() {
         <p className="text-sm text-muted-foreground mt-1">Deposit funds using cryptocurrency</p>
       </div>
 
-      {/* Pending Deposit View */}
-      {pendingDeposit && pendingCountdown !== 'Expired' ? (
-        <div className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
-          <div className="max-w-xl mx-auto space-y-4">
-            <div className="rounded-xl bg-card border border-amber-500/20 p-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                  <Clock className="w-6 h-6 text-amber-400 animate-pulse" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-bold">Awaiting Payment</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Complete your deposit to receive credits</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-lg font-bold tabular-nums">${pendingDeposit.amountUSD.toFixed(2)}</div>
-                  {pendingCountdown && (
-                    <div className="flex items-center gap-1 text-xs text-amber-400 font-medium mt-0.5 justify-end">
-                      <Clock className="w-3 h-3" />
-                      <span className="tabular-nums font-mono">{pendingCountdown}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-card border border-border overflow-hidden">
-              {pendingDeposit.address && (
-                <div className="flex justify-center py-4 px-4 bg-secondary/20">
-                  <div className="p-3 bg-white rounded-lg">
-                    <QRCodeSVG value={pendingDeposit.address} size={160} level="M" />
-                  </div>
-                </div>
-              )}
-              <div className="px-4 py-3 flex items-center justify-center gap-3 border-t border-border bg-muted/20">
-                {pendingDeposit.cryptoName && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background border border-border">
-                    <CryptoIcon coinId={pendingDeposit.cryptoName.toLowerCase()} className="w-5 h-5" name={pendingDeposit.cryptoName} />
-                    <span className="text-xs font-semibold">{pendingDeposit.cryptoName.toUpperCase()}</span>
-                  </div>
-                )}
-                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                {pendingDeposit.networkName && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background border border-border">
-                    <CryptoIcon coinId={getNetworkCoinId(pendingDeposit.networkName)} className="w-5 h-5" name={pendingDeposit.networkName} />
-                    <span className="text-xs font-semibold">{pendingDeposit.networkName.toUpperCase()}</span>
-                  </div>
-                )}
-              </div>
-              {pendingDeposit.address && (
-                <div className="p-4 border-t border-border">
-                  <p className="text-[11px] text-muted-foreground mb-2 text-center uppercase tracking-wider">Send to this address</p>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/50 border border-border/50">
-                    <code className="flex-1 text-xs font-mono break-all text-foreground/80 select-all leading-relaxed">
-                      {pendingDeposit.address}
-                    </code>
-                    <Button
-                      variant={copied ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => { navigator.clipboard.writeText(pendingDeposit.address); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
-                      className="h-8 rounded-lg gap-1.5 shrink-0 text-xs"
-                    >
-                      {copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copied ? 'Copied' : 'Copy'}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground text-center px-2">
-              Send <span className="font-semibold text-foreground">${pendingDeposit.amountUSD.toFixed(2)}</span> in {pendingDeposit.cryptoName} via {pendingDeposit.networkName} network. Payment detected automatically.
-            </p>
-          </div>
+      {/* Pending Deposit View — shared component */}
+      {!cryptomusInvoiceId && pendingDeposit ? (
+        <div className={cn("transition-all duration-700 ease-out", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8")}>
+          <DepositInvoiceCard
+            data={{
+              amountUSD: pendingDeposit.amountUSD || 0,
+              cryptoName: pendingDeposit.cryptoName || '',
+              networkName: pendingDeposit.networkName || '',
+              address: pendingDeposit.address || '',
+              status: pendingDeposit.status || 'pending',
+              invoiceId: pendingDeposit.invoiceId || pendingDeposit.notes || '',
+            }}
+            countdown={pendingCountdown}
+            copied={copied}
+            onCopy={() => { navigator.clipboard.writeText(pendingDeposit.address || ''); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+          />
         </div>
       ) : cryptomusInvoiceId ? (
-        /* Invoice Created View */
-        <div className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
-          <div className="max-w-xl mx-auto space-y-5">
-            <div className={cn("rounded-xl bg-card border p-5 text-center", currentStatus?.border || "border-amber-500/20")}>
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary/50 flex items-center justify-center">
-                {cryptomusStatus === 'paid' ? (
-                  <CheckCircle2 className="w-8 h-8 text-green-400" />
-                ) : cryptomusStatus === 'expired' || cryptomusStatus === 'failed' ? (
-                  <XCircle className="w-8 h-8 text-red-400" />
-                ) : (
-                  <Clock className="w-8 h-8 text-amber-400 animate-pulse" />
-                )}
-              </div>
-              <h3 className="text-xl font-bold mb-1">{currentStatus?.label || 'Awaiting Payment'}</h3>
-              <p className="text-sm text-muted-foreground mb-1">Invoice #{cryptomusInvoiceId?.slice(0, 12)}...</p>
-              {cryptomusPaymentAmount && (
-                <p className="text-sm text-muted-foreground mb-4">
-                  Amount: <span className="font-semibold text-foreground">${cryptomusPaymentAmount.toFixed(2)}</span>
-                </p>
-              )}
-              {countdown && cryptomusStatus !== 'paid' && cryptomusStatus !== 'expired' && cryptomusStatus !== 'failed' && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary/50 text-xs font-mono">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>Expires in {countdown}</span>
-                </div>
-              )}
-              {cryptomusStatus === 'paid' && (
-                <p className="text-sm text-green-400 mt-3">Funds have been credited to your balance!</p>
-              )}
-            </div>
-
-            {cryptomusStatus !== 'paid' && cryptomusStatus !== 'expired' && cryptomusStatus !== 'failed' && (
-              <div className="rounded-xl bg-card border border-border p-4 space-y-4">
-                {(cryptomusWalletAddress || cryptomusUrl) && (
-                  <div className="flex justify-center">
-                    <div className="p-4 bg-white rounded-lg">
-                      <QRCodeSVG value={cryptomusWalletAddress || cryptomusUrl || ''} size={180} level="M" />
-                    </div>
-                  </div>
-                )}
-                {cryptomusNetwork && (
-                  <div className="flex justify-center">
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary">
-                      {cryptomusNetwork.toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 text-center">
-                    {cryptomusWalletAddress ? 'Send to this address' : 'Scan QR to pay'}
-                  </p>
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-secondary/50 border border-border">
-                    <code className="flex-1 text-xs font-mono break-all text-foreground">
-                      {cryptomusWalletAddress || cryptomusUrl}
-                    </code>
-                    <Button variant="outline" size="sm" onClick={handleCopyAddress} className="h-8 rounded-lg gap-1.5 shrink-0">
-                      {copied ? <><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  {cryptomusPaymentAmount != null && (
-                    <>Send exactly <span className="font-semibold text-foreground">${cryptomusPaymentAmount.toFixed(2)}</span>{cryptomusWalletAddress ? ' to the address above. ' : '. '}</>
-                  )}
-                  Your payment will be detected automatically.
-                </p>
-              </div>
-            )}
-
-            {cryptomusStatus !== 'paid' && (
-              <Button
-                variant="ghost"
-                onClick={() => { dispatch(stopCryptomusPolling()); dispatch(resetCryptomusStatus()) }}
-                className="h-10 rounded-xl text-sm w-full"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Make a different deposit
-              </Button>
-            )}
-          </div>
+        <div className={cn("transition-all duration-700 ease-out", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8")}>
+          <DepositInvoiceCard
+            data={{
+              amountUSD: cryptomusPaymentAmount || 0,
+              cryptoName: cryptomusNetwork || 'USDT',
+              networkName: cryptomusNetwork || '',
+              address: cryptomusWalletAddress || cryptomusUrl || cryptomusInvoiceId || '',
+              status: cryptomusStatus || 'pending',
+              invoiceId: cryptomusInvoiceId,
+            }}
+            countdown={countdown}
+            copied={copied}
+            onCopy={handleCopyAddress}
+          />
         </div>
       ) : (
         /* Main Deposit Form */
@@ -374,7 +253,7 @@ export default function DashboardTopupPage() {
               {/* Coin Selection */}
               <div className="rounded-xl bg-card border border-border p-4">
                 <h3 className="font-semibold text-sm mb-1">Select Cryptocurrency</h3>
-                <p className="text-xs text-muted-foreground mb-3">Choose a coin to deposit with CryptoMus</p>
+                <p className="text-xs text-muted-foreground mb-3">Choose a coin to deposit with CP (CaptchaMaster)</p>
                 {configsLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -585,7 +464,7 @@ export default function DashboardTopupPage() {
               <div className="rounded-xl bg-card border border-border p-4">
                 <h4 className="font-semibold text-sm mb-3">Why Deposit?</h4>
                 <div className="space-y-2.5">
-                  {['Supports multiple cryptocurrencies', 'Secure Cryptomus payment gateway', 'Automatic credit to your balance', '24/7 support available'].map((item, i) => (
+                  {['Supports multiple cryptocurrencies', 'Secure CP payment gateway', 'Automatic credit to your balance', '24/7 support available'].map((item, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                       <span className="text-sm text-muted-foreground">{item}</span>
@@ -593,13 +472,16 @@ export default function DashboardTopupPage() {
                   ))}
                 </div>
               </div>
-              <div className="rounded-xl bg-card border border-border p-4">
+              <a href="https://t.me/CaptchaMasterBangladesh" target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-card border border-border p-4 hover:bg-secondary/30 transition-colors">
                 <h4 className="font-semibold text-sm mb-1">Need Help?</h4>
                 <p className="text-xs text-muted-foreground mb-3">If you experience any issues with your deposit, contact our support team.</p>
-                <Link to="/contact" className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
-                  Contact Support <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+                <span className="text-sm text-primary font-medium flex items-center gap-1.5">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" style={{ color: '#0088cc' }} xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" fill="currentColor"/>
+                  </svg>
+                  Contact
+                </span>
+              </a>
             </div>
           </div>
         </div>

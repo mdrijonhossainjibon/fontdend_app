@@ -23,6 +23,23 @@ function* fetchActivePackageSaga(): Generator {
     }
 }
 
+// ── Check Pending Deposit (lightweight) ──
+function* checkPendingDepositSaga(): Generator {
+    try {
+        const { response, status }: APIResponse = yield call(API_CALL, {
+            method: 'GET',
+            url: '/topup/pending-deposit',
+        })
+        if (status === 200 && (response as any).success) {
+            yield put(actions.checkPendingDepositSuccess((response as any).pendingDeposit || null))
+        } else {
+            yield put(actions.checkPendingDepositFailure(null))
+        }
+    } catch (error: any) {
+        yield put(actions.checkPendingDepositFailure(null))
+    }
+}
+
 // ── Buy Credits ──
 function* buyCreditsSaga(action: ReturnType<typeof actions.buyCreditsRequest>): Generator {
     try {
@@ -179,4 +196,5 @@ export default function* topupSaga() {
     yield takeLatest(types.CREATE_CRYPTOMUS_INVOICE_REQUEST, createCryptomusInvoiceSaga)
     yield takeLatest(types.POLL_CRYPTOMUS_STATUS_START, pollCryptomusStatusSaga)
     yield takeLatest(types.FETCH_INVOICE_REQUEST, fetchInvoiceSaga)
+    yield takeLatest(types.CHECK_PENDING_DEPOSIT_REQUEST, checkPendingDepositSaga)
 }

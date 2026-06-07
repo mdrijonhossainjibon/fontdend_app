@@ -7,6 +7,9 @@ export interface PendingDepositInfo {
     address: string
     createdAt: string
     expiresAt: string
+    status?: string
+    cryptomusUrl?: string
+    invoiceId?: string
 }
 
 export interface ActivePackageInfo {
@@ -64,6 +67,7 @@ export interface TopupState {
     activePackage: ActivePackageInfo | null
     loading: boolean
     error: string | null
+    pendingDeposit: PendingDepositInfo | null
 
     buying: boolean
 
@@ -94,6 +98,7 @@ const initialState: TopupState = {
     activePackage: null,
     loading: false,
     error: null,
+    pendingDeposit: null,
 
     buying: false,
 
@@ -127,6 +132,12 @@ const topupReducer = (state = initialState, action: any): TopupState => {
             return { ...state, loading: true, error: null }
         case types.FETCH_ACTIVE_PACKAGE_SUCCESS:
             return { ...state, loading: false, activePackage: action.payload }
+        case types.CHECK_PENDING_DEPOSIT_REQUEST:
+            return { ...state, pendingDeposit: state.pendingDeposit }
+        case types.CHECK_PENDING_DEPOSIT_SUCCESS:
+            return { ...state, pendingDeposit: action.payload }
+        case types.CHECK_PENDING_DEPOSIT_FAILURE:
+            return { ...state, pendingDeposit: null }
         case types.FETCH_ACTIVE_PACKAGE_FAILURE:
             return { ...state, loading: false, error: action.payload }
 
