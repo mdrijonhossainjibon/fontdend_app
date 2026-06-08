@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Modal, message } from 'antd'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from 'sonner'
 import { RootState } from '@/modules/rootReducer'
 import {
     fetchSolutionsRequest,
@@ -34,6 +44,8 @@ export default function AdminSolutionsContent() {
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage] = useState(20)
     const [viewSolution, setViewSolution] = useState<Solution | null>(null)
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+    const [clearAllConfirm, setClearAllConfirm] = useState(false)
 
     const debouncedSearch = useDebounce(searchInput, 450)
 
@@ -57,45 +69,11 @@ export default function AdminSolutionsContent() {
 
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
-        Modal.confirm({
-            title: 'Delete Solution',
-            content: 'Remove this cached solution?',
-            okText: 'Delete',
-            okType: 'danger',
-            onOk: () => {
-                dispatch(
-                    deleteSolutionRequest(id, {
-                        search: debouncedSearch || '',
-                        service: serviceFilter || '',
-                        type: typeFilter || '',
-                        page: currentPage,
-                        limit: itemsPerPage,
-                    }),
-                )
-                message.success('Deleted')
-            },
-        })
+        setDeleteConfirmId(id)
     }
 
     const handleClearAll = () => {
-        Modal.confirm({
-            title: 'Clear All Solutions',
-            content: 'This will delete ALL cached solutions. This cannot be undone!',
-            okText: 'Clear All',
-            okType: 'danger',
-            onOk: () => {
-                dispatch(
-                    clearAllSolutionsRequest({
-                        search: debouncedSearch || '',
-                        service: serviceFilter || '',
-                        type: typeFilter || '',
-                        page: currentPage,
-                        limit: itemsPerPage,
-                    }),
-                )
-                message.success('All solutions cleared')
-            },
-        })
+        setClearAllConfirm(true)
     }
 
     return (
@@ -150,6 +128,60 @@ export default function AdminSolutionsContent() {
                     onPageChange={setCurrentPage}
                 />
             )}
+
+            {/* Delete Solution Confirmation */}
+            <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Solution</AlertDialogTitle>
+                        <AlertDialogDescription>Remove this cached solution?</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            if (deleteConfirmId) {
+                                dispatch(
+                                    deleteSolutionRequest(deleteConfirmId, {
+                                        search: debouncedSearch || '',
+                                        service: serviceFilter || '',
+                                        type: typeFilter || '',
+                                        page: currentPage,
+                                        limit: itemsPerPage,
+                                    }),
+                                )
+                                toast.success('Deleted')
+                            }
+                            setDeleteConfirmId(null)
+                        }}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Clear All Confirmation */}
+            <AlertDialog open={clearAllConfirm} onOpenChange={setClearAllConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Clear All Solutions</AlertDialogTitle>
+                        <AlertDialogDescription>This will delete ALL cached solutions. This cannot be undone!</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            dispatch(
+                                clearAllSolutionsRequest({
+                                    search: debouncedSearch || '',
+                                    service: serviceFilter || '',
+                                    type: typeFilter || '',
+                                    page: currentPage,
+                                    limit: itemsPerPage,
+                                }),
+                            )
+                            toast.success('All solutions cleared')
+                            setClearAllConfirm(false)
+                        }}>Clear All</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <style>{`
                 @keyframes slideInUp {

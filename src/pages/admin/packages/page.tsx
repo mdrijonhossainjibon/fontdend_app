@@ -1,6 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Modal, message } from 'antd'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from 'sonner'
 import { Package, Edit, Trash2, Plus, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RootState } from '@/modules/rootReducer'
@@ -15,6 +33,7 @@ export default function AdminPricingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingPackage, setEditingPackage] = useState<PricingPackage | null>(null)
+  const [deletePkg, setDeletePkg] = useState<PricingPackage | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -36,7 +55,7 @@ export default function AdminPricingPage() {
 
   const handleCreatePackage = async () => {
     if (!formData.code || !formData.price) {
-      message.error('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
     const payload: any = {
@@ -49,13 +68,13 @@ export default function AdminPricingPage() {
       status: formData.status
     }
     if (formData.type === 'count') {
-      if (!formData.count) { message.error('Please enter total request count'); return }
+      if (!formData.count) { toast.error('Please enter total request count'); return }
       payload.count = parseInt(formData.count)
     } else if (formData.type === 'daily') {
-      if (!formData.dailyLimit) { message.error('Please enter daily request limit'); return }
+      if (!formData.dailyLimit) { toast.error('Please enter daily request limit'); return }
       payload.dailyLimit = parseInt(formData.dailyLimit)
     } else if (formData.type === 'minute') {
-      if (!formData.rateLimit) { message.error('Please enter requests per minute'); return }
+      if (!formData.rateLimit) { toast.error('Please enter requests per minute'); return }
       payload.rateLimit = parseInt(formData.rateLimit)
     }
     dispatch(createPackageRequest(payload))
@@ -84,14 +103,7 @@ export default function AdminPricingPage() {
   }
 
   const handleDeletePackage = (pkg: PricingPackage) => {
-    Modal.confirm({
-      title: 'Delete Package',
-      content: `Are you sure you want to delete package ${pkg.code}? This action cannot be undone.`,
-      okText: 'Delete',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk: () => dispatch(deletePackageRequest(pkg.id, pkg.code)),
-    })
+    setDeletePkg(pkg)
   }
 
   const openEditModal = (pkg: PricingPackage) => {
@@ -323,42 +335,20 @@ export default function AdminPricingPage() {
         </div>
       )}
 
-      {/* Create/Edit Package Modal */}
-      <Modal
-        title={
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">
-              {isEditMode ? 'Edit Package' : 'Create New Package'}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isEditMode ? 'Update package details' : 'Add a new pricing package to your catalog'}
-            </p>
-          </div>
-        }
-        open={isModalOpen}
-        onCancel={() => {
+      {/* Create/Edit Package Dialog */}
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        if (!open) {
           setIsModalOpen(false)
           setIsEditMode(false)
           setEditingPackage(null)
           resetForm()
-        }}
-        footer={[
-          <Button key="cancel" variant="outline" onClick={() => {
-            setIsModalOpen(false)
-            setIsEditMode(false)
-            setEditingPackage(null)
-            resetForm()
-          }} className="bg-transparent" disabled={saving}>Cancel</Button>,
-          <Button key="submit" className="bg-amber-500 hover:bg-amber-600"
-            onClick={isEditMode ? handleUpdatePackage : handleCreatePackage} disabled={saving}>
-            {saving ? (
-              <><Loader2 className="w-4 h-4 animate-spin mr-2" />{isEditMode ? 'Updating...' : 'Creating...'}</>
-            ) : (isEditMode ? 'Update Package' : 'Create Package')}
-          </Button>,
-        ]}
-        width={700}
-        centered
-      >
+        }
+      }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{isEditMode ? 'Edit Package' : 'Create New Package'}</DialogTitle>
+            <DialogDescription>{isEditMode ? 'Update package details' : 'Add a new pricing package to your catalog'}</DialogDescription>
+          </DialogHeader>
         <div className="space-y-6 py-4">
           {/* Package Type Selection */}
           <div>
@@ -487,7 +477,41 @@ export default function AdminPricingPage() {
             </button>
           </div>
         </div>
-      </Modal>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => {
+            setIsModalOpen(false)
+            setIsEditMode(false)
+            setEditingPackage(null)
+            resetForm()
+          }} className="bg-transparent" disabled={saving}>Cancel</Button>
+          <Button className="bg-amber-500 hover:bg-amber-600"
+            onClick={isEditMode ? handleUpdatePackage : handleCreatePackage} disabled={saving}>
+            {saving ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" />{isEditMode ? 'Updating...' : 'Creating...'}</>
+            ) : (isEditMode ? 'Update Package' : 'Create Package')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+      </Dialog>
+
+      {/* Delete Package Confirmation */}
+      <AlertDialog open={!!deletePkg} onOpenChange={() => setDeletePkg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Package</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete package {deletePkg?.code}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deletePkg) dispatch(deletePackageRequest(deletePkg.id, deletePkg.code))
+              setDeletePkg(null)
+            }}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style>{`
         @keyframes slideInUp {

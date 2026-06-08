@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { notification } from 'antd'
+import { toast } from 'sonner'
 
 type LoginStep = 'credentials' | 'otp' | 'success'
 
@@ -216,27 +216,18 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        notification.error({
-          message: 'Resend Failed',
-          description: data.error || 'Failed to resend OTP code.',
-        })
+        toast.error('Resend Failed', { description: data.error || 'Failed to resend OTP code.' })
         setResendDisabled(false)
         setIsLoading(false)
         return
       }
 
-      notification.success({
-        message: 'OTP Resent',
-        description: 'A new verification code has been sent to your email.',
-      })
+      toast.success('OTP Resent', { description: 'A new verification code has been sent to your email.' })
       setOtp(['', '', '', '', '', ''])
       setTimer(300)
     } catch (error) {
       console.error('Resend OTP error:', error)
-      notification.error({
-        message: 'Error',
-        description: 'An error occurred while resending OTP. Please try again.',
-      })
+      toast.error('Error', { description: 'An error occurred while resending OTP. Please try again.' })
       setResendDisabled(false)
     } finally {
       setIsLoading(false)
@@ -655,10 +646,7 @@ export default function LoginPage() {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      notification.info({
-                        message: 'Coming Soon',
-                        description: 'Social login is being updated.',
-                      })
+                      toast.info('Coming Soon', { description: 'Social login is being updated.' })
                     }}
                     className="h-12 border-border hover:bg-secondary/50 hover:border-primary/30 transition-all bg-transparent"
                   >
@@ -686,10 +674,7 @@ export default function LoginPage() {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      notification.info({
-                        message: 'Coming Soon',
-                        description: 'Social login is being updated.',
-                      })
+                      toast.info('Coming Soon', { description: 'Social login is being updated.' })
                     }}
                     className="h-12 border-border hover:bg-secondary/50 hover:border-primary/30 transition-all bg-transparent"
                   >

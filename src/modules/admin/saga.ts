@@ -2,7 +2,7 @@ import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from './constants';
 import * as actions from './actions';
 import { API_CALL, APIResponse } from '@/lib/auth-fingerprint';
-import { message } from 'antd';
+import { toast } from "sonner";
 
 function* fetchAdminStatsSaga(): Generator {
     const { response, status }: APIResponse = yield call(API_CALL, { method: 'GET', url: '/admin/dashboard' });
@@ -52,11 +52,11 @@ function* fetchAdminUsersSaga(action: any): Generator {
             yield put(actions.fetchAdminUsersSuccess({ users: mappedUsers, pagination: response.pagination }));
         } else {
             yield put(actions.fetchAdminUsersFailure(response?.error || 'Failed to fetch users'));
-            message.error(response?.error || 'Failed to fetch users');
+            toast.error(response?.error || 'Failed to fetch users');
         }
     } catch (error) {
         yield put(actions.fetchAdminUsersFailure('Failed to fetch users'));
-        message.error('Failed to fetch users');
+        toast.error('Failed to fetch users');
     }
 }
 
@@ -77,14 +77,14 @@ function* updateAdminUserSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.updateAdminUserSuccess({ id: userId, name, balance, status: userStatus }));
-            message.success('User updated successfully');
+            toast.success('User updated successfully');
         } else {
             yield put(actions.updateAdminUserFailure(response?.error || 'Failed to update user'));
-            message.error(response?.error || 'Failed to update user');
+            toast.error(response?.error || 'Failed to update user');
         }
     } catch (error) {
         yield put(actions.updateAdminUserFailure('Failed to update user'));
-        message.error('Failed to update user');
+        toast.error('Failed to update user');
     }
 }
 
@@ -99,14 +99,14 @@ function* deleteAdminUserSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.deleteAdminUserSuccess(userId));
-            message.success('User deleted successfully');
+            toast.success('User deleted successfully');
         } else {
             yield put(actions.deleteAdminUserFailure(response?.error || 'Failed to delete user'));
-            message.error(response?.error || 'Failed to delete user');
+            toast.error(response?.error || 'Failed to delete user');
         }
     } catch (error) {
         yield put(actions.deleteAdminUserFailure('Failed to delete user'));
-        message.error('Failed to delete user');
+        toast.error('Failed to delete user');
     }
 }
 
@@ -128,11 +128,11 @@ function* fetchAdminBotsSaga(action: any): Generator {
             yield put(actions.fetchAdminBotsSuccess({ bots: response.bots, pagination: response.pagination }));
         } else {
             yield put(actions.fetchAdminBotsFailure(response?.error || 'Failed to fetch bots'));
-            message.error(response?.error || 'Failed to fetch bots');
+            toast.error(response?.error || 'Failed to fetch bots');
         }
     } catch (error) {
         yield put(actions.fetchAdminBotsFailure('Failed to fetch bots'));
-        message.error('Failed to fetch bots');
+        toast.error('Failed to fetch bots');
     }
 }
 
@@ -147,14 +147,14 @@ function* updateAdminBotSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.updateAdminBotSuccess({ id: botId, ...updateData }));
-            message.success('Bot updated successfully');
+            toast.success('Bot updated successfully');
         } else {
             yield put(actions.updateAdminBotFailure(response?.error || 'Failed to update bot'));
-            message.error(response?.error || 'Failed to update bot');
+            toast.error(response?.error || 'Failed to update bot');
         }
     } catch (error) {
         yield put(actions.updateAdminBotFailure('Failed to update bot'));
-        message.error('Failed to update bot');
+        toast.error('Failed to update bot');
     }
 }
 
@@ -168,14 +168,14 @@ function* deleteAdminBotSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.deleteAdminBotSuccess(botId));
-            message.success('Bot deleted successfully');
+            toast.success('Bot deleted successfully');
         } else {
             yield put(actions.deleteAdminBotFailure(response?.error || 'Failed to delete bot'));
-            message.error(response?.error || 'Failed to delete bot');
+            toast.error(response?.error || 'Failed to delete bot');
         }
     } catch (error) {
         yield put(actions.deleteAdminBotFailure('Failed to delete bot'));
-        message.error('Failed to delete bot');
+        toast.error('Failed to delete bot');
     }
 }
 
@@ -190,11 +190,11 @@ function* fetchEmailTemplatesSaga(): Generator {
             yield put(actions.fetchEmailTemplatesSuccess({ templates: response.templates || [] }));
         } else {
             yield put(actions.fetchEmailTemplatesFailure(response?.error || 'Failed to fetch templates'));
-            message.error(response?.error || 'Failed to fetch templates');
+            toast.error(response?.error || 'Failed to fetch templates');
         }
     } catch (error) {
         yield put(actions.fetchEmailTemplatesFailure('Error fetching templates'));
-        message.error('Error fetching templates');
+        toast.error('Error fetching templates');
     }
 }
 
@@ -207,15 +207,15 @@ function* createEmailTemplateSaga(action: any): Generator {
         });
         if (response && response.success) {
             yield put(actions.createEmailTemplateSuccess(response.template));
-            message.success('Template saved');
+            toast.success('Template saved');
             yield put(actions.fetchEmailTemplatesRequest());
         } else {
             yield put(actions.createEmailTemplateFailure(response?.error || 'Failed to save'));
-            message.error(response?.error || 'Failed to save');
+            toast.error(response?.error || 'Failed to save');
         }
     } catch (error) {
         yield put(actions.createEmailTemplateFailure('Error saving template'));
-        message.error('Error saving template');
+        toast.error('Error saving template');
     }
 }
 
@@ -229,15 +229,15 @@ function* updateEmailTemplateSaga(action: any): Generator {
         });
         if (response && response.success) {
             yield put(actions.updateEmailTemplateSuccess(response.template));
-            message.success('Template updated');
+            toast.success('Template updated');
             yield put(actions.fetchEmailTemplatesRequest());
         } else {
             yield put(actions.updateEmailTemplateFailure(response?.error || 'Failed to update'));
-            message.error(response?.error || 'Failed to update');
+            toast.error(response?.error || 'Failed to update');
         }
     } catch (error) {
         yield put(actions.updateEmailTemplateFailure('Error updating template'));
-        message.error('Error updating template');
+        toast.error('Error updating template');
     }
 }
 
@@ -250,15 +250,47 @@ function* deleteEmailTemplateSaga(action: any): Generator {
         });
         if (response && response.success) {
             yield put(actions.deleteEmailTemplateSuccess(id));
-            message.success('Template deleted');
+            toast.success('Template deleted');
             yield put(actions.fetchEmailTemplatesRequest());
         } else {
             yield put(actions.deleteEmailTemplateFailure(response?.error || 'Failed to delete'));
-            message.error(response?.error || 'Failed to delete');
+            toast.error(response?.error || 'Failed to delete');
         }
     } catch (error) {
         yield put(actions.deleteEmailTemplateFailure('Error deleting template'));
-        message.error('Error deleting template');
+        toast.error('Error deleting template');
+    }
+}
+
+// ── Admin Analytics ──────────────────────────────────────────────────────────
+function* fetchAdminAnalyticsSaga(action: any): Generator {
+    try {
+        const days = action.payload || 30
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'GET',
+            url: `/admin/analytics?days=${days}`
+        })
+        if (response && response.success) {
+            yield put(actions.fetchAdminAnalyticsSuccess({
+                chartData: response.chartData || [],
+                metrics: response.metrics || {
+                    totalCaptchas: { value: '0', change: '+0%' },
+                    avgResponseTime: { value: '0s', change: '0s' },
+                    successRate: { value: '0%', change: '+0%' },
+                    apiCalls: { value: '0', change: '+0%' },
+                    totalRevenue: { value: '$0.00', change: '+0%' },
+                    activeApiKeys: { value: '0', change: '+0' },
+                },
+                topCountries: response.topCountries || [],
+                captchaTypes: response.captchaTypes || [],
+            }))
+        } else {
+            yield put(actions.fetchAdminAnalyticsFailure(response?.error || 'Failed to fetch analytics'))
+            toast.error(response?.error || 'Failed to fetch analytics')
+        }
+    } catch (error: any) {
+        yield put(actions.fetchAdminAnalyticsFailure(error?.message || 'Failed to fetch analytics'))
+        toast.error('Failed to fetch analytics')
     }
 }
 
@@ -278,4 +310,7 @@ export default function* adminSaga() {
     yield takeLatest(types.CREATE_EMAIL_TEMPLATE_REQUEST, createEmailTemplateSaga);
     yield takeLatest(types.UPDATE_EMAIL_TEMPLATE_REQUEST, updateEmailTemplateSaga);
     yield takeLatest(types.DELETE_EMAIL_TEMPLATE_REQUEST, deleteEmailTemplateSaga);
+
+    // Analytics
+    yield takeLatest(types.FETCH_ADMIN_ANALYTICS_REQUEST, fetchAdminAnalyticsSaga);
 }

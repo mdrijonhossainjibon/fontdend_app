@@ -12,7 +12,7 @@ import {
   Lock,
   Mail,
 } from 'lucide-react'
-import { notification } from 'antd'
+import { toast } from "sonner"
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RootState } from '@/modules/rootReducer'
@@ -45,15 +45,15 @@ export default function ForgotPasswordPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        notification.error({ message: 'Reset Failed', description: data.error || 'Failed to send reset email.' })
+        toast.error('Reset Failed', { description: data.error || 'Failed to send reset email.' })
         setIsLoading(false)
         return
       }
-      notification.success({ message: 'Email Sent', description: 'Password reset email sent! Please check your inbox.' })
+      toast.success('Email Sent', { description: 'Password reset email sent! Please check your inbox.' })
       setIsSubmitted(true)
       setCountdown(60)
     } catch {
-      notification.error({ message: 'Error', description: 'An error occurred. Please try again.' })
+      toast.error('Error', { description: 'An error occurred. Please try again.' })
     } finally {
       setIsLoading(false)
     }
@@ -70,14 +70,14 @@ export default function ForgotPasswordPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        notification.error({ message: 'Resend Failed', description: data.error || 'Failed to resend email.' })
+        toast.error('Resend Failed', { description: data.error || 'Failed to resend email.' })
         setIsLoading(false)
         return
       }
-      notification.success({ message: 'Email Resent', description: 'Password reset email resent! Please check your inbox.' })
+      toast.success('Email Resent', { description: 'Password reset email resent! Please check your inbox.' })
       setCountdown(60)
     } catch {
-      notification.error({ message: 'Error', description: 'An error occurred. Please try again.' })
+      toast.error('Error', { description: 'An error occurred. Please try again.' })
     } finally {
       setIsLoading(false)
     }

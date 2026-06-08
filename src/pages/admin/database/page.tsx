@@ -4,7 +4,7 @@ import type { RootState } from '@/modules/rootReducer'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Database, HardDrive, Activity, FileText, RefreshCw, Download, Loader2 } from 'lucide-react'
-import { message } from 'antd'
+import { toast } from 'sonner'
 import { fetchDatabaseStatsRequest, backupCollectionRequest, clearBackupResult } from '@/modules/admin/database/actions'
 
 export default function DatabasePage() {
@@ -38,8 +38,8 @@ export default function DatabasePage() {
       a.click()
       window.URL.revokeObjectURL(url)
 
-      message.destroy()
-      message.success(`${collectionName} exported successfully (${data?.documentCount || '?'} documents)`)
+      toast.dismiss()
+      toast.success(`${collectionName} exported successfully (${data?.documentCount || '?'} documents)`)
       setDownloadingCollection(null)
       dispatch(clearBackupResult())
     }
@@ -47,8 +47,8 @@ export default function DatabasePage() {
 
   useEffect(() => {
     if (backupError) {
-      message.destroy()
-      message.error(backupError)
+      toast.dismiss()
+      toast.error(backupError)
       setDownloadingCollection(null)
       dispatch(clearBackupResult())
     }
@@ -56,7 +56,7 @@ export default function DatabasePage() {
 
   const handleDownloadBackup = (collectionName: string) => {
     setDownloadingCollection(collectionName)
-    message.loading(`Exporting ${collectionName}...`, 0)
+    toast.loading(`Exporting ${collectionName}...`)
     dispatch(backupCollectionRequest(collectionName))
   }
 

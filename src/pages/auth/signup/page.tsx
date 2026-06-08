@@ -16,7 +16,7 @@ import {
   User,
   Trophy,
 } from 'lucide-react'
-import { notification } from 'antd'
+import { toast } from "sonner"
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RootState } from '@/modules/rootReducer'

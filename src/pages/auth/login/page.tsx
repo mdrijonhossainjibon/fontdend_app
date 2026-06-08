@@ -15,7 +15,7 @@ import {
   Lock,
   ChevronRight,
 } from 'lucide-react'
-import { notification } from 'antd'
+import { toast } from "sonner"
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RootState } from '@/modules/rootReducer'
@@ -75,11 +75,7 @@ export default function LoginPage() {
       }
       const desc = messages[err] || 'An error occurred during social login.'
       setOauthError(desc)
-      notification.error({
-        message: 'Login Failed',
-        description: desc,
-        placement: 'topRight',
-      })
+      toast.error('Login Failed', { description: desc })
       window.history.replaceState({}, '', '/auth/login')
     }
   }, [])
@@ -132,21 +128,13 @@ export default function LoginPage() {
   /* ── React to Redux state changes ── */
   useEffect(() => {
     if (reduxError) {
-      notification.error({
-        message: 'Login Error',
-        description: reduxError,
-        placement: 'topRight',
-      })
+      toast.error('Login Error', { description: reduxError })
     }
   }, [reduxError])
 
   useEffect(() => {
     if (requiresOTP && step === 'credentials') {
-      notification.info({
-        message: 'Verification Required',
-        description: 'Please enter the 6-digit code sent to your email.',
-        placement: 'topRight',
-      })
+      toast.info('Verification Required', { description: 'Please enter the 6-digit code sent to your email.' })
       setStep('otp'); setTimer(300); setResendDisabled(true)
     }
   }, [requiresOTP])
@@ -155,11 +143,7 @@ export default function LoginPage() {
 
     console.log('loginSuccess', loginSuccess)
     if (loginSuccess) {
-      notification.success({
-        message: 'Welcome Back!',
-        description: 'You have successfully signed in.',
-        placement: 'topRight',
-      })
+      toast.success('Welcome Back!', { description: 'You have successfully signed in.' })
       setStep('success')
       setTimeout(() => { navigate('/dashboard') }, 2000)
     }

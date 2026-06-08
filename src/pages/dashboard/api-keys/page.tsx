@@ -213,19 +213,6 @@ export default function ApiKeysPage() {
   return (
     <DashboardLayout>
       <div className="p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <Key className="w-6 h-6 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold text-foreground">API Keys</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Manage your API keys. Master key is permanent, additional keys can be generated in empty slots.
-          </p>
-        </div>
-
         {/* Info Card */}
         <Card className="mb-6 border-border/50 bg-secondary/30">
           <CardContent className="pt-6">

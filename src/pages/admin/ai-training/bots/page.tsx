@@ -5,7 +5,9 @@ import { RootState } from "@/modules/rootReducer"
 import * as actions from "@/modules/ai-training/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Modal, message } from "antd"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 import {
     Search,
     Trash2,
@@ -50,6 +52,7 @@ export default function KolotiCachePage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [editingRecord, setEditingRecord] = useState<KolotiCacheRecord | null>(null)
     const [answerInput, setAnswerInput] = useState("")
+    const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null)
 
     // Debounce search term
     useEffect(() => {
@@ -72,7 +75,7 @@ export default function KolotiCachePage() {
     // Handle errors from Redux
     useEffect(() => {
         if (error) {
-            message.error(error)
+            toast.error(error)
         }
     }, [error])
 
@@ -85,24 +88,21 @@ export default function KolotiCachePage() {
     }
 
     const handleDeleteRecord = (recordId: string) => {
-        Modal.confirm({
-            title: 'Delete Record',
-            content: 'Are you sure you want to delete this cache record? This action cannot be undone.',
-            okText: 'Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk: () => {
-                dispatch(actions.deleteKolotiCacheRequest(recordId))
-                // Success/failure and refresh will be handled via sagas/reducer or another effect
-            }
-        })
+        setDeleteRecordId(recordId)
+    }
+
+    const confirmDeleteRecord = () => {
+        if (deleteRecordId) {
+            dispatch(actions.deleteKolotiCacheRequest(deleteRecordId))
+            setDeleteRecordId(null)
+        }
     }
 
     // Refresh after delete
     const [wasDeleting, setWasDeleting] = useState(false)
     useEffect(() => {
         if (wasDeleting && !isDeleting && !error) {
-            message.success('Record deleted successfully')
+            toast.success('Record deleted successfully')
             fetchRecords()
         }
         setWasDeleting(isDeleting)
@@ -171,7 +171,7 @@ export default function KolotiCachePage() {
                 })
 
             if (answerArray.length === 0) {
-                message.error('Answer cannot be empty')
+                toast.error('Answer cannot be empty')
                 return
             }
 
@@ -185,7 +185,7 @@ export default function KolotiCachePage() {
             // For now, I'll keep the side effect of closing the modal out of here unless I add more state.
         } catch (error: any) {
             console.error('Error parsing answer:', error)
-            message.error(error.message || 'Invalid answer format')
+            toast.error(error.message || 'Invalid answer format')
         }
     }
 
@@ -195,7 +195,7 @@ export default function KolotiCachePage() {
         if (wasSaving && !isSaving && !error && isEditModalOpen) {
             setIsEditModalOpen(false)
             setEditingRecord(null)
-            message.success('Answer updated successfully')
+            toast.success('Answer updated successfully')
 
         }
         setWasSaving(isSaving)
@@ -490,164 +490,174 @@ export default function KolotiCachePage() {
                 </div>
             )}
 
-            {/* Detail Modal */}
-            <Modal
-                title="Cache Record Details"
-                open={isDetailModalOpen}
-                onCancel={() => setIsDetailModalOpen(false)}
-                footer={[
-                    <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
-                        Close
-                    </Button>
-                ]}
-                width={700}
-            >
-                {selectedRecord && (
-                    <div className="space-y-4 py-4">
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Image</label>
-                            <div className="flex justify-center p-4 bg-secondary/50 rounded-xl border border-border">
-                                <img
-                                    src={selectedRecord.imageData}
-                                    alt="Captcha"
-                                    className="max-w-full h-auto rounded-lg"
+            {/* Detail Dialog */}
+            <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+                <DialogContent className="max-w-[700px]">
+                    <DialogHeader>
+                        <DialogTitle>Cache Record Details</DialogTitle>
+                    </DialogHeader>
+                    {selectedRecord && (
+                        <div className="space-y-4 py-4">
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Image</label>
+                                <div className="flex justify-center p-4 bg-secondary/50 rounded-xl border border-border">
+                                    <img
+                                        src={selectedRecord.imageData}
+                                        alt="Captcha"
+                                        className="max-w-full h-auto rounded-lg"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Image Hash</label>
+                                <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground text-xs break-all">
+                                    {selectedRecord.imageHash}
+                                </code>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Question</label>
+                                <p className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground">
+                                    {selectedRecord.question}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Answer</label>
+                                <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground font-mono">
+                                    [{selectedRecord.answer.join(', ')}]
+                                </code>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Raw Response</label>
+                                <pre className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground text-xs overflow-auto max-h-64">
+                                    {JSON.stringify(selectedRecord.rawResponse, null, 2)}
+                                </pre>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Created At</label>
+                                <div className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground flex items-center justify-between">
+                                    <span>
+                                        {formatBDDate(selectedRecord.createdAt, 'full')}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground font-medium bg-secondary px-2.5 py-1 rounded-lg">
+                                        {formatBDDate(selectedRecord.createdAt, 'distance')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button onClick={() => setIsDetailModalOpen(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Answer Dialog */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Answer</DialogTitle>
+                    </DialogHeader>
+                    {editingRecord && (
+                        <div className="space-y-4 py-4">
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Image</label>
+                                <div className="flex justify-center p-4 bg-secondary/50 rounded-xl border border-border">
+                                    <img
+                                        src={editingRecord.imageData}
+                                        alt="Captcha"
+                                        className="max-w-full h-auto rounded-lg"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">
+                                    Image Hash
+                                </label>
+                                <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground text-xs break-all">
+                                    {editingRecord.imageHash}
+                                </code>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">
+                                    Question
+                                </label>
+                                <p className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground">
+                                    {editingRecord.question}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">
+                                    Answer <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={answerInput}
+                                    onChange={(e) => setAnswerInput(e.target.value)}
+                                    placeholder="Enter numbers separated by commas (e.g., 1, 2, 3)"
+                                    className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all font-mono"
                                 />
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    Enter numbers separated by commas. Example: 1, 2, 3, 4
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">
+                                    Current Answer
+                                </label>
+                                <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground font-mono">
+                                    [{editingRecord.answer.join(', ')}]
+                                </code>
                             </div>
                         </div>
+                    )}
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsEditModalOpen(false)}
+                            disabled={isSaving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-amber-500 hover:bg-amber-600 font-medium"
+                            onClick={handleEditAnswer}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                    Saving...
+                                </>
+                            ) : (
+                                'Save Changes'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Image Hash</label>
-                            <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground text-xs break-all">
-                                {selectedRecord.imageHash}
-                            </code>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Question</label>
-                            <p className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground">
-                                {selectedRecord.question}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Answer</label>
-                            <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground font-mono">
-                                [{selectedRecord.answer.join(', ')}]
-                            </code>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Raw Response</label>
-                            <pre className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground text-xs overflow-auto max-h-64">
-                                {JSON.stringify(selectedRecord.rawResponse, null, 2)}
-                            </pre>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Created At</label>
-                            <div className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground flex items-center justify-between">
-                                <span>
-                                    {formatBDDate(selectedRecord.createdAt, 'full')}
-                                </span>
-                                <span className="text-sm text-muted-foreground font-medium bg-secondary px-2.5 py-1 rounded-lg">
-                                    {formatBDDate(selectedRecord.createdAt, 'distance')}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-
-            {/* Edit Answer Modal */}
-            <Modal
-                title="Edit Answer"
-                open={isEditModalOpen}
-                onCancel={() => setIsEditModalOpen(false)}
-                footer={[
-                    <Button
-                        key="cancel"
-                        variant="outline"
-                        onClick={() => setIsEditModalOpen(false)}
-                        disabled={isSaving}
-                    >
-                        Cancel
-                    </Button>,
-                    <Button
-                        key="submit"
-                        className="bg-amber-500 hover:bg-amber-600 font-medium"
-                        onClick={handleEditAnswer}
-                        disabled={isSaving}
-                    >
-                        {isSaving ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                Saving...
-                            </>
-                        ) : (
-                            'Save Changes'
-                        )}
-                    </Button>
-                ]}
-                width={600}
-            >
-                {editingRecord && (
-                    <div className="space-y-4 py-4">
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Image</label>
-                            <div className="flex justify-center p-4 bg-secondary/50 rounded-xl border border-border">
-                                <img
-                                    src={editingRecord.imageData}
-                                    alt="Captcha"
-                                    className="max-w-full h-auto rounded-lg"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">
-                                Image Hash
-                            </label>
-                            <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground text-xs break-all">
-                                {editingRecord.imageHash}
-                            </code>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">
-                                Question
-                            </label>
-                            <p className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground">
-                                {editingRecord.question}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">
-                                Answer <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={answerInput}
-                                onChange={(e) => setAnswerInput(e.target.value)}
-                                placeholder="Enter numbers separated by commas (e.g., 1, 2, 3)"
-                                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all font-mono"
-                            />
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Enter numbers separated by commas. Example: 1, 2, 3, 4
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">
-                                Current Answer
-                            </label>
-                            <code className="block w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground font-mono">
-                                [{editingRecord.answer.join(', ')}]
-                            </code>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteRecordId !== null} onOpenChange={(open) => { if (!open) setDeleteRecordId(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Record</AlertDialogTitle>
+                        <AlertDialogDescription>Are you sure you want to delete this cache record? This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteRecord}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <style>{`
         @keyframes slideInUp {

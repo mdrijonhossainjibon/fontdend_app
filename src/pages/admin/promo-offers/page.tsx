@@ -111,15 +111,8 @@ export default function AdminPromoOffersPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Gift className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl md:text-3xl font-bold">Promo Offers</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">Manage promotional offers shown on the dashboard</p>
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-4">
         <Button onClick={() => setShowCreate(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Create Offer
         </Button>

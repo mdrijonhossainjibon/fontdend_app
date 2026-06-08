@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Web3 from "web3"
-import { notification } from "antd"
+import { toast } from "sonner"
 
 interface MetaMaskDepositProps {
     onSuccess?: (txHash: string) => void
@@ -127,10 +127,7 @@ export function MetaMaskDeposit({ onSuccess, onError }: MetaMaskDepositProps) {
 
     const connectWallet = async () => {
         if (!web3) {
-            notification.error({
-                message: 'MetaMask Not Found',
-                description: 'Please install MetaMask to continue with the deposit.',
-            })
+            toast.error('MetaMask Not Found', { description: 'Please install MetaMask to continue with the deposit.' })
             window.open("https://metamask.io/download/", "_blank")
             return
         }
@@ -191,10 +188,7 @@ export function MetaMaskDeposit({ onSuccess, onError }: MetaMaskDepositProps) {
 
             const hash = tx.transactionHash.toString()
             setTxHash(hash)
-            notification.success({
-                message: 'Deposit Successful',
-                description: 'Your deposit has been processed! Transaction hash: ' + hash.substring(0, 10) + '...',
-            })
+            toast.success('Deposit Successful', { description: 'Your deposit has been processed! Transaction hash: ' + hash.substring(0, 10) + '...' })
 
             if (onSuccess) {
                 onSuccess(hash)
@@ -246,10 +240,7 @@ export function MetaMaskDeposit({ onSuccess, onError }: MetaMaskDepositProps) {
     const copyAddress = (address: string) => {
         navigator.clipboard.writeText(address)
         setCopied(true)
-        notification.success({
-            message: 'Address Copied',
-            description: 'The wallet address has been copied to your clipboard.',
-        })
+        toast.success('Address Copied', { description: 'The wallet address has been copied to your clipboard.' })
         setTimeout(() => setCopied(false), 2000)
     }
 

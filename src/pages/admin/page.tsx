@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   if (loading && !data) {
     return (
       <div className="space-y-8 animate-in fade-in duration-1000">
-        <HeaderSection />
+        <LiveFeedback />
         <SkeletonStats />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 h-[500px] w-full bg-card/20 rounded-xl animate-pulse" />
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <HeaderSection />
+      <LiveFeedback />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Top Layer: Primary Stats - Spanning all 12 columns */}
@@ -82,23 +82,17 @@ export default function AdminDashboard() {
   )
 }
 
-function HeaderSection() {
+function LiveFeedback() {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Command Center</h1>
-        <p className="text-muted-foreground mt-1">Real-time system oversight and financial operations.</p>
+    <div className="flex items-center justify-end gap-2 bg-secondary/30 p-1.5 rounded-lg border border-border/40 backdrop-blur-sm w-fit ml-auto">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/50 border border-border/40 shadow-sm">
+        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        <span className="text-xs font-bold uppercase tracking-wider text-green-600">Live Feedback</span>
       </div>
-      <div className="flex items-center gap-2 bg-secondary/30 p-1.5 rounded-lg border border-border/40 backdrop-blur-sm">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background/50 border border-border/40 shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-bold uppercase tracking-wider text-green-600">Live Feedback</span>
-        </div>
-        <div className="px-3 py-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </span>
-        </div>
+      <div className="px-3 py-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+        </span>
       </div>
     </div>
   )

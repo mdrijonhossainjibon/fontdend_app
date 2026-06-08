@@ -6,7 +6,8 @@ import { useSearchParams } from "react-router-dom"
 import type { RootState } from "@/modules/rootReducer"
 import { fetchPricingPackagesRequest, subscribeToPlanRequest, clearSubscriptionResult } from "@/modules/pricing/actions"
 import { Package, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
-import { Popup } from "antd-mobile"
+
+// Mobile Popup: Simple Tailwind bottom sheet instead of antd-mobile Popup
 
 // TypeScript interfaces
 interface PricingPackage {
@@ -148,25 +149,6 @@ export function DashboardPricing() {
     return (
         <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-background ">
             <div className="max-w-[1600px] mx-auto">
-
-                {/* Header Section */}
-                <div className="mb-6 md:mb-8">
-                    <div className="flex items-center gap-3 md:gap-4 mb-2">
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-[#9ACD32]/25 to-[#9ACD32]/5 border border-[#9ACD32]/40 flex items-center justify-center flex-shrink-0">
-                            <Package className="w-5 h-5 md:w-6 md:h-6 text-[#9ACD32]" />
-                        </div>
-                        <div className="min-w-0">
-                            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">
-                                Pricing Plans
-                            </h1>
-                            <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
-                                Choose the perfect plan for your captcha solving needs
-                            </p>
-                        </div>
-                    </div>
-                    {/* Decorative gradient line */}
-                    <div className="h-1 w-20 md:w-32 bg-gradient-to-r from-[#9ACD32] to-transparent rounded-full mt-3 md:mt-4" />
-                </div>
 
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
@@ -457,19 +439,13 @@ export function DashboardPricing() {
 
                 {/* Confirmation Modal/Popup - Conditional based on device */}
                 {isMobile ? (
-                    // Mobile: Use Popup
-                    <Popup
-                        visible={isModalOpen}
-                        onMaskClick={handleCancel}
-                        onClose={handleCancel}
-                        bodyStyle={{
-                            borderTopLeftRadius: '16px',
-                            borderTopRightRadius: '16px',
-                            minHeight: '40vh',
-                            maxHeight: '90vh',
-                            overflow: 'auto'
-                        }}
-                    >
+                    // Mobile: Use Tailwind bottom sheet
+                    isModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+                            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCancel} />
+                            <div className="relative w-full max-w-md bg-card/95 backdrop-blur-md border border-border rounded-t-2xl md:rounded-2xl shadow-2xl animate-slideUp"
+                                style={{ maxHeight: '90vh', overflow: 'auto', minHeight: '40vh' }}
+                            >
                         {selectedPackage && (
                             <div className="relative bg-card/95 backdrop-blur-md p-6">
                                 {/* Confirm State */}
@@ -606,7 +582,9 @@ export function DashboardPricing() {
                                 )}
                             </div>
                         )}
-                    </Popup>
+                            </div>
+                        </div>
+                    )
                 ) : (
                     // Desktop: Use Modal
                     isModalOpen && selectedPackage && (

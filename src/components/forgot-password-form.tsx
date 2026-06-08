@@ -8,7 +8,7 @@ import { Mail, ArrowRight, ArrowLeft, CheckCircle2, KeyRound } from "lucide-reac
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { notification } from "antd"
+import { toast } from "sonner"
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("")
@@ -45,28 +45,19 @@ export function ForgotPasswordForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        notification.error({
-          message: 'Reset Failed',
-          description: data.error || 'Failed to send reset email.',
-        })
+        toast.error('Reset Failed', { description: data.error || 'Failed to send reset email.' })
         setIsLoading(false)
         return
       }
 
-      notification.success({
-        message: 'Email Sent',
-        description: 'Password reset email sent! Please check your inbox.',
-      })
+      toast.success('Email Sent', { description: 'Password reset email sent! Please check your inbox.' })
 
       console.log('✅ Password reset email sent')
       setIsSubmitted(true)
       setCountdown(60)
     } catch (error) {
       console.error('Forgot password error:', error)
-      notification.error({
-        message: 'Error',
-        description: 'An error occurred. Please try again.',
-      })
+      toast.error('Error', { description: 'An error occurred. Please try again.' })
     } finally {
       setIsLoading(false)
     }
@@ -88,27 +79,18 @@ export function ForgotPasswordForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        notification.error({
-          message: 'Resend Failed',
-          description: data.error || 'Failed to resend email.',
-        })
+        toast.error('Resend Failed', { description: data.error || 'Failed to resend email.' })
         setIsLoading(false)
         return
       }
 
-      notification.success({
-        message: 'Email Resent',
-        description: 'Password reset email resent! Please check your inbox.',
-      })
+      toast.success('Email Resent', { description: 'Password reset email resent! Please check your inbox.' })
 
       console.log('✅ Password reset email resent')
       setCountdown(60)
     } catch (error) {
       console.error('Resend error:', error)
-      notification.error({
-        message: 'Error',
-        description: 'An error occurred. Please try again.',
-      })
+      toast.error('Error', { description: 'An error occurred. Please try again.' })
     } finally {
       setIsLoading(false)
     }

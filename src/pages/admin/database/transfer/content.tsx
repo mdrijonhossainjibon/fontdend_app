@@ -20,7 +20,7 @@ import {
   RefreshCw,
   Info,
 } from "lucide-react"
-import { message } from "antd"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useDispatch, useSelector } from "react-redux"
 import type { RootState } from "@/modules/rootReducer"
@@ -83,20 +83,20 @@ export default function TransferContent() {
   useEffect(() => {
     if (connectError) {
       addLog("error", `Connection failed: ${connectError}`)
-      message.error(`Connection failed: ${connectError}`)
+      toast.error(`Connection failed: ${connectError}`)
     }
   }, [connectError])
 
   useEffect(() => {
     if (transferError) {
       addLog("error", `Transfer failed: ${transferError}`)
-      message.error(`Transfer failed: ${transferError}`)
+      toast.error(`Transfer failed: ${transferError}`)
     }
   }, [transferError])
 
   const handleConnect = () => {
     if (!targetHost) {
-      message.error("Please enter target host address")
+      toast.error("Please enter target host address")
       return
     }
 
@@ -132,7 +132,7 @@ export default function TransferContent() {
 
   const handleTransfer = () => {
     if (selectedDbs.size === 0) {
-      message.error("Please select at least one database to transfer")
+      toast.error("Please select at least one database to transfer")
       return
     }
 
@@ -154,7 +154,7 @@ export default function TransferContent() {
   useEffect(() => {
     if (transferComplete) {
       addLog("success", `Successfully transferred database(s) to ${targetHost}`)
-      message.success("Transfer complete!")
+      toast.success("Transfer complete!")
     }
   }, [transferComplete])
 
@@ -166,14 +166,8 @@ export default function TransferContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Database Transfer</h1>
-          <p className="text-muted-foreground mt-1">
-            Copy databases from current server to another server
-          </p>
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-end">
         {connected && (
           <Button variant="outline" onClick={handleReset} className="gap-2">
             <RefreshCw className="w-4 h-4" />
@@ -181,7 +175,6 @@ export default function TransferContent() {
           </Button>
         )}
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Source Server — auto-detected */}
         <Card className="border-border/50">

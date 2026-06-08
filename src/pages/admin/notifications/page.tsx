@@ -77,10 +77,6 @@ export default function NotificationsPage() {
     <AdminLayout>
       <div className="p-8">
         <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Notifications</h1>
-            <p className="text-muted-foreground">Send notifications and announcements to users</p>
-          </div>
           <Button className="bg-primary hover:bg-primary/90 gap-2">
             <Plus className="w-4 h-4" />
             Send Notification

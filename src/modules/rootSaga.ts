@@ -5,7 +5,6 @@ import adminPackagesSaga from './admin/packages/saga';
 import adminExtensionsSaga from './admin/extensions/saga';
 import adminSolutionsSaga from './admin/solutions/saga';
 import adminOrdersSaga from './admin/orders/saga';
-import adminTopupHistorySaga from './admin/topup-history/saga';
 import adminHistorySaga from './admin/history/saga';
 import adminObjectClassesSaga from './admin/object-classes/saga';
 import adminHealthCheckSaga from './admin/health-check/saga';
@@ -35,7 +34,6 @@ export default function* rootSaga(): Generator {
         adminExtensionsSaga(),
         adminSolutionsSaga(),
         adminOrdersSaga(),
-        adminTopupHistorySaga(),
         adminHistorySaga(),
         adminObjectClassesSaga(),
         adminHealthCheckSaga(),

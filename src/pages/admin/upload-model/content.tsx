@@ -500,13 +500,6 @@ export default function UploadModelContent() {
                 transition: "all 0.5s ease-out",
             }}
         >
-            <div>
-                <h1 className="text-2xl font-bold text-foreground">Upload Model</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Upload .pt model files — processed by actual bot endpoint (no mock)
-                </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <UploadCard
                     title="AWS"

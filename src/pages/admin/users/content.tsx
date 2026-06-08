@@ -1,6 +1,24 @@
 
 import { useState, useEffect, useRef } from "react"
-import { Modal, message } from "antd"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 import { useDispatch, useSelector } from "react-redux"
 import store from "@/modules/store"
 type AppDispatch = typeof store.dispatch
@@ -81,6 +99,8 @@ export default function AdminUsersContent() {
   const [editingPkgId, setEditingPkgId] = useState<string | null>(null)
   const [editPkgCredits, setEditPkgCredits] = useState<number>(0)
   const [removingPkgId, setRemovingPkgId] = useState<string | null>(null)
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [removePkgConfirmId, setRemovePkgConfirmId] = useState<string | null>(null)
   const [trialDays, setTrialDays] = useState(7)
   const [trialCredits, setTrialCredits] = useState(50)
 
@@ -106,7 +126,7 @@ export default function AdminUsersContent() {
   // Handle errors
   useEffect(() => {
     if (error) {
-      message.error(error)
+      toast.error(error)
     }
   }, [error])
 
@@ -130,7 +150,7 @@ export default function AdminUsersContent() {
   // Handle package assign success
   useEffect(() => {
     if (assignPkgSuccess) {
-      message.success('Package assigned successfully')
+      toast.success('Package assigned successfully')
       setIsPkgModalOpen(false)
       dispatch(resetAssignSuccess())
     }
@@ -140,7 +160,7 @@ export default function AdminUsersContent() {
   const prevAssigningRef = useRef(false)
   useEffect(() => {
     if (prevAssigningRef.current && assignPkgError) {
-      message.error(assignPkgError)
+      toast.error(assignPkgError)
     }
     prevAssigningRef.current = isAssigningPkg
   }, [assignPkgError, isAssigningPkg])
@@ -160,16 +180,7 @@ export default function AdminUsersContent() {
   }
 
   const handleDeleteUser = (userId: string) => {
-    Modal.confirm({
-      title: 'Delete User',
-      content: 'Are you sure you want to delete this user? This action cannot be undone.',
-      okText: 'Delete',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk: () => {
-        dispatch(deleteAdminUserRequest(userId))
-      }
-    })
+    setDeleteUserId(userId)
   }
 
   const openManagePackages = async (user: User) => {
@@ -184,17 +195,7 @@ export default function AdminUsersContent() {
   }
 
   const handleRemovePackage = async (pkgId: string) => {
-    Modal.confirm({
-      title: 'Remove Package',
-      content: 'Are you sure you want to remove this package from the user?',
-      okText: 'Remove',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk: async () => {
-        setRemovingPkgId(pkgId)
-        dispatch(deleteUserPackageRequest(pkgId))
-      }
-    })
+    setRemovePkgConfirmId(pkgId)
   }
 
   return (
@@ -459,45 +460,13 @@ export default function AdminUsersContent() {
           )}
         </div>
 
-        {/* Edit User Modal */}
-        <Modal
-          title={
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Edit User</h2>
-              <p className="text-sm text-muted-foreground">Update user information</p>
-            </div>
-          }
-          open={isEditModalOpen}
-          onCancel={() => setIsEditModalOpen(false)}
-          footer={[
-            <Button
-              key="cancel"
-              variant="outline"
-              onClick={() => setIsEditModalOpen(false)}
-              className="bg-transparent"
-              disabled={isSaving}
-            >
-              Cancel
-            </Button>,
-            <Button
-              key="submit"
-              className="bg-amber-500 hover:bg-amber-600"
-              onClick={handleEditUser}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Saving...
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>,
-          ]}
-          width={500}
-          centered
-        >
+        {/* Edit User Dialog */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>Update user information</DialogDescription>
+            </DialogHeader>
           {selectedUser && (
             <div className="space-y-4 py-4">
               {/* Name */}
@@ -576,53 +545,26 @@ export default function AdminUsersContent() {
               </div>
             </div>
           )}
-        </Modal>
-
-        {/* Set Package Modal */}
-        <Modal
-          title={
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Set Package</h2>
-              <p className="text-sm text-muted-foreground">Assign to {pkgUser?.name || pkgUser?.email}</p>
-            </div>
-          }
-          open={isPkgModalOpen}
-          onCancel={() => setIsPkgModalOpen(false)}
-          footer={[
-            <Button key="cancel" variant="outline" onClick={() => setIsPkgModalOpen(false)} className="bg-transparent" disabled={isAssigningPkg}>
-              Cancel
-            </Button>,
-            <Button
-              key="submit"
-              className="bg-purple-500 hover:bg-purple-600"
-              onClick={() => {
-                if (!pkgUser) return
-                if (!isFreeTrial && !selectedPlanId) return
-                const body: any = { userId: pkgUser.id }
-                if (isFreeTrial) {
-                  body.freeTrial = true
-                  body.trialDays = trialDays
-                  body.trialCredits = trialCredits
-                } else {
-                  body.planId = selectedPlanId
-                }
-              
-                dispatch(assignPackageRequest(body))
-              }}
-              disabled={isAssigningPkg || (!isFreeTrial && !selectedPlanId)}
-            >
-              {isAssigningPkg ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" />Assigning...</>
-              ) : isFreeTrial ? (
-                'Assign Free Trial'
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="bg-transparent" disabled={isSaving}>Cancel</Button>
+            <Button className="bg-amber-500 hover:bg-amber-600" onClick={handleEditUser} disabled={isSaving}>
+              {isSaving ? (
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</>
               ) : (
-                'Assign Package'
+                'Save Changes'
               )}
-            </Button>,
-          ]}
-          width={700}
-          centered
-        >
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+        {/* Set Package Dialog */}
+        <Dialog open={isPkgModalOpen} onOpenChange={setIsPkgModalOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Set Package</DialogTitle>
+              <DialogDescription>Assign to {pkgUser?.name || pkgUser?.email}</DialogDescription>
+            </DialogHeader>
           {/* Free Trial Toggle */}
           <div className="flex items-center justify-between py-4 border-b border-border">
             <div>
@@ -714,26 +656,47 @@ export default function AdminUsersContent() {
               ))}
             </div>
           )}
-        </Modal>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPkgModalOpen(false)} className="bg-transparent" disabled={isAssigningPkg}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-purple-500 hover:bg-purple-600"
+              onClick={() => {
+                if (!pkgUser) return
+                if (!isFreeTrial && !selectedPlanId) return
+                const body: any = { userId: pkgUser.id }
+                if (isFreeTrial) {
+                  body.freeTrial = true
+                  body.trialDays = trialDays
+                  body.trialCredits = trialCredits
+                } else {
+                  body.planId = selectedPlanId
+                }
 
-        {/* Manage Packages Modal */}
-        <Modal
-          title={
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Manage Packages</h2>
-              <p className="text-sm text-muted-foreground">Packages for {pkgManageUser?.name || pkgManageUser?.email}</p>
-            </div>
-          }
-          open={isPkgManageOpen}
-          onCancel={() => setIsPkgManageOpen(false)}
-          footer={[
-            <Button key="close" variant="outline" onClick={() => setIsPkgManageOpen(false)} className="bg-transparent">
-              Close
-            </Button>,
-          ]}
-          width={800}
-          centered
-        >
+                dispatch(assignPackageRequest(body))
+              }}
+              disabled={isAssigningPkg || (!isFreeTrial && !selectedPlanId)}
+            >
+              {isAssigningPkg ? (
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" />Assigning...</>
+              ) : isFreeTrial ? (
+                'Assign Free Trial'
+              ) : (
+                'Assign Package'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+        {/* Manage Packages Dialog */}
+        <Dialog open={isPkgManageOpen} onOpenChange={setIsPkgManageOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Manage Packages</DialogTitle>
+              <DialogDescription>Packages for {pkgManageUser?.name || pkgManageUser?.email}</DialogDescription>
+            </DialogHeader>
           {loadingPackages ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -840,7 +803,51 @@ export default function AdminUsersContent() {
               ))}
             </div>
           )}
-        </Modal>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPkgManageOpen(false)} className="bg-transparent">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to delete this user? This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deleteUserId) dispatch(deleteAdminUserRequest(deleteUserId))
+              setDeleteUserId(null)
+            }}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Package Confirmation */}
+      <AlertDialog open={!!removePkgConfirmId} onOpenChange={() => setRemovePkgConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Package</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to remove this package from the user?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (removePkgConfirmId) {
+                setRemovingPkgId(removePkgConfirmId)
+                dispatch(deleteUserPackageRequest(removePkgConfirmId))
+              }
+              setRemovePkgConfirmId(null)
+            }}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       </Suspense>
 
       <style>{`

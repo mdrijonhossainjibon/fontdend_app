@@ -2,7 +2,7 @@ import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from './constants';
 import * as actions from './actions';
 import { API_CALL, APIResponse } from '@/lib/auth-fingerprint';
-import { message } from 'antd';
+import { toast } from "sonner";
 
 function* fetchOrdersSaga(action: any): Generator {
     try {
@@ -32,11 +32,11 @@ function* fetchOrdersSaga(action: any): Generator {
             yield put(actions.fetchOrdersSuccess({ orders: deposits, pagination, stats }));
         } else {
             yield put(actions.fetchOrdersFailure(response?.error || 'Failed to fetch orders'));
-            message.error(response?.error || 'Failed to fetch orders');
+            toast.error(response?.error || 'Failed to fetch orders');
         }
     } catch (error) {
         yield put(actions.fetchOrdersFailure('Failed to fetch orders'));
-        message.error('Failed to fetch orders');
+        toast.error('Failed to fetch orders');
     }
 }
 
@@ -50,14 +50,14 @@ function* approveOrderSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.approveOrderSuccess(response.deposit));
-            message.success('Order approved successfully');
+            toast.success('Order approved successfully');
         } else {
             yield put(actions.approveOrderFailure(response?.error || 'Failed to approve'));
-            message.error(response?.error || 'Failed to approve');
+            toast.error(response?.error || 'Failed to approve');
         }
     } catch (error) {
         yield put(actions.approveOrderFailure('Failed to approve order'));
-        message.error('Failed to approve order');
+        toast.error('Failed to approve order');
     }
 }
 
@@ -71,14 +71,14 @@ function* rejectOrderSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.rejectOrderSuccess(response.deposit));
-            message.success('Order rejected');
+            toast.success('Order rejected');
         } else {
             yield put(actions.rejectOrderFailure(response?.error || 'Failed to reject'));
-            message.error(response?.error || 'Failed to reject');
+            toast.error(response?.error || 'Failed to reject');
         }
     } catch (error) {
         yield put(actions.rejectOrderFailure('Failed to reject order'));
-        message.error('Failed to reject order');
+        toast.error('Failed to reject order');
     }
 }
 
@@ -95,15 +95,15 @@ function* clearOrdersSaga(action: any): Generator {
 
         if (response && response.success) {
             yield put(actions.clearOrdersSuccess(response));
-            message.success('Orders cleared successfully');
+            toast.success('Orders cleared successfully');
             yield put(actions.fetchOrdersRequest());
         } else {
             yield put(actions.clearOrdersFailure(response?.error || 'Failed to clear orders'));
-            message.error(response?.error || 'Failed to clear orders');
+            toast.error(response?.error || 'Failed to clear orders');
         }
     } catch (error) {
         yield put(actions.clearOrdersFailure('Failed to clear orders'));
-        message.error('Failed to clear orders');
+        toast.error('Failed to clear orders');
     }
 }
 

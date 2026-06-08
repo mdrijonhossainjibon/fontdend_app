@@ -6,7 +6,6 @@ import type { RootState } from "@/modules/rootReducer"
 import { fetchReferralStatsRequest, fetchReferralListRequest } from "@/modules/referrals/actions"
 import {
     Users,
-    Gift,
     Share2,
     Copy,
     CheckCircle2,
@@ -53,21 +52,6 @@ export default function ReferralsPage() {
 
     return (
         <div className="relative p-4 md:p-6 lg:p-8 space-y-6 animate-in fade-in duration-700 min-h-[calc(100vh-100px)]">
-
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                        Invite & Earn <Gift className="w-6 h-6 text-primary" />
-                    </h1>
-                    <p className="text-muted-foreground mt-1">Share the power of CaptchaMaster and earn {stats?.commissionRate ?? 15}% commission on every credit purchase your referrals make.</p>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl">
-                    <Trophy className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-bold text-primary">Live Early Access</span>
-                </div>
-            </div>
-
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {statCards.map((stat, i) => (

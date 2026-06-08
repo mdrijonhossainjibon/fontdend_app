@@ -167,3 +167,20 @@ export const deleteEmailTemplateFailure = (error: string) => ({
     payload: error,
 });
 
+// ── Admin Analytics ────────────────────────────────────────────────────────────
+
+export const fetchAdminAnalyticsRequest = (days: number = 30) => ({
+    type: types.FETCH_ADMIN_ANALYTICS_REQUEST,
+    payload: days,
+});
+
+export const fetchAdminAnalyticsSuccess = (payload: any) => ({
+    type: types.FETCH_ADMIN_ANALYTICS_SUCCESS,
+    payload,
+});
+
+export const fetchAdminAnalyticsFailure = (error: string) => ({
+    type: types.FETCH_ADMIN_ANALYTICS_FAILURE,
+    payload: error,
+});
+

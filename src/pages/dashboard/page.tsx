@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import {
-  fetchDashboardDataRequest,
   generateKeyRequest,
   deleteKeyRequest,
   regenerateKeyRequest,
@@ -86,7 +85,6 @@ const startAutoPlay = useCallback(() => {
 
   // Initial data fetch on mount
   useEffect(() => {
-    dispatch(fetchDashboardDataRequest())
     dispatch(fetchOffersRequest())
   }, [dispatch])
 

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Tabs } from "antd"
+import { useEffect, useState } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import {
   User,
@@ -248,45 +248,44 @@ export function DashboardProfileContent() {
             transitionDelay: "300ms",
           }}
         >
-          <Tabs
-            defaultActiveKey="profile"
-            items={[
-              {
-                key: "profile",
-                label: "Profile",
-                children: (
-                  <div className="space-y-6">
-                    {/* Personal Info */}
-                    <div className="p-6 rounded-2xl bg-card border border-border">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-foreground">Personal Information</h3>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-                          disabled={isSaving}
-                          className="gap-2"
-                        >
-                          {isSaving ? (
-                            <>
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : isEditing ? (
-                            <>
-                              <Save className="w-4 h-4" />
-                              Save Changes
-                            </>
-                          ) : (
-                            <>
-                              <Edit3 className="w-4 h-4" />
-                              Edit
-                            </>
-                          )}
-                        </Button>
-                      </div>
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="security">Security</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile">
+              <div className="space-y-6">
+                {/* Personal Info */}
+                <div className="p-6 rounded-2xl bg-card border border-border">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-foreground">Personal Information</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+                      disabled={isSaving}
+                      className="gap-2"
+                    >
+                      {isSaving ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : isEditing ? (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Save Changes
+                        </>
+                      ) : (
+                        <>
+                          <Edit3 className="w-4 h-4" />
+                          Edit
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
                           { label: "Full Name", value: profile.name, icon: User },
                           { label: "Email Address", value: profile.email, icon: Mail },
@@ -318,69 +317,58 @@ export function DashboardProfileContent() {
                         })}
                       </div>
                     </div>
-
-
                   </div>
-                ),
-              },
-              {
-                key: "security",
-                label: "Security",
-                children: (
-                  <div className="space-y-6">
-                    {/* Password */}
-                    <div className="p-6 rounded-2xl bg-card border border-border">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 rounded-xl bg-primary/10">
-                          <Lock className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-foreground">Change Password</h3>
-                          <p className="text-sm text-muted-foreground">Update your password regularly for security</p>
-                        </div>
-                      </div>
+            </TabsContent>
+            <TabsContent value="security">
+              <div className="space-y-6">
+                {/* Password */}
+                <div className="p-6 rounded-2xl bg-card border border-border">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <Lock className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Change Password</h3>
+                      <p className="text-sm text-muted-foreground">Update your password regularly for security</p>
+                    </div>
+                  </div>
 
-                      <div className="space-y-4">
-                        {["Current Password", "New Password", "Confirm New Password"].map((label) => (
-                          <div key={label} className="space-y-2">
-                            <label className="text-sm font-medium text-muted-foreground">{label}</label>
-                            <input
-                              type="password"
-                              placeholder="••••••••"
-                              className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground outline-none transition-all"
-                            />
-                          </div>
-                        ))}
-                        <Button className="gap-2 bg-primary hover:bg-primary/90">
-                          <Save className="w-4 h-4" />
-                          Update Password
-                        </Button>
+                  <div className="space-y-4">
+                    {["Current Password", "New Password", "Confirm New Password"].map((label) => (
+                      <div key={label} className="space-y-2">
+                        <label className="text-sm font-medium text-muted-foreground">{label}</label>
+                        <input
+                          type="password"
+                          placeholder="••••••••"
+                          className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground outline-none transition-all"
+                        />
+                      </div>
+                    ))}
+                    <Button className="gap-2 bg-primary hover:bg-primary/90">
+                      <Save className="w-4 h-4" />
+                      Update Password
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 2FA */}
+                <div className="p-6 rounded-2xl bg-card border border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-green-500/10">
+                        <Shield className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">Two-Factor Authentication</h3>
+                        <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
                       </div>
                     </div>
-
-                    {/* 2FA */}
-                    <div className="p-6 rounded-2xl bg-card border border-border">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-green-500/10">
-                            <Shield className="w-5 h-5 text-green-500" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground">Two-Factor Authentication</h3>
-                            <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-green-500/10 text-green-500">Enabled</Badge>
-                      </div>
-                    </div>
-
-
+                    <Badge className="bg-green-500/10 text-green-500">Enabled</Badge>
                   </div>
-                ),
-              },
-
-            ]}
-          />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

@@ -67,17 +67,8 @@ export default function TrainingDataPage() {
     return (
         <div className="min-h-screen bg-background p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                            <Database className="w-8 h-8 text-primary" />
-                            AI Training Data
-                        </h1>
-                        <p className="text-muted-foreground mt-1">
-                            Manage object classes for AI bot training
-                        </p>
-                    </div>
+                {/* Actions */}
+                <div className="flex items-center justify-end">
                     <button
                         onClick={() => {
                             setEditingClass(null)

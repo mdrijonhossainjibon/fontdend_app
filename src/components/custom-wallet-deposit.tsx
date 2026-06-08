@@ -12,7 +12,14 @@ import {
     Zap
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Select, notification } from "antd"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { toast } from "sonner"
 import Web3 from 'web3'
 import { RootState } from "@/modules/rootReducer"
 import { fetchSettingsRequest } from "@/modules/settings/actions"
@@ -115,11 +122,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
     // Connect wallet
     const connectWallet = async () => {
         if (!isMetaMaskInstalled()) {
-            notification.error({
-                message: 'MetaMask Not Found',
-                description: 'Please install MetaMask or another Web3 wallet to continue.',
-                placement: 'topRight'
-            })
+            toast.error('MetaMask Not Found', { description: 'Please install MetaMask or another Web3 wallet to continue.' })
             return
         }
 
@@ -136,18 +139,10 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
             setCurrentChainId(parseInt(chainId, 16))
             setIsConnected(true)
 
-            notification.success({
-                message: 'Wallet Connected',
-                description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`,
-                placement: 'topRight'
-            })
+            toast.success('Wallet Connected', { description: `Connected to ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}` })
         } catch (error: any) {
             console.error('Connection error:', error)
-            notification.error({
-                message: 'Connection Failed',
-                description: error.message || 'Failed to connect wallet',
-                placement: 'topRight'
-            })
+            toast.error('Connection Failed', { description: error.message || 'Failed to connect wallet' })
         }
     }
 
@@ -157,10 +152,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
         setUserAddress("")
         setIsConnected(false)
         setCurrentChainId(null)
-        notification.info({
-            message: 'Wallet Disconnected',
-            placement: 'topRight'
-        })
+        toast.info('Wallet Disconnected')
     }
 
     // Switch network
@@ -176,11 +168,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
             setCurrentChainId(targetChainId)
         } catch (error: any) {
             console.error('Network switch error:', error)
-            notification.error({
-                message: 'Network Switch Failed',
-                description: error.message || 'Failed to switch network',
-                placement: 'topRight'
-            })
+            toast.error('Network Switch Failed', { description: error.message || 'Failed to switch network' })
         }
     }
 
@@ -246,11 +234,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
     // Handle deposit
     const handleDeposit = async () => {
         if (!web3 || !userAddress || !depositAmount || !selectedNetwork || !selectedCrypto) {
-            notification.warning({
-                message: 'Missing Data',
-                description: 'Please ensure wallet is connected and amount is selected.',
-                placement: 'topRight'
-            })
+            toast.warning('Missing Data', { description: 'Please ensure wallet is connected and amount is selected.' })
             return
         }
 
@@ -259,11 +243,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
 
         // Switch network if needed
         if (isWrongNetwork) {
-            notification.info({
-                message: 'Switch Network',
-                description: `Please switch to ${selectedNetwork.name} network.`,
-                placement: 'topRight'
-            })
+            toast.info('Switch Network', { description: `Please switch to ${selectedNetwork.name} network.` })
             await switchNetwork(targetChainId)
             return
         }
@@ -301,11 +281,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
                 txHash = receipt.transactionHash
             }
 
-            notification.success({
-                message: 'Transaction Sent',
-                description: 'Your deposit is being processed on-chain.',
-                placement: 'topRight'
-            })
+            toast.success('Transaction Sent', { description: 'Your deposit is being processed on-chain.' })
 
             if (onSuccess) onSuccess(txHash)
 
@@ -330,11 +306,7 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
 
         } catch (error: any) {
             console.error("Transaction error:", error)
-            notification.error({
-                message: 'Transaction Failed',
-                description: error.message || 'Failed to process transaction',
-                placement: 'topRight'
-            })
+            toast.error('Transaction Failed', { description: error.message || 'Failed to process transaction' })
             if (onError) onError(error.message)
         } finally {
             setIsSending(false)
@@ -431,40 +403,41 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
                             Select Asset
                         </label>
                         <Select
-                            value={selectedCrypto?.id}
-                            onChange={(value) => {
+                            value={selectedCrypto?.id || ""}
+                            onValueChange={(value) => {
                                 const crypto = cryptoOptions.find((c: any) => c.id === value)
                                 if (crypto) {
                                     setSelectedCrypto(crypto)
                                     setSelectedNetwork(crypto.networks[0])
                                 }
                             }}
-                            className="w-full h-12"
-                            size="large"
-                            popupClassName="crypto-select-dropdown"
                         >
-                            {cryptoOptions.map((crypto: any) => (
-                                <Select.Option key={crypto.id} value={crypto.id}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-lg ${crypto.bg} flex items-center justify-center font-bold ${crypto.color} overflow-hidden`}>
-                                            {crypto.id === 'sect' ? (
-                                                'S'
-                                            ) : (
-                                                <img 
-                                                    src={require(`../node_modules/cryptocurrency-icons/svg/color/${crypto.id}.svg`)}
-                                                    alt={crypto.name}
-                                                    style={{ width: 20 }}
-                                                    
-                                                />
-                                            )}
+                            <SelectTrigger className="w-full h-12">
+                                <SelectValue placeholder="Select a cryptocurrency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {cryptoOptions.map((crypto: any) => (
+                                    <SelectItem key={crypto.id} value={crypto.id}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-lg ${crypto.bg} flex items-center justify-center font-bold ${crypto.color} overflow-hidden`}>
+                                                {crypto.id === 'sect' ? (
+                                                    'S'
+                                                ) : (
+                                                    <img
+                                                        src={require(`../node_modules/cryptocurrency-icons/svg/color/${crypto.id}.svg`)}
+                                                        alt={crypto.name}
+                                                        style={{ width: 20 }}
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="text-sm font-bold">{crypto.name}</p>
+                                                <p className="text-xs text-muted-foreground">{crypto.fullName}</p>
+                                            </div>
                                         </div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-bold">{crypto.name}</p>
-                                            <p className="text-xs text-muted-foreground">{crypto.fullName}</p>
-                                        </div>
-                                    </div>
-                                </Select.Option>
-                            ))}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                     </div>
 
@@ -476,30 +449,32 @@ export function CustomWalletDeposit({ onSuccess, onError }: CustomWalletDepositP
                                 Select Network
                             </label>
                             <Select
-                                value={selectedNetwork?.id}
-                                onChange={(value) => {
-                                    const network = selectedCrypto.networks.find(n => n.id === value)
+                                value={selectedNetwork?.id || ""}
+                                onValueChange={(value) => {
+                                    const network = selectedCrypto.networks.find((n: any) => n.id === value)
                                     if (network) setSelectedNetwork(network)
                                 }}
-                                className="w-full h-12"
-                                size="large"
-                                popupClassName="network-select-dropdown"
                             >
-                                {selectedCrypto.networks.map((network: any) => (
-                                    <Select.Option key={network.id} value={network.id}>
-                                        <div className="flex flex-col text-left">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-bold">{network.name}</span>
-                                                {network.badge && (
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${network.badgeColor} font-semibold`}>
-                                                        {network.badge}
-                                                    </span>
-                                                )}
+                                <SelectTrigger className="w-full h-12">
+                                    <SelectValue placeholder="Select a network" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {selectedCrypto.networks.map((network: any) => (
+                                        <SelectItem key={network.id} value={network.id}>
+                                            <div className="flex flex-col text-left">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-bold">{network.name}</span>
+                                                    {network.badge && (
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${network.badgeColor} font-semibold`}>
+                                                            {network.badge}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[10px] text-muted-foreground">{network.fee} • {network.time}</span>
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground">{network.fee} • {network.time}</span>
-                                        </div>
-                                    </Select.Option>
-                                ))}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
                             </Select>
                         </div>
                     )}

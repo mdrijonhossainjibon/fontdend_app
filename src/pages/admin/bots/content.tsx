@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react"
-import { Modal, message } from "antd"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 import { useDispatch, useSelector } from "react-redux"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -51,6 +53,7 @@ export default function AdminBotsContent() {
     const [statusFilter, setStatusFilter] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
+    const [deleteBotId, setDeleteBotId] = useState<string | null>(null)
 
     useEffect(() => {
         dispatch(fetchAdminBotsRequest({ searchTerm, statusFilter, page: currentPage, limit: itemsPerPage }))
@@ -59,7 +62,7 @@ export default function AdminBotsContent() {
     useEffect(() => { setCurrentPage(1) }, [searchTerm, statusFilter])
 
     useEffect(() => {
-        if (error) message.error(error)
+        if (error) toast.error(error)
     }, [error])
 
     const handleEditBot = () => {
@@ -74,14 +77,14 @@ export default function AdminBotsContent() {
     }
 
     const handleDeleteBot = (botId: string) => {
-        Modal.confirm({
-            title: 'Delete Bot',
-            content: 'Are you sure you want to delete this bot? This cannot be undone.',
-            okText: 'Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk: () => dispatch(deleteAdminBotRequest(botId))
-        })
+        setDeleteBotId(botId)
+    }
+
+    const confirmDeleteBot = () => {
+        if (deleteBotId) {
+            dispatch(deleteAdminBotRequest(deleteBotId))
+            setDeleteBotId(null)
+        }
     }
 
     const totalBots = pagination?.total || 0
@@ -279,70 +282,84 @@ export default function AdminBotsContent() {
                 </div>
             )}
 
-            {/* Edit Bot Modal */}
-            <Modal
-                title={<div><h2 className="text-xl font-bold">Edit Bot</h2><p className="text-sm text-muted-foreground">Update bot balance, credits, and status</p></div>}
-                open={isEditModalOpen}
-                onCancel={() => setIsEditModalOpen(false)}
-                footer={[
-                    <Button key="cancel" variant="outline" onClick={() => setIsEditModalOpen(false)} className="bg-transparent" disabled={isSaving}>Cancel</Button>,
-                    <Button key="submit" className="bg-amber-500 hover:bg-amber-600" onClick={handleEditBot} disabled={isSaving}>
-                        {isSaving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</> : 'Save Changes'}
-                    </Button>,
-                ]}
-                width={480}
-                centered
-            >
-                {selectedBot && (
-                    <div className="space-y-4 py-4">
-                        <div className="p-4 rounded-xl bg-muted/30 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <Bot className="w-5 h-5 text-primary" />
+            {/* Edit Bot Dialog */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Edit Bot</DialogTitle>
+                        <p className="text-sm text-muted-foreground">Update bot balance, credits, and status</p>
+                    </DialogHeader>
+                    {selectedBot && (
+                        <div className="space-y-4 py-4">
+                            <div className="p-4 rounded-xl bg-muted/30 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <Bot className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold">{selectedBot.name}</p>
+                                    <p className="text-xs text-muted-foreground">{selectedBot.userEmail}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-semibold">{selectedBot.name}</p>
-                                <p className="text-xs text-muted-foreground">{selectedBot.userEmail}</p>
-                            </div>
-                        </div>
 
-                        <div>
-                            <label className="text-sm font-semibold mb-2 block">Balance (USD)</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                            <div>
+                                <label className="text-sm font-semibold mb-2 block">Balance (USD)</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                    <input
+                                        type="number"
+                                        value={editForm.balance}
+                                        onChange={e => setEditForm({ ...editForm, balance: parseFloat(e.target.value) || 0 })}
+                                        className="w-full pl-8 pr-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold mb-2 block">Credits Limit</label>
                                 <input
                                     type="number"
-                                    value={editForm.balance}
-                                    onChange={e => setEditForm({ ...editForm, balance: parseFloat(e.target.value) || 0 })}
-                                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                                    value={editForm.credits}
+                                    onChange={e => setEditForm({ ...editForm, credits: parseInt(e.target.value) || 0 })}
+                                    className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="text-sm font-semibold mb-2 block">Credits Limit</label>
-                            <input
-                                type="number"
-                                value={editForm.credits}
-                                onChange={e => setEditForm({ ...editForm, credits: parseInt(e.target.value) || 0 })}
-                                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
-                            />
+                            <div>
+                                <label className="text-sm font-semibold mb-2 block">Status</label>
+                                <select
+                                    value={editForm.status}
+                                    onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                    <option value="banned">Banned</option>
+                                </select>
+                            </div>
                         </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="bg-transparent" disabled={isSaving}>Cancel</Button>
+                        <Button className="bg-amber-500 hover:bg-amber-600" onClick={handleEditBot} disabled={isSaving}>
+                            {isSaving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</> : 'Save Changes'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                        <div>
-                            <label className="text-sm font-semibold mb-2 block">Status</label>
-                            <select
-                                value={editForm.status}
-                                onChange={e => setEditForm({ ...editForm, status: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
-                            >
-                                <option value="active">Active</option>
-                                <option value="paused">Paused</option>
-                                <option value="banned">Banned</option>
-                            </select>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteBotId !== null} onOpenChange={(open) => { if (!open) setDeleteBotId(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Bot</AlertDialogTitle>
+                        <AlertDialogDescription>Are you sure you want to delete this bot? This cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteBot}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <style>{`
         @keyframes slideInUp {

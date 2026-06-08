@@ -19,6 +19,10 @@ const initialState = {
     // Email Templates
     emailTemplates: [],
     emailLoading: false,
+    // Analytics
+    analytics: null,
+    analyticsLoading: false,
+    analyticsError: null,
 };
 
 
@@ -170,6 +174,14 @@ const adminReducer = (state = initialState, action: any) => {
             return { ...state, emailLoading: false, error: null };
         case types.DELETE_EMAIL_TEMPLATE_FAILURE:
             return { ...state, emailLoading: false, error: action.payload };
+
+        // ── Analytics ──────────────────────────────────────────────────────
+        case types.FETCH_ADMIN_ANALYTICS_REQUEST:
+            return { ...state, analyticsLoading: true, analyticsError: null };
+        case types.FETCH_ADMIN_ANALYTICS_SUCCESS:
+            return { ...state, analyticsLoading: false, analytics: action.payload, analyticsError: null };
+        case types.FETCH_ADMIN_ANALYTICS_FAILURE:
+            return { ...state, analyticsLoading: false, analyticsError: action.payload };
 
         default:
             return state;

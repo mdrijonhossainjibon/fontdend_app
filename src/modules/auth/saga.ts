@@ -1,7 +1,7 @@
 import { call, put, take, takeLatest, fork } from 'redux-saga/effects';
 import * as types from './constants';
 import * as actions from './actions';
-import { notification } from 'antd';
+import { toast } from "sonner";
 import { API_CALL, APIResponse } from '@/lib/auth-fingerprint';
 
 /**
@@ -21,16 +21,14 @@ function* registerFlow(): Generator<any, any, any> {
 
         if (regResult.status !== 200 && regResult.status !== 201) {
             yield put(actions.registerFailure(regResult.response?.error || 'Registration failed.'));
-            notification.error({
-                message: 'Registration Failed',
+            toast.error('Registration Failed', {
                 description: regResult.response?.error || 'Something went wrong during registration.',
             });
             continue;
         }
 
         yield put(actions.registerSuccess(regResult.response));
-        notification.success({
-            message: 'Account created!',
+        toast.success('Account created!', {
             description: 'Please verify your email to continue.',
         });
 
@@ -45,16 +43,14 @@ function* registerFlow(): Generator<any, any, any> {
 
         if (verifyResult.status !== 200) {
             yield put(actions.verifyEmailFailure(verifyResult.response?.error || 'Invalid OTP.'));
-            notification.error({
-                message: 'Invalid OTP',
+            toast.error('Invalid OTP', {
                 description: verifyResult.response?.error || 'The code you entered is incorrect.',
             });
             continue;
         }
 
         yield put(actions.verifyEmailSuccess(verifyResult.response));
-        notification.success({
-            message: 'Email Verified',
+        toast.success('Email Verified', {
             description: 'Your email has been verified successfully!',
         });
         localStorage.setItem('authToken', verifyResult.response.token);
@@ -92,21 +88,18 @@ function* resendVerificationSaga(action: any): Generator<any, any, any> {
 
         if (status === 200) {
             yield put(actions.resendVerificationSuccess(response));
-            notification.success({
-                message: 'Code Resent',
+            toast.success('Code Resent', {
                 description: 'A new verification code has been sent to your email.',
             });
         } else {
             yield put(actions.resendVerificationFailure(response?.error || 'Failed to resend verification code.'));
-            notification.error({
-                message: 'Resend Failed',
+            toast.error('Resend Failed', {
                 description: response?.error || 'Failed to resend verification code.',
             });
         }
     } catch (error: any) {
         yield put(actions.resendVerificationFailure(error.message || 'An error occurred. Please try again.'));
-        notification.error({
-            message: 'Error',
+        toast.error('Error', {
             description: 'An error occurred. Please try again.',
         });
     }
@@ -161,7 +154,7 @@ function* loginFlow(): Generator<any, any, any> {
         } else {
             const err = result.response?.error || 'Login failed. Please try again.';
             yield put(actions.loginFailure(err));
-            notification.error({ message: 'Login Failed', description: err });
+            toast.error('Login Failed', { description: err });
         }
     }
 }
@@ -180,15 +173,15 @@ function* verifyOtpSaga(action: any): Generator<any, any, any> {
             yield put(actions.verifyOtpSuccess(response));
             localStorage.setItem('authToken', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
-            notification.success({ message: 'Verified', description: 'Login successful!' });
+            toast.success('Verified', { description: 'Login successful!' });
         } else {
             const err = response?.error || 'Invalid verification code.';
             yield put(actions.verifyOtpFailure(err));
-            notification.error({ message: 'Verification Failed', description: err });
+            toast.error('Verification Failed', { description: err });
         }
     } catch (error: any) {
         yield put(actions.verifyOtpFailure(error.message || 'An error occurred.'));
-        notification.error({ message: 'Error', description: error.message || 'An error occurred.' });
+        toast.error('Error', { description: error.message || 'An error occurred.' });
     }
 }
 
@@ -204,15 +197,15 @@ function* resendOtpSaga(action: any): Generator<any, any, any> {
         });
         if (status === 200) {
             yield put(actions.resendOtpSuccess(response));
-            notification.success({ message: 'Code Resent', description: 'A new code has been sent to your email.' });
+            toast.success('Code Resent', { description: 'A new code has been sent to your email.' });
         } else {
             const err = response?.error || 'Failed to resend code.';
             yield put(actions.resendOtpFailure(err));
-            notification.error({ message: 'Resend Failed', description: err });
+            toast.error('Resend Failed', { description: err });
         }
     } catch (error: any) {
         yield put(actions.resendOtpFailure(error.message || 'An error occurred.'));
-        notification.error({ message: 'Error', description: error.message || 'An error occurred.' });
+        toast.error('Error', { description: error.message || 'An error occurred.' });
     }
 }
 
@@ -231,22 +224,19 @@ function* googleLoginSaga(action: any): Generator<any, any, any> {
             yield put(actions.googleLoginSuccess(result.response));
             localStorage.setItem('authToken', result.response.token);
             localStorage.setItem('user', JSON.stringify(result.response.user));
-            notification.success({
-                message: 'Welcome Back!',
+            toast.success('Welcome Back!', {
                 description: 'Successfully signed in with Google.',
             });
         } else {
             const err = result.response?.error || 'Google Login failed.';
             yield put(actions.googleLoginFailure(err));
-            notification.error({
-                message: 'Google Login Failed',
+            toast.error('Google Login Failed', {
                 description: err,
             });
         }
     } catch (error: any) {
         yield put(actions.googleLoginFailure(error.message || 'An error occurred.'));
-        notification.error({
-            message: 'Error',
+        toast.error('Error', {
             description: error.message || 'An error occurred during Google login.',
         });
     }
@@ -261,8 +251,7 @@ function* logoutSaga(): Generator<any, any, any> {
         localStorage.removeItem('user');
         localStorage.removeItem('tokenExpiry');
         yield put(actions.logoutSuccess());
-        notification.success({
-            message: 'Signed Out',
+        toast.success('Signed Out', {
             description: 'You have been successfully logged out.',
         });
         window.location.href = '/';

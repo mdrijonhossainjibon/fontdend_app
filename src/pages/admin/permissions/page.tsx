@@ -132,14 +132,6 @@ export default function AdminPermissionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Permissions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage roles, permissions, and user access</p>
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-secondary/50 rounded-xl w-fit">
         {([

@@ -2,7 +2,7 @@ import { call, put, takeLatest, select, delay, take, race } from 'redux-saga/eff
 import * as types from './constants';
 import * as actions from './actions';
 import { API_CALL, APIResponse } from '@/lib/auth-fingerprint';
-import { notification } from 'antd';
+import { toast } from "sonner";
 import { updateUserBalance } from '../dashboard/actions';
 
 function* fetchCryptoConfigSaga(): Generator {
@@ -100,10 +100,8 @@ function* checkIncomingDepositsSaga(action: any): Generator {
             if (response.data && response.data.length > 0) {
                 const totalAmount = response.data.reduce((sum: number, dep: any) => sum + (dep.amountUSD || 0), 0);
                 yield put(updateUserBalance(totalAmount));
-                notification.success({
-                    message: 'New Deposit Detected',
+                toast.success('New Deposit Detected', {
                     description: `Successfully detected ${response.data.length} new deposit(s).`,
-                    placement: 'bottomRight',
                 });
             }
         }

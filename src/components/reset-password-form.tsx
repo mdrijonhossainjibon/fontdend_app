@@ -5,7 +5,7 @@ import { Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle, ArrowLeft, Sp
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { notification } from "antd"
+import { toast } from "sonner"
 
 type ResetStep = 'loading' | 'form' | 'success' | 'error'
 
@@ -51,11 +51,11 @@ export function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password.length < 6) {
-      notification.error({ message: 'Password Too Short', description: 'Password must be at least 6 characters.' })
+      toast.error('Password Too Short', { description: 'Password must be at least 6 characters.' })
       return
     }
     if (password !== confirmPassword) {
-      notification.error({ message: 'Passwords do not match', description: 'Please ensure your passwords are identical.' })
+      toast.error('Passwords do not match', { description: 'Please ensure your passwords are identical.' })
       return
     }
 
@@ -67,12 +67,12 @@ export function ResetPasswordForm() {
         body: JSON.stringify({ token, password }),
       })
       const data = await res.json()
-      if (!res.ok) { notification.error({ message: 'Reset Failed', description: data.error || 'Failed to reset password.' }); setIsLoading(false); return }
-      notification.success({ message: 'Password Reset', description: 'Your password has been successfully reset!' })
+      if (!res.ok) { toast.error('Reset Failed', { description: data.error || 'Failed to reset password.' }); setIsLoading(false); return }
+      toast.success('Password Reset', { description: 'Your password has been successfully reset!' })
       setStep('success')
       setTimeout(() => navigate('/auth/login'), 3000)
     } catch {
-      notification.error({ message: 'Error', description: 'An error occurred. Please try again.' })
+      toast.error('Error', { description: 'An error occurred. Please try again.' })
     } finally { setIsLoading(false) }
   }
 

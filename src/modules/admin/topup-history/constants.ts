@@ -1,3 +1,0 @@
-export const FETCH_TOPUP_HISTORY_REQUEST = 'admin/topup-history/FETCH_TOPUP_HISTORY_REQUEST'
-export const FETCH_TOPUP_HISTORY_SUCCESS = 'admin/topup-history/FETCH_TOPUP_HISTORY_SUCCESS'
-export const FETCH_TOPUP_HISTORY_FAILURE = 'admin/topup-history/FETCH_TOPUP_HISTORY_FAILURE'

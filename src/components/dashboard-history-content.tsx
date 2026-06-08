@@ -97,12 +97,7 @@ export function DashboardHistoryContent() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Transaction History</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Track all your deposits and spending</p>
-        </div>
+      <div className="flex justify-end">
         <button
           onClick={() => { dispatch(fetchHistoryRequest()); setCurrentPage(1) }}
           disabled={historyLoading}

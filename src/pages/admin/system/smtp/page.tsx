@@ -6,21 +6,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
-    Mail,
     Save,
     RefreshCw,
     ShieldCheck,
     AlertCircle,
     Send,
-    CheckCircle2
+    CheckCircle2,
+    Eye,
+    EyeOff,
+    Power
 } from "lucide-react"
-import { toast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { API_CALL } from '@/lib/auth-fingerprint'
 
 export default function SmtpSettingsPage() {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [testing, setTesting] = useState(false)
+    const [showPass, setShowPass] = useState(false)
+    const [hasPass, setHasPass] = useState(false)
     const [settings, setSettings] = useState({
         host: '',
         port: 587,
@@ -49,13 +53,14 @@ export default function SmtpSettingsPage() {
                     port: s.port || 587,
                     secure: s.secure ?? false,
                     user: s.user || '',
-                    pass: '', // never prefill password
+                    pass: s.pass || '',
                     from: s.from || '',
                     isActive: s.status === 'active',
                 })
+                setHasPass(!!s.pass)
             }
         } catch (error) {
-            toast({ title: 'Failed to load SMTP settings', variant: 'destructive' })
+            toast.error('Failed to load SMTP settings')
         } finally {
             setLoading(false)
         }
@@ -67,15 +72,15 @@ export default function SmtpSettingsPage() {
             const { response, status } = await API_CALL({
                 method: 'PATCH',
                 url: '/admin/system/smtp',
-                body: { ...settings, isActive: undefined, status: settings.isActive ? 'active' : 'inactive' }
+                body: { ...settings, isActive: undefined, status: settings.isActive ? 'active' : 'inactive', pass: !settings.pass && hasPass ? undefined : settings.pass }
             })
             if (status === 200) {
-                toast({ title: 'SMTP settings saved successfully' })
+                toast.success('SMTP settings saved successfully')
             } else {
-                toast({ title: response.error || 'Failed to save settings', variant: 'destructive' })
+                toast.error(response.error || 'Failed to save settings')
             }
         } catch (error) {
-            toast({ title: 'An error occurred while saving', variant: 'destructive' })
+            toast.error('An error occurred while saving')
         } finally {
             setSaving(false)
         }
@@ -87,15 +92,15 @@ export default function SmtpSettingsPage() {
             const { response, status } = await API_CALL({
                 method: 'POST',
                 url: '/admin/system/smtp/test',
-                body: settings
+                body: { ...settings, pass: !settings.pass && hasPass ? undefined : settings.pass }
             })
             if (status === 200) {
-                toast({ title: 'SMTP connection verified successfully' })
+                toast.success('SMTP connection verified successfully')
             } else {
-                toast({ title: response.error || 'Connection test failed', variant: 'destructive' })
+                toast.error(response.error || 'Connection test failed')
             }
         } catch (error: any) {
-            toast({ title: error.message || 'Connection test failed', variant: 'destructive' })
+            toast.error(error.message || 'Connection test failed')
         } finally {
             setTesting(false)
         }
@@ -111,18 +116,6 @@ export default function SmtpSettingsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-xl text-primary">
-                            <Mail className="w-8 h-8" />
-                        </div>
-                        SMTP Configuration
-                    </h1>
-                    <p className="text-muted-foreground">Manage your outgoing email server settings</p>
-                </div>
-            </div>
-
             <div className="grid gap-6">
                 <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                     <CardHeader>
@@ -177,15 +170,24 @@ export default function SmtpSettingsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="pass text-muted-foreground">Password / App Key</Label>
-                                <Input
-                                    id="pass"
-                                    type="password"
-                                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                                    value={settings.pass}
-                                    onChange={e => setSettings({ ...settings, pass: e.target.value })}
-                                />
-                                <p className="text-[10px] text-muted-foreground">Leave blank to keep existing password</p>
+                                <Label htmlFor="pass">Password / App Key</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="pass"
+                                        type={showPass ? "text" : "password"}
+                                        placeholder={hasPass ? "Leave blank to keep existing" : "Enter password"}
+                                        value={settings.pass}
+                                        onChange={e => setSettings({ ...settings, pass: e.target.value })}
+                                    />
+                                        <button
+                                        type="button"
+                                        onClick={() => setShowPass(!showPass)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Use eye icon to show/hide password</p>
                             </div>
                         </div>
 
@@ -200,6 +202,38 @@ export default function SmtpSettingsPage() {
                             <p className="text-xs text-muted-foreground italic">
                                 This address will appear in the "From" field of outgoing emails.
                             </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Status */}
+                <Card className="border-border/50">
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${settings.isActive ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                                <Power className={`w-5 h-5 ${settings.isActive ? 'text-green-600' : 'text-red-500'}`} />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg">SMTP Status</CardTitle>
+                                <CardDescription>Enable or disable the SMTP service</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full ${settings.isActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                                <div>
+                                    <p className="font-medium text-foreground">{settings.isActive ? 'Active' : 'Inactive'}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {settings.isActive ? 'SMTP service is running and sending emails' : 'SMTP service is disabled'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={settings.isActive}
+                                onCheckedChange={(checked) => setSettings({ ...settings, isActive: checked })}
+                            />
                         </div>
                     </CardContent>
                 </Card>

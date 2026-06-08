@@ -56,15 +56,8 @@ export default function AdminHistoryPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <History className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl md:text-3xl font-bold">All History</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">View all transactions across users</p>
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-4">
         <button onClick={doFetch} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary/50 border border-border text-sm hover:bg-secondary/80 transition-colors">
           <RefreshCw className="w-4 h-4" /> Reload
         </button>

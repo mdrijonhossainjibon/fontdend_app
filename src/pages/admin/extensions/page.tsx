@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Modal, message } from 'antd'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import {
     Package,
     Upload,
@@ -25,7 +26,7 @@ import {
     Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { toast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { ChromeIcon } from '@/components/chrome-icon'
 import { RootState } from '@/modules/rootReducer'
 import { fetchExtensionsRequest, uploadExtensionRequest, updateExtensionRequest, deleteExtensionRequest } from '@/modules/admin/extensions/actions'
@@ -64,6 +65,7 @@ export default function AdminExtensionsPage() {
     // Edit Modal state
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [editingExt, setEditingExt] = useState<AdminExtension | null>(null)
+    const [deleteExt, setDeleteExt] = useState<AdminExtension | null>(null)
 
     const [uploadForm, setUploadForm] = useState({
         name: '',
@@ -116,7 +118,7 @@ export default function AdminExtensionsPage() {
                         changelog: data.data.changelog || prev.changelog || '',
                         releaseNote: data.data.releaseNote || prev.releaseNote || ''
                     }))
-                    message.success(`Detected: ${data.data.name || 'Extension'} v${data.data.version || ''}`)
+                    toast.success(`Detected: ${data.data.name || 'Extension'} v${data.data.version || ''}`)
                 }
             } catch (err) {
                 console.warn('Auto-detection failed', err)
@@ -132,11 +134,11 @@ export default function AdminExtensionsPage() {
 
     const handleUpload = async () => {
         if (!selectedFile) {
-            message.error('Please select a file')
+            toast.error('Please select a file')
             return
         }
         if (!uploadForm.name || !uploadForm.version) {
-            message.error('Name and version are required')
+            toast.error('Name and version are required')
             return
         }
 
@@ -162,9 +164,8 @@ export default function AdminExtensionsPage() {
     const handleCopyLink = (ext: AdminExtension) => {
         const url = `${window.location.origin}${ext.downloadUrl}`
         navigator.clipboard.writeText(url)
-        toast({
-            title: "Direct link copied!",
-            description: "Direct download link is now in your clipboard.",
+        toast.success('Direct link copied!', {
+            description: 'Direct download link is now in your clipboard.',
         })
     }
 
@@ -189,14 +190,14 @@ export default function AdminExtensionsPage() {
     }
 
     const handleDelete = (ext: AdminExtension) => {
-        Modal.confirm({
-            title: 'Delete Extension',
-            content: `Are you sure you want to delete "${ext.name}"? This will permanently remove the file.`,
-            okText: 'Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk: () => dispatch(deleteExtensionRequest(ext._id)),
-        })
+        setDeleteExt(ext)
+    }
+
+    const confirmDelete = () => {
+        if (deleteExt) {
+            dispatch(deleteExtensionRequest(deleteExt._id))
+            setDeleteExt(null)
+        }
     }
 
     const openEdit = (ext: AdminExtension) => {
@@ -230,13 +231,8 @@ export default function AdminExtensionsPage() {
 
     return (
         <div>
-            {/* Header & Actions */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Extensions</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">Upload and manage downloadable extensions</p>
-                </div>
-                <div className="flex items-center gap-3">
+            {/* Actions */}
+            <div className="flex items-center justify-end mb-6">
                     <Button variant="outline" size="sm" onClick={() => dispatch(fetchExtensionsRequest())} disabled={loading} className="gap-2">
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
@@ -252,7 +248,6 @@ export default function AdminExtensionsPage() {
                         Upload Extension
                     </Button>
                 </div>
-            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -368,7 +363,7 @@ export default function AdminExtensionsPage() {
                                                         })
                                                     } else {
                                                         navigator.clipboard.writeText(link)
-                                                        message.success('Short link copied!')
+                                                        toast.success('Short link copied!')
                                                     }
                                                 }}
                                             >
@@ -381,7 +376,7 @@ export default function AdminExtensionsPage() {
                                                 onClick={() => {
                                                     const link = `${window.location.origin}/api/d/${ext.shortId}`
                                                     navigator.clipboard.writeText(link)
-                                                    message.success('Short link copied!')
+                                                    toast.success('Short link copied!')
                                                 }}
                                             >
                                                 <Copy className="w-3.5 h-3.5" />
@@ -442,242 +437,243 @@ export default function AdminExtensionsPage() {
                 </div>
             )}
 
-            {/* Upload Modal */}
-            <Modal
-                title={
-                    <div>
-                        <h2 className="text-xl font-bold text-foreground">Upload Extension</h2>
+            {/* Upload Dialog */}
+            <Dialog open={isUploadModalOpen} onOpenChange={(open) => { if (!open) resetUploadForm(); return open; }}>
+                <DialogContent className="max-w-[680px]">
+                    <DialogHeader>
+                        <DialogTitle>Upload Extension</DialogTitle>
                         <p className="text-sm text-muted-foreground">Upload a new extension file for users to download</p>
-                    </div>
-                }
-                open={isUploadModalOpen}
-                onCancel={() => {
-                    setIsUploadModalOpen(false)
-                    resetUploadForm()
-                }}
-                footer={[
-                    <Button
-                        key="cancel"
-                        variant="outline"
-                        onClick={() => {
-                            setIsUploadModalOpen(false)
-                            resetUploadForm()
-                        }}
-                        disabled={uploading}
-                        className="bg-transparent"
-                    >
-                        Cancel
-                    </Button>,
-                    <Button
-                        key="upload"
-                        className="bg-amber-500 hover:bg-amber-600 gap-2"
-                        onClick={handleUpload}
-                        disabled={uploading || !selectedFile}
-                    >
-                        {uploading ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading...
-                            </>
-                        ) : (
-                            <>
-                                <Upload className="w-4 h-4" />
-                                Upload
-                            </>
-                        )}
-                    </Button>,
-                ]}
-                width={680}
-                centered
-            >
-                <div className="space-y-5 py-4">
-                    {/* Drop Zone */}
-                    <div
-                        className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${dragOver
-                            ? 'border-amber-500 bg-amber-500/5'
-                            : selectedFile
-                                ? 'border-green-500 bg-green-500/5'
-                                : 'border-border hover:border-amber-500/50 hover:bg-muted/20'
-                            }`}
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragOver={(e) => {
-                            e.preventDefault()
-                            setDragOver(true)
-                        }}
-                        onDragLeave={() => setDragOver(false)}
-                        onDrop={(e) => {
-                            e.preventDefault()
-                            setDragOver(false)
-                            const file = e.dataTransfer.files?.[0]
-                            if (file) handleFileSelect(file)
-                        }}
-                    >
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            className="hidden"
-                            accept=".zip,.crx,.xpi,.exe,.dmg,.deb"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0]
+                    </DialogHeader>
+                    <div className="space-y-5 py-4">
+                        {/* Drop Zone */}
+                        <div
+                            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${dragOver
+                                ? 'border-amber-500 bg-amber-500/5'
+                                : selectedFile
+                                    ? 'border-green-500 bg-green-500/5'
+                                    : 'border-border hover:border-amber-500/50 hover:bg-muted/20'
+                                }`}
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragOver={(e) => {
+                                e.preventDefault()
+                                setDragOver(true)
+                            }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={(e) => {
+                                e.preventDefault()
+                                setDragOver(false)
+                                const file = e.dataTransfer.files?.[0]
                                 if (file) handleFileSelect(file)
                             }}
-                        />
-                        {selectedFile ? (
-                            <div className="flex items-center justify-center gap-3">
-                                <div className="text-3xl">{isScanning ? '🔍' : '📦'}</div>
-                                <div className="text-left">
-                                    <p className="font-bold text-green-600">
-                                        {isScanning ? 'Scanning manifest...' : selectedFile.name}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                accept=".zip,.crx,.xpi,.exe,.dmg,.deb"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleFileSelect(file)
+                                }}
+                            />
+                            {selectedFile ? (
+                                <div className="flex items-center justify-center gap-3">
+                                    <div className="text-3xl">{isScanning ? '🔍' : '📦'}</div>
+                                    <div className="text-left">
+                                        <p className="font-bold text-green-600">
+                                            {isScanning ? 'Scanning manifest...' : selectedFile.name}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">{formatBytes(selectedFile.size)}</p>
+                                    </div>
+                                    {isScanning ? <Loader2 className="w-5 h-5 animate-spin text-amber-500" /> : <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3">
+                                        <Upload className="w-6 h-6 text-amber-500" />
+                                    </div>
+                                    <p className="font-semibold text-foreground mb-1">Drop your extension file here</p>
+                                    <p className="text-sm text-muted-foreground">or click to browse</p>
+                                    <p className="text-xs text-muted-foreground mt-2 bg-muted/50 inline-block px-3 py-1 rounded-full">
+                                        .zip • .crx • .xpi • .exe • .dmg • .deb (max 500MB)
                                     </p>
-                                    <p className="text-sm text-muted-foreground">{formatBytes(selectedFile.size)}</p>
-                                </div>
-                                {isScanning ? <Loader2 className="w-5 h-5 animate-spin text-amber-500" /> : <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3">
-                                    <Upload className="w-6 h-6 text-amber-500" />
-                                </div>
-                                <p className="font-semibold text-foreground mb-1">Drop your extension file here</p>
-                                <p className="text-sm text-muted-foreground">or click to browse</p>
-                                <p className="text-xs text-muted-foreground mt-2 bg-muted/50 inline-block px-3 py-1 rounded-full">
-                                    .zip • .crx • .xpi • .exe • .dmg • .deb (max 500MB)
-                                </p>
-                            </>
-                        )}
-                    </div>
+                                </>
+                            )}
+                        </div>
 
-                    {/* Name */}
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">
-                            Extension Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="e.g., CaptchaMaster Chrome Extension"
-                            value={uploadForm.name}
-                            onChange={(e) => setUploadForm({ ...uploadForm, name: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
-                        />
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Description</label>
-                        <textarea
-                            rows={2}
-                            placeholder="Brief description of what this extension does..."
-                            value={uploadForm.description}
-                            onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none"
-                        />
-                    </div>
-
-                    {/* Version & Platform */}
-                    <div className="grid grid-cols-2 gap-4">
+                        {/* Name */}
                         <div>
                             <label className="text-sm font-semibold text-foreground mb-2 block">
-                                Version <span className="text-red-500">*</span>
+                                Extension Name <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="e.g., 1.0.0"
-                                value={uploadForm.version}
-                                onChange={(e) => setUploadForm({ ...uploadForm, version: e.target.value })}
+                                placeholder="e.g., CaptchaMaster Chrome Extension"
+                                value={uploadForm.name}
+                                onChange={(e) => setUploadForm({ ...uploadForm, name: e.target.value })}
+                                className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
+                            />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Description</label>
+                            <textarea
+                                rows={2}
+                                placeholder="Brief description of what this extension does..."
+                                value={uploadForm.description}
+                                onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                                className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none"
+                            />
+                        </div>
+
+                        {/* Version & Platform */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">
+                                    Version <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., 1.0.0"
+                                    value={uploadForm.version}
+                                    onChange={(e) => setUploadForm({ ...uploadForm, version: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-semibold text-foreground mb-2 block">Platform</label>
+                                <select
+                                    value={uploadForm.platform}
+                                    onChange={(e) => setUploadForm({ ...uploadForm, platform: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
+                                >
+                                    <option value="All">All Platforms</option>
+                                    <option value="Chrome">Chrome</option>
+                                    <option value="Firefox">Firefox</option>
+                                    <option value="Windows">Windows</option>
+                                    <option value="macOS">macOS</option>
+                                    <option value="Linux">Linux</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Changelog */}
+                        <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Changelog / Release Notes</label>
+                            <textarea
+                                rows={3}
+                                placeholder={"What's new in this version?\n- Bug fixes\n- New features"}
+                                value={uploadForm.changelog}
+                                onChange={(e) => setUploadForm({ ...uploadForm, changelog: e.target.value })}
+                                className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none font-mono text-sm"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsUploadModalOpen(false)
+                                resetUploadForm()
+                            }}
+                            disabled={uploading}
+                            className="bg-transparent"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-amber-500 hover:bg-amber-600 gap-2"
+                            onClick={handleUpload}
+                            disabled={uploading || !selectedFile}
+                        >
+                            {uploading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Uploading...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="w-4 h-4" />
+                                    Upload
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Dialog */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-[560px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Extension</DialogTitle>
+                        <p className="text-sm text-muted-foreground">Update extension information</p>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Name</label>
+                            <input
+                                type="text"
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                                 className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-semibold text-foreground mb-2 block">Platform</label>
-                            <select
-                                value={uploadForm.platform}
-                                onChange={(e) => setUploadForm({ ...uploadForm, platform: e.target.value })}
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Description</label>
+                            <textarea
+                                rows={2}
+                                value={editForm.description}
+                                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Version</label>
+                            <input
+                                type="text"
+                                value={editForm.version}
+                                onChange={(e) => setEditForm({ ...editForm, version: e.target.value })}
                                 className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
-                            >
-                                <option value="All">All Platforms</option>
-                                <option value="Chrome">Chrome</option>
-                                <option value="Firefox">Firefox</option>
-                                <option value="Windows">Windows</option>
-                                <option value="macOS">macOS</option>
-                                <option value="Linux">Linux</option>
-                            </select>
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-semibold text-foreground mb-2 block">Changelog</label>
+                            <textarea
+                                rows={4}
+                                value={editForm.changelog}
+                                onChange={(e) => setEditForm({ ...editForm, changelog: e.target.value })}
+                                className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none font-mono text-sm"
+                            />
                         </div>
                     </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(false)} disabled={saving} className="bg-transparent">
+                            Cancel
+                        </Button>
+                        <Button className="bg-amber-500 hover:bg-amber-600" onClick={handleSaveEdit} disabled={saving}>
+                            {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</> : 'Save Changes'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                    {/* Changelog */}
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Changelog / Release Notes</label>
-                        <textarea
-                            rows={3}
-                            placeholder={"What's new in this version?\n- Bug fixes\n- New features"}
-                            value={uploadForm.changelog}
-                            onChange={(e) => setUploadForm({ ...uploadForm, changelog: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none font-mono text-sm"
-                        />
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Edit Modal */}
-            <Modal
-                title={
-                    <div>
-                        <h2 className="text-xl font-bold text-foreground">Edit Extension</h2>
-                        <p className="text-sm text-muted-foreground">Update extension information</p>
-                    </div>
-                }
-                open={isEditModalOpen}
-                onCancel={() => setIsEditModalOpen(false)}
-                footer={[
-                    <Button key="cancel" variant="outline" onClick={() => setIsEditModalOpen(false)} disabled={saving} className="bg-transparent">
-                        Cancel
-                    </Button>,
-                    <Button key="save" className="bg-amber-500 hover:bg-amber-600" onClick={handleSaveEdit} disabled={saving}>
-                        {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</> : 'Save Changes'}
-                    </Button>,
-                ]}
-                width={560}
-                centered
-            >
-                <div className="space-y-4 py-4">
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Name</label>
-                        <input
-                            type="text"
-                            value={editForm.name}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Description</label>
-                        <textarea
-                            rows={2}
-                            value={editForm.description}
-                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Version</label>
-                        <input
-                            type="text"
-                            value={editForm.version}
-                            onChange={(e) => setEditForm({ ...editForm, version: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Changelog</label>
-                        <textarea
-                            rows={4}
-                            value={editForm.changelog}
-                            onChange={(e) => setEditForm({ ...editForm, changelog: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all resize-none font-mono text-sm"
-                        />
-                    </div>
-                </div>
-            </Modal>
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteExt !== null} onOpenChange={(open) => { if (!open) setDeleteExt(null) }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Extension</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{deleteExt?.name}"? This will permanently remove the file.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <style>{`
         @keyframes slideInUp {

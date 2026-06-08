@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Download, Settings, Zap, CheckCircle, ArrowRight } from "lucide-react"
-import { Steps, ConfigProvider, theme } from "antd"
 
 
 
@@ -60,15 +59,6 @@ export function HowItWorks() {
   }, [])
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: "#7c3aed",
-          borderRadius: 12,
-        },
-        algorithm: theme.darkAlgorithm,
-      }}
-    >
       <section id="how-it-works" className="py-24 sm:py-32 relative overflow-hidden bg-background">
         {/* Background Decorative Elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none overflow-hidden">
@@ -94,41 +84,61 @@ export function HowItWorks() {
             </p>
           </div>
 
-          {/* Ant Design Steps - Interactive */}
+          {/* Interactive Steps */}
           <div
             className={`transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
           >
             <div className="bg-card/30 backdrop-blur-xl border border-border/40 p-6 sm:p-10 rounded-2xl shadow-lg overflow-hidden relative group mb-12">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-              <Steps
-                direction="horizontal"
-                size="small"
-                current={currentStep}
-                onChange={(c) => setCurrentStep(c)}
-                responsive={true}
-                items={steps.map((step, idx) => ({
-                  title: (
-                    <div className={`text-base font-semibold mb-1.5 transition-colors duration-300 ${currentStep === idx ? 'text-primary' : 'text-foreground/80'}`}>
-                      {step.title}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {steps.map((step, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setCurrentStep(idx)}
+                    className={`
+                      relative group/step cursor-pointer
+                      flex flex-col items-center text-center
+                      p-5 rounded-xl border transition-all duration-300
+                      ${currentStep >= idx
+                        ? 'bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/30 shadow-md'
+                        : 'bg-card/50 border-border/50 hover:bg-card/80 hover:border-border'
+                      }
+                    `}
+                  >
+                    {/* Connector line */}
+                    {idx < steps.length - 1 && (
+                      <div className={`
+                        hidden lg:block absolute top-9 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-0.5 transition-colors duration-300
+                        ${idx < currentStep ? 'bg-primary/60' : 'bg-border'}
+                      `} />
+                    )}
+                    {/* Step number */}
+                    <div className="absolute top-2 right-3 text-xs font-bold text-muted-foreground/30">
+                      {String(idx + 1).padStart(2, '0')}
                     </div>
-                  ),
-                  description: (
-                    <div className="text-muted-foreground/70 leading-relaxed text-sm max-w-[180px]">
-                      {step.description}
-                    </div>
-                  ),
-                  icon: (
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${step.color} ${step.borderColor} border flex items-center justify-center transition-all duration-300 ${currentStep === idx
-                        ? `scale-105 ${step.glowColor} shadow-md`
-                        : 'scale-100 hover:scale-105 hover:bg-primary/10'
-                      }`}>
+                    {/* Icon */}
+                    <div className={`
+                      w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} ${step.borderColor} border
+                      flex items-center justify-center transition-all duration-300 mb-4
+                      ${currentStep >= idx
+                        ? `scale-110 ${step.glowColor} shadow-md`
+                        : 'group-hover/step:scale-105'
+                      }
+                    `}>
                       {step.icon}
                     </div>
-                  ),
-                }))}
-                className="custom-steps cursor-pointer"
-              />
+                    {/* Title */}
+                    <h3 className={`text-base font-semibold mb-1.5 transition-colors duration-300 ${currentStep >= idx ? 'text-primary' : 'text-foreground/80'}`}>
+                      {step.title}
+                    </h3>
+                    {/* Description */}
+                    <p className="text-muted-foreground/70 leading-relaxed text-sm">
+                      {step.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Quick Action Button */}
@@ -146,53 +156,6 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <style jsx global>{`
-          .custom-steps .ant-steps-item-title {
-            padding-right: 24px !important;
-          }
-          .custom-steps .ant-steps-item-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          .custom-steps .ant-steps-item-icon {
-            margin-bottom: 16px !important;
-            margin-inline-start: 0 !important;
-            float: none !important;
-          }
-          .custom-steps .ant-steps-item-content {
-            display: block !important;
-            min-height: auto !important;
-          }
-          .custom-steps .ant-steps-item-tail {
-            top: 20px !important;
-            padding: 0 20px !important;
-          }
-          .custom-steps .ant-steps-item-tail::after {
-            background-color: rgba(124, 58, 237, 0.2) !important;
-            height: 2px !important;
-          }
-          .custom-steps .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-tail::after {
-            background-color: #7c3aed !important;
-          }
-          
-          @media (max-width: 768px) {
-            .custom-steps .ant-steps-item-container {
-              align-items: center;
-              text-align: center;
-            }
-            .custom-steps .ant-steps-item-icon {
-              margin-inline-end: 0 !important;
-            }
-            .custom-steps .ant-steps-item-tail {
-              display: none !important;
-            }
-            .custom-steps .ant-steps-item {
-              margin-bottom: 32px;
-            }
-          }
-        `}</style>
       </section>
-    </ConfigProvider>
   )
 }

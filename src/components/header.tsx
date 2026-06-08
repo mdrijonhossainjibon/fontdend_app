@@ -1,8 +1,8 @@
 "use client"
 
-import { Bell, User, MoreVertical, Puzzle, Code, Wallet, Loader2, Gift, LogOut, Shield, LayoutDashboard, ExternalLink } from "lucide-react"
+import { Bell, User, MoreVertical, Puzzle, Code, Wallet, Loader2, Gift, LogOut, Shield, LayoutDashboard, ExternalLink, CreditCard, History, Package, Users, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import {
@@ -25,37 +25,48 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
   const balance = userData?.balance || 0
 
   const isAdmin = userData?.role === "admin"
+  const location = useLocation()
+
+  const pageTitles: Record<string, string> = {
+    "/dashboard": "Dashboard",
+    "/dashboard/topup": "Top Up",
+    "/dashboard/redeem": "Redeem Code",
+    "/dashboard/history": "Transaction History",
+    "/dashboard/pricing": "Pricing",
+    "/dashboard/referrals": "Invite & Earn",
+    "/dashboard/profile": "Profile",
+    "/dashboard/settings": "Settings",
+    "/dashboard/api-keys": "API Keys",
+  }
+  const currentPageTitle = pageTitles[location.pathname] || ""
+  const pageIcons: Record<string, React.ReactNode> = {
+    "/dashboard": <LayoutDashboard className="w-5 h-5" />,
+    "/dashboard/topup": <CreditCard className="w-5 h-5" />,
+    "/dashboard/redeem": <Gift className="w-5 h-5" />,
+    "/dashboard/history": <History className="w-5 h-5" />,
+    "/dashboard/pricing": <Package className="w-5 h-5" />,
+    "/dashboard/referrals": <Users className="w-5 h-5" />,
+    "/dashboard/profile": <User className="w-5 h-5" />,
+    "/dashboard/settings": <Settings className="w-5 h-5" />,
+    "/dashboard/api-keys": <Shield className="w-5 h-5" />,
+  }
 
   return (
     <header className="w-full border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top bar with logo and navigation */}
         <div className="flex items-center justify-between h-16">
-          {/* Left Side: Logo + TG Group */}
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden transition-all duration-300 group-hover:scale-105">
-                <img src="/logo.png" alt="CaptchaMaster Logo" className="w-full h-full object-contain" />
+          {/* Left Side: Page Icon + Active page name */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-amber-400 to-orange-600 shadow-sm">
+              <div className="text-white">
+                {pageIcons[location.pathname] || <LayoutDashboard className="w-5 h-5" />}
               </div>
-              <span className="text-xl font-bold text-foreground">
-                Captcha<span className="text-primary">Ɱaster</span>
-              </span>
-            </Link>
-            {/* Telegram Group */}
-            <a
-              href="https://t.me/CaptchaMasterBangladesh"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-muted-foreground hover:text-[#2AABEE] hover:bg-[#2AABEE]/5 transition-colors"
-              title="Join Telegram Group"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.121.099.155.233.17.33.016.099.036.324.02.499z"/>
-              </svg>
-              <span className="text-xs font-medium">Join TG Group</span>
-            </a>
+            </div>
+            {currentPageTitle && (
+              <h1 className="text-lg font-semibold text-foreground">{currentPageTitle}</h1>
+            )}
           </div>
-
           {/* Right Section Content */}
           <div className="flex-1 flex items-center justify-end gap-6 transition-all duration-300">
             {/* Center Navigation Group */}
@@ -77,6 +88,20 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                 <Code className="w-4 h-4 text-foreground" />
                 <span className="text-sm font-medium text-foreground hidden lg:inline">API Library</span>
               </Link>
+
+              {/* Telegram Group */}
+              <a
+                href="https://t.me/CaptchaMasterBangladesh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-muted-foreground hover:text-[#2AABEE] hover:bg-[#2AABEE]/5 transition-colors"
+                title="Join Telegram Group"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.121.099.155.233.17.33.016.099.036.324.02.499z"/>
+                </svg>
+                <span className="text-xs font-medium">Join TG Group</span>
+              </a>
             </div>
 
             {/* Separator */}

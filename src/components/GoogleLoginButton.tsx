@@ -1,7 +1,7 @@
 import { useState, useCallback, type ButtonHTMLAttributes } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
-import { notification } from 'antd'
+import { toast } from 'sonner'
 import { API_CALL } from '@/lib/api'
 
 function GoogleSVG({ className }: { className?: string }) {
@@ -46,23 +46,14 @@ export function GoogleLoginButton({
           localStorage.setItem('user', JSON.stringify(response.user))
           navigate('/dashboard')
         } else {
-          notification.error({
-            message: 'Google Login Failed',
-            description: response?.error || 'Could not sign in with Google.',
-          })
+          toast.error('Google Login Failed', { description: response?.error || 'Could not sign in with Google.' })
         }
       } catch (error: any) {
-        notification.error({
-          message: 'Google Login Failed',
-          description: error?.message || 'An unexpected error occurred.',
-        })
+        toast.error('Google Login Failed', { description: error?.message || 'An unexpected error occurred.' })
       }
     },
     onError: () => {
-      notification.error({
-        message: 'Google Login Failed',
-        description: 'The Google sign-in popup was closed or failed.',
-      })
+      toast.error('Google Login Failed', { description: 'The Google sign-in popup was closed or failed.' })
     },
   })
 

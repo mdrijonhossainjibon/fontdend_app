@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { notification } from 'antd'
+import { toast } from 'sonner'
 
 
 import { useDispatch, useSelector } from 'react-redux'
@@ -94,10 +94,7 @@ export function SignupForm() {
   const handleSubmitCredentials = (e: React.FormEvent) => {
     e.preventDefault()
     if (password !== confirmPassword) {
-      notification.error({
-        message: 'Passwords do not match',
-        description: 'Please ensure your passwords are identical.',
-      })
+      toast.error('Passwords do not match', { description: 'Please ensure your passwords are identical.' })
       return
     }
 
@@ -145,10 +142,7 @@ export function SignupForm() {
   }
 
   const handleGoogleSignup = async () => {
-    notification.info({
-      message: 'Coming Soon',
-      description: 'Social signup is being updated.',
-    })
+    toast.info('Coming Soon', { description: 'Social signup is being updated.' })
   }
 
   const passwordStrength = passwordRequirements.filter((req) => req.test(password)).length

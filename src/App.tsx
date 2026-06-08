@@ -36,7 +36,6 @@ const AdminPackages = lazy(() => import('@/pages/admin/packages/page'))
 const AdminExtensions = lazy(() => import('@/pages/admin/extensions/page'))
 const AdminCrypto = lazy(() => import('@/pages/admin/crypto/page'))
 const AdminOrders = lazy(() => import('@/pages/admin/orders/page'))
-const AdminTopupHistory = lazy(() => import('@/pages/admin/topup-history/page'))
 const AdminHistory = lazy(() => import('@/pages/admin/history/page'))
 const AdminCacheControl = lazy(() => import('@/pages/admin/cache-control/page'))
 const AdminRedeemCodes = lazy(() => import('@/pages/admin/redeem-codes/page'))
@@ -119,7 +118,6 @@ export default function App() {
           <Route path="extensions" element={<AdminExtensions />} />
           <Route path="crypto" element={<AdminCrypto />} />
           <Route path="orders" element={<AdminOrders />} />
-          <Route path="topup-history" element={<AdminTopupHistory />} />
           <Route path="history" element={<AdminHistory />} />
           <Route path="cache-control" element={<AdminCacheControl />} />
           <Route path="redeem-codes" element={<AdminRedeemCodes />} />

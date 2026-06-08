@@ -32,7 +32,6 @@ import {
   Smartphone,
   Key,
   Activity,
-  History,
   ShoppingCart,
   Puzzle,
   Upload,
@@ -54,7 +53,6 @@ const managementItems = [
   { href: "/admin/solutions", label: "Solution Cache", icon: Database },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/crypto", label: "Crypto Config", icon: Zap },
-  { href: "/admin/topup-history", label: "Topup History", icon: History },
   { href: "/admin/history", label: "All History", icon: FileText },
   { href: "/admin/ai-training/bot-endpoints", label: "Bot Endpoints", icon: Bot },
   { href: "/admin/upload-model", label: "Upload Model", icon: Upload },
@@ -66,7 +64,7 @@ const managementItems = [
 const systemItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/permissions", label: "Permissions", icon: Lock },
-  { href: "/admin/system/smtp", label: "SMTP Config", icon: Settings },
+  { href: "/admin/system/smtp", label: "SMTP Config", icon: Mail },
   { href: "/admin/email", label: "Email Templates", icon: Mail },
   { href: "/admin/database", label: "Database", icon: Database },
   { href: "/admin/database/transfer", label: "Database Transfer", icon: ArrowRightLeft }

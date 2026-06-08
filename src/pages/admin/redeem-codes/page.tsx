@@ -148,23 +148,14 @@ export default function AdminRedeemCodesPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Gift className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl md:text-3xl font-bold">Redeem Codes</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">Create and manage promo/redeem codes</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => dispatch(fetchRedeemCodesRequest())} className="gap-2">
-            <RotateCw className="w-4 h-4" /> Reload
-          </Button>
-          <Button onClick={() => setShowCreate(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Create Code
-          </Button>
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline" onClick={() => dispatch(fetchRedeemCodesRequest())} className="gap-2">
+          <RotateCw className="w-4 h-4" /> Reload
+        </Button>
+        <Button onClick={() => setShowCreate(true)} className="gap-2">
+          <Plus className="w-4 h-4" /> Create Code
+        </Button>
       </div>
 
       {/* Search */}

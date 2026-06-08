@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { RefreshCw, HeartPulse, Server, AlertCircle, CheckCircle, XCircle, Clock, Activity } from "lucide-react"
+import { RefreshCw, Server, AlertCircle, CheckCircle, XCircle, Clock, Activity } from "lucide-react"
 import { toast } from "sonner"
 import {
     fetchHealthStatusesRequest,
@@ -158,19 +158,6 @@ export default function HealthCheckPage() {
     return (
         <div className="min-h-screen bg-background p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                            <HeartPulse className="w-8 h-8 text-primary" />
-                            Health Check
-                        </h1>
-                        <p className="text-muted-foreground mt-1">
-                            Monitor bot health and uptime
-                        </p>
-                    </div>
-                </div>
-
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-card border border-border rounded-lg p-6">

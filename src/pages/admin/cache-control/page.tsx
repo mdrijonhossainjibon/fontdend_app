@@ -5,7 +5,7 @@ import type { RootState } from '@/modules/rootReducer'
 import { fetchCacheSettingsRequest, updateCacheSettingRequest } from '@/modules/admin/cache-control/actions'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Cloud, Database, Shield, Key, Loader2, RefreshCw } from "lucide-react"
+import { Cloud, Database, Shield, Key, Loader2 } from "lucide-react"
 
 const cacheItems = [
   { key: 'cacheControlAws', label: 'AWS', icon: Cloud, color: 'text-orange-500', description: 'Cache AWS model responses' },
@@ -44,16 +44,6 @@ export default function CacheControl() {
         transition: 'all 0.5s ease-out',
       }}
     >
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-          <RefreshCw className="w-7 h-7 text-primary" />
-          Cache Control
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Enable or disable caching per service
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {cacheItems.map((item, idx) => {
           const Icon = item.icon

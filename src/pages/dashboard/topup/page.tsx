@@ -16,7 +16,6 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Empty } from "antd"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import {
@@ -206,12 +205,6 @@ export default function DashboardTopupPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-4">
-      {/* Header */}
-      <div className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
-        <h1 className="text-xl font-semibold tracking-tight">Top Up</h1>
-        <p className="text-sm text-muted-foreground mt-1">Deposit funds using cryptocurrency</p>
-      </div>
-
       {/* Pending Deposit View — shared component */}
       {!cryptomusInvoiceId && pendingDeposit ? (
         <div className={cn("transition-all duration-700 ease-out", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8")}>
@@ -259,7 +252,10 @@ export default function DashboardTopupPage() {
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : activeConfigs.length === 0 ? (
-                  <Empty description="No cryptocurrencies available" />
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Coins className="w-10 h-10 text-muted-foreground/50 mb-3" />
+                    <p className="text-sm text-muted-foreground">No cryptocurrencies available</p>
+                  </div>
                 ) : (
                   <div className="relative" ref={dropdownRef}>
                     <button
