@@ -62,7 +62,7 @@ function* fetchAdminUsersSaga(action: any): Generator {
 
 function* updateAdminUserSaga(action: any): Generator {
     try {
-        const { userId, name, balance, status: userStatus } = action.payload;
+        const { userId, name, balance, status: userStatus, role } = action.payload;
         const cleanBalance = typeof balance === 'string' ? parseFloat(balance.replace(/[^0-9.-]/g, '')) || 0 : balance;
 
         const { response, status }: APIResponse = yield call(API_CALL, {
@@ -71,12 +71,13 @@ function* updateAdminUserSaga(action: any): Generator {
             body: {
                 name,
                 balance: cleanBalance,
-                status: userStatus
+                status: userStatus,
+                role
             }
         });
 
         if (response && response.success) {
-            yield put(actions.updateAdminUserSuccess({ id: userId, name, balance, status: userStatus }));
+            yield put(actions.updateAdminUserSuccess({ id: userId, name, balance, status: userStatus, role }));
             toast.success('User updated successfully');
         } else {
             yield put(actions.updateAdminUserFailure(response?.error || 'Failed to update user'));

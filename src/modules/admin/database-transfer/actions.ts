@@ -9,6 +9,10 @@ import {
     TRANSFER_DATABASES_SUCCESS,
     TRANSFER_DATABASES_FAILURE,
     RESET_TRANSFER,
+    FETCH_TRANSFER_PROGRESS_REQUEST,
+    FETCH_TRANSFER_PROGRESS_SUCCESS,
+    FETCH_TRANSFER_PROGRESS_FAILURE,
+    STOP_TRANSFER_POLLING,
 } from './constants'
 
 export const fetchSourceInfoRequest = () => ({ type: FETCH_SOURCE_INFO_REQUEST })
@@ -24,3 +28,8 @@ export const transferDatabasesSuccess = (payload: any) => ({ type: TRANSFER_DATA
 export const transferDatabasesFailure = (error: string) => ({ type: TRANSFER_DATABASES_FAILURE, error })
 
 export const resetTransfer = () => ({ type: RESET_TRANSFER })
+
+export const fetchTransferProgressRequest = (transferId: string) => ({ type: FETCH_TRANSFER_PROGRESS_REQUEST, payload: transferId })
+export const fetchTransferProgressSuccess = (payload: any) => ({ type: FETCH_TRANSFER_PROGRESS_SUCCESS, payload })
+export const fetchTransferProgressFailure = (error: string) => ({ type: FETCH_TRANSFER_PROGRESS_FAILURE, error })
+export const stopTransferPolling = () => ({ type: STOP_TRANSFER_POLLING })

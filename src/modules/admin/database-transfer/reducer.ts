@@ -9,6 +9,10 @@ import {
     TRANSFER_DATABASES_SUCCESS,
     TRANSFER_DATABASES_FAILURE,
     RESET_TRANSFER,
+    FETCH_TRANSFER_PROGRESS_REQUEST,
+    FETCH_TRANSFER_PROGRESS_SUCCESS,
+    FETCH_TRANSFER_PROGRESS_FAILURE,
+    STOP_TRANSFER_POLLING,
 } from './constants'
 
 export interface DatabaseInfo {
@@ -30,6 +34,25 @@ export interface TransferResult {
     error?: string
 }
 
+export interface TransferProgressDb {
+    name: string
+    status: 'pending' | 'transferring' | 'completed' | 'failed'
+    currentCollection: string
+    bytesTransferred: number
+    collections: { name: string; docsTotal: number; docsTransferred: number }[]
+}
+
+export interface TransferProgressData {
+    transferId: string
+    status: 'running' | 'completed' | 'failed'
+    databases: TransferProgressDb[]
+    currentDb: string
+    totalDbs: number
+    completedDbs: number
+    startTime: number
+    summary?: { total: number; succeeded: number; failed: number }
+}
+
 export interface DatabaseTransferState {
     sourceInfo: SourceInfo | null
     sourceLoading: boolean
@@ -39,9 +62,11 @@ export interface DatabaseTransferState {
     databases: DatabaseInfo[]
     connectError: string | null
     transferring: boolean
+    transferId: string | null
     transferComplete: boolean
     transferResults: TransferResult[] | null
     transferError: string | null
+    progress: TransferProgressData | null
     logs: { type: string; message: string; timestamp: string }[]
 }
 
@@ -54,9 +79,11 @@ const initialState: DatabaseTransferState = {
     databases: [],
     connectError: null,
     transferring: false,
+    transferId: null,
     transferComplete: false,
     transferResults: null,
     transferError: null,
+    progress: null,
     logs: [],
 }
 
@@ -77,11 +104,29 @@ const databaseTransferReducer = (state = initialState, action: any): DatabaseTra
             return { ...state, connecting: false, connectError: action.error }
 
         case TRANSFER_DATABASES_REQUEST:
-            return { ...state, transferring: true, transferComplete: false, transferError: null }
+            return { ...state, transferring: true, transferComplete: false, transferError: null, progress: null, transferId: null }
         case TRANSFER_DATABASES_SUCCESS:
-            return { ...state, transferring: false, transferComplete: true, transferResults: action.payload.results || [], transferError: null }
+            return { ...state, transferring: true, transferId: action.payload.transferId, transferResults: action.payload.results || null }
         case TRANSFER_DATABASES_FAILURE:
             return { ...state, transferring: false, transferError: action.error }
+
+        case FETCH_TRANSFER_PROGRESS_REQUEST:
+            return { ...state }
+        case FETCH_TRANSFER_PROGRESS_SUCCESS:
+            const p = action.payload.progress
+            const done = p.status === 'completed' || p.status === 'failed'
+            return {
+                ...state,
+                progress: p,
+                transferring: !done,
+                transferComplete: done,
+                transferResults: done ? (p.databases || []).map((d: any) => ({ db: d.name, status: d.status, error: d.error })) : state.transferResults,
+            }
+        case FETCH_TRANSFER_PROGRESS_FAILURE:
+            return { ...state, transferError: action.error }
+
+        case STOP_TRANSFER_POLLING:
+            return { ...state }
 
         case RESET_TRANSFER:
             return {
@@ -91,9 +136,11 @@ const databaseTransferReducer = (state = initialState, action: any): DatabaseTra
                 databases: [],
                 connectError: null,
                 transferring: false,
+                transferId: null,
                 transferComplete: false,
                 transferResults: null,
                 transferError: null,
+                progress: null,
                 logs: [],
             }
 

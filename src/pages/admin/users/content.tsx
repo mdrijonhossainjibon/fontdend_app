@@ -1,4 +1,5 @@
 
+import { cn } from "@/lib/utils"
 import { useState, useEffect, useRef } from "react"
 import {
   Dialog,
@@ -57,6 +58,7 @@ interface User {
   image?: string | null
   twoFactorEnabled?: boolean
   isAdmin?: boolean
+  role?: string
 }
 
 interface Pagination {
@@ -79,7 +81,7 @@ export default function AdminUsersContent() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [editForm, setEditForm] = useState({ name: "", balance: "", status: "" })
+  const [editForm, setEditForm] = useState({ name: "", balance: "", status: "", role: "" })
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
 
@@ -172,7 +174,8 @@ export default function AdminUsersContent() {
       userId: selectedUser.id,
       name: editForm.name,
       balance: editForm.balance,
-      status: editForm.status
+      status: editForm.status,
+      role: editForm.role
     }))
 
     // Optimistically close modal
@@ -251,6 +254,7 @@ export default function AdminUsersContent() {
                       <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Name</th>
                         <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Email</th>
+                        <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Role</th>
                         <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Balance</th>
                         <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Status</th>
                         <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Joined</th>
@@ -278,6 +282,17 @@ export default function AdminUsersContent() {
                             {user.name}
                           </td>
                           <td className="py-4 px-4 text-sm text-muted-foreground">{user.email}</td>
+                          <td className="py-4 px-4">
+                            <span className={cn(
+                              'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold',
+                              user.role === 'admin'
+                                ? 'bg-purple-500/10 text-purple-600 border border-purple-500/30'
+                                : 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
+                            )}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${user.role === 'admin' ? 'bg-purple-500' : 'bg-blue-500'}`} />
+                              {user.role || 'user'}
+                            </span>
+                          </td>
                           <td className="py-4 px-4">
                             <span className="font-semibold text-foreground">{user.balance}</span>
                             <span className="text-xs text-muted-foreground ml-1">USD</span>
@@ -350,7 +365,7 @@ export default function AdminUsersContent() {
                                 className="bg-transparent border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-white text-xs gap-1 h-8 px-3"
                                 onClick={() => {
                                   setSelectedUser(user)
-                                  setEditForm({ name: user.name, balance: `$${user.balance}`, status: user.status })
+                                  setEditForm({ name: user.name, balance: `$${user.balance}`, status: user.status, role: user.role || 'user' })
                                   setIsEditModalOpen(true)
                                 }}
                               >
@@ -495,6 +510,34 @@ export default function AdminUsersContent() {
                     onChange={(e) => setEditForm({ ...editForm, balance: `$${e.target.value.replace('$', '')}` })}
                     className="w-full pl-8 pr-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
                   />
+                </div>
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">
+                  Role <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  {[
+                    { value: "user", label: "User", color: "bg-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+                    { value: "admin", label: "Admin", color: "bg-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/30" },
+                  ].map((role) => (
+                    <button
+                      key={role.value}
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, role: role.value })}
+                      className={`
+                        flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200
+                        ${editForm.role === role.value
+                          ? `${role.bg} ${role.border} shadow-lg ring-2 ${role.color.replace('bg-', 'ring-')}/40`
+                          : 'bg-secondary/50 border-border hover:bg-secondary/80 text-muted-foreground'}
+                      `}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${role.color}`} />
+                      <span className="font-medium">{role.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 

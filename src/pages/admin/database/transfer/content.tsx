@@ -19,6 +19,9 @@ import {
   Terminal,
   RefreshCw,
   Info,
+  HardDrive,
+  List,
+  Gauge,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -30,12 +33,21 @@ import {
   transferDatabasesRequest,
   resetTransfer,
 } from "@/modules/admin/database-transfer/actions"
-import type { DatabaseInfo } from "@/modules/admin/database-transfer/reducer"
+import type { DatabaseInfo, TransferProgressData } from "@/modules/admin/database-transfer/reducer"
 
 interface TransferLog {
   type: "info" | "success" | "error" | "warning"
   message: string
   timestamp: string
+}
+
+function formatBytes(n: number): string {
+  if (!n || n === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0
+  let val = n
+  while (val >= 1024 && i < units.length - 1) { val /= 1024; i++ }
+  return `${val.toFixed(1)} ${units[i]}`
 }
 
 export default function TransferContent() {
@@ -50,6 +62,7 @@ export default function TransferContent() {
     transferComplete,
     transferError,
     connectError,
+    progress,
   } = useSelector((state: RootState) => state.adminDatabaseTransfer)
 
   // Target connection
@@ -419,6 +432,129 @@ export default function TransferContent() {
             </Button>
           </div>
         </>
+      )}
+
+      {/* Transfer Progress */}
+      {transferring && progress && (
+        <Card className="border-border/50 border-primary/30">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Gauge className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-lg">Transfer Progress</CardTitle>
+                <CardDescription>
+                  {progress.currentDb} — {progress.completedDbs}/{progress.totalDbs} databases
+                </CardDescription>
+              </div>
+              {/* Overall Stats */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="text-right">
+                  <p className="text-muted-foreground text-xs">Transferred</p>
+                  <p className="font-mono font-medium">
+                    {formatBytes(
+                      progress.databases.reduce((sum: number, d: any) => sum + (d.bytesTransferred || 0), 0)
+                    )}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-muted-foreground text-xs">Progress</p>
+                  <p className="font-mono font-medium">
+                    {progress.totalDbs > 0
+                      ? Math.round((progress.completedDbs / progress.totalDbs) * 100)
+                      : 0}%
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Overall Progress Bar */}
+            {progress.totalDbs > 0 && (
+              <div className="w-full bg-muted rounded-full h-2 mt-2">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.round((progress.completedDbs / progress.totalDbs) * 100))}%` }}
+                />
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {progress.databases.map((db: any) => {
+              const totalBytes = db.collections?.reduce((s: number, c: any) => s + (c.docsTotal || 0), 0) || 0
+              const transferredBytes = db.bytesTransferred || 0
+              const dbProgress = totalBytes > 0 ? Math.round((transferredBytes / totalBytes) * 100) : 0
+              return (
+                <div key={db.name} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {db.status === 'transferring' && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500 shrink-0" />}
+                      {db.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                      {db.status === 'failed' && <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+                      {db.status === 'pending' && <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
+                      <span className="font-medium truncate">{db.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {formatBytes(transferredBytes)}
+                      </span>
+                      <span className={cn(
+                        'text-xs font-mono',
+                        db.status === 'completed' && 'text-green-600',
+                        db.status === 'transferring' && 'text-blue-600',
+                        db.status === 'failed' && 'text-red-500',
+                        db.status === 'pending' && 'text-muted-foreground',
+                      )}>
+                        {db.status === 'transferring' && db.currentCollection}
+                        {db.status === 'completed' && 'Done'}
+                        {db.status === 'failed' && db.error}
+                        {db.status === 'pending' && 'Waiting'}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Per-DB Progress Bar */}
+                  {(db.status === 'transferring' || db.status === 'completed') && transferredBytes > 0 && (
+                    <div className="w-full bg-muted rounded-full h-1.5">
+                      <div
+                        className={cn(
+                          'h-1.5 rounded-full transition-all duration-500',
+                          db.status === 'completed' ? 'bg-green-500' : 'bg-blue-500',
+                        )}
+                        style={{ width: `${Math.min(100, dbProgress)}%` }}
+                      />
+                    </div>
+                  )}
+                  {db.collections?.length > 0 && db.status === 'transferring' && (
+                    <div className="space-y-1.5 pl-5">
+                      {db.collections.filter((c: any) => c.docsTotal > 0 || c.docsTransferred > 0).map((col: any) => (
+                        <div key={col.name} className="space-y-0.5">
+                          <div className="text-xs text-muted-foreground flex justify-between">
+                            <span className="truncate max-w-[200px]">{col.name}</span>
+                            <span className="font-mono shrink-0 ml-2">{col.docsTransferred}/{col.docsTotal} docs</span>
+                          </div>
+                          {/* Per-Collection Mini Progress */}
+                          {col.docsTotal > 0 && (
+                            <div className="w-full bg-muted/50 rounded-full h-1">
+                              <div
+                                className="bg-primary/60 h-1 rounded-full transition-all duration-300"
+                                style={{ width: `${Math.min(100, Math.round((col.docsTransferred / col.docsTotal) * 100))}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            {progress.status === 'running' && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse pt-2 border-t border-border/50">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Transfer in progress...
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Transfer Logs */}
