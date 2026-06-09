@@ -26,7 +26,9 @@ type AppDispatch = typeof store.dispatch
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Search, MoreVertical, Ban, Unlock, Edit, Trash2, Loader2, Eye, Package, RefreshCw } from "lucide-react"
+import {
+  Search, MoreVertical, Ban, Unlock, Edit, Trash2, Loader2, Eye, Package, RefreshCw,
+} from "lucide-react"
 import { Suspense } from "react"
 import { useNavigate } from 'react-router-dom'
 import Loading from "./loading"
@@ -34,7 +36,8 @@ import { RootState } from "@/modules/rootReducer"
 import {
   fetchAdminUsersRequest,
   updateAdminUserRequest,
-  deleteAdminUserRequest
+  deleteAdminUserRequest,
+  clearAdminUsersRequest,
 } from "@/modules/admin/actions"
 import {
   fetchUserPackagesRequest,
@@ -103,6 +106,7 @@ export default function AdminUsersContent() {
   const [removingPkgId, setRemovingPkgId] = useState<string | null>(null)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [removePkgConfirmId, setRemovePkgConfirmId] = useState<string | null>(null)
+  const [clearDialogOpen, setClearDialogOpen] = useState(false)
   const [trialDays, setTrialDays] = useState(7)
   const [trialCredits, setTrialCredits] = useState(50)
 
@@ -201,6 +205,20 @@ export default function AdminUsersContent() {
     setRemovePkgConfirmId(pkgId)
   }
 
+  const handleRefresh = () => {
+    dispatch(fetchAdminUsersRequest({
+      searchTerm,
+      statusFilter,
+      page: currentPage,
+      limit: itemsPerPage,
+    }))
+  }
+
+  const handleClearAll = () => {
+    dispatch(clearAdminUsersRequest({ status: statusFilter || undefined }))
+    setClearDialogOpen(false)
+  }
+
   return (
     <>
       <Suspense fallback={<Loading />}>
@@ -231,6 +249,30 @@ export default function AdminUsersContent() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ── Actions Row ── */}
+          <div className="flex items-center justify-end gap-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="h-9 gap-1.5 text-xs"
+            >
+              <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setClearDialogOpen(true)}
+              disabled={isLoading}
+              className="h-9 gap-1.5 text-xs"
+            >
+              <Trash2 size={14} />
+              <span className="hidden sm:inline">Clear All</span>
+            </Button>
+          </div>
 
           {/* Users table */}
           <Card>
@@ -887,6 +929,27 @@ export default function AdminUsersContent() {
               }
               setRemovePkgConfirmId(null)
             }}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear All Users Confirmation */}
+      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 size={16} className="text-destructive" />
+              Clear All Users
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear all users? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="rounded-lg bg-destructive hover:bg-destructive/90" onClick={handleClearAll}>
+              Clear All
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

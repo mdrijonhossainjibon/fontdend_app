@@ -59,6 +59,21 @@ export const deleteAdminUserFailure = (error: string) => ({
     payload: error,
 });
 
+export const clearAdminUsersRequest = (filters?: any) => ({
+    type: types.CLEAR_ADMIN_USERS_REQUEST,
+    payload: filters,
+});
+
+export const clearAdminUsersSuccess = (payload: any) => ({
+    type: types.CLEAR_ADMIN_USERS_SUCCESS,
+    payload,
+});
+
+export const clearAdminUsersFailure = (error: string) => ({
+    type: types.CLEAR_ADMIN_USERS_FAILURE,
+    payload: error,
+});
+
 // ── Bot Management ────────────────────────────────────────────────────────────
 
 export const fetchAdminBotsRequest = (payload?: any) => ({

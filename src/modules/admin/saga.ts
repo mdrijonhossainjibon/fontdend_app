@@ -295,11 +295,37 @@ function* fetchAdminAnalyticsSaga(action: any): Generator {
     }
 }
 
+function* clearAdminUsersSaga(action: any): Generator {
+    try {
+        const params = new URLSearchParams();
+        params.append('clearAll', 'true');
+        if (action.payload?.status) params.append('status', action.payload.status);
+
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'DELETE',
+            url: `/admin/users?${params.toString()}`
+        });
+
+        if (response && response.success) {
+            yield put(actions.clearAdminUsersSuccess(response));
+            toast.success('All users cleared successfully');
+            yield put(actions.fetchAdminUsersRequest({ searchTerm: '', statusFilter: '', page: 1, limit: 10 }));
+        } else {
+            yield put(actions.clearAdminUsersFailure(response?.error || 'Failed to clear users'));
+            toast.error(response?.error || 'Failed to clear users');
+        }
+    } catch (error) {
+        yield put(actions.clearAdminUsersFailure('Failed to clear users'));
+        toast.error('Failed to clear users');
+    }
+}
+
 export default function* adminSaga() {
     yield takeLatest(types.FETCH_ADMIN_STATS_REQUEST, fetchAdminStatsSaga);
     yield takeLatest(types.FETCH_ADMIN_USERS_REQUEST, fetchAdminUsersSaga);
     yield takeLatest(types.UPDATE_ADMIN_USER_REQUEST, updateAdminUserSaga);
     yield takeLatest(types.DELETE_ADMIN_USER_REQUEST, deleteAdminUserSaga);
+    yield takeLatest(types.CLEAR_ADMIN_USERS_REQUEST, clearAdminUsersSaga);
 
     // Bots
     yield takeLatest(types.FETCH_ADMIN_BOTS_REQUEST, fetchAdminBotsSaga);

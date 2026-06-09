@@ -1,7 +1,8 @@
-
-import { useState, useEffect } from "react"
-import { X, ChevronLeft, ChevronRight, CheckCircle2, ImageIcon, BookImage } from "lucide-react"
-import { Solution, SERVICE_COLORS, TYPE_COLORS, b64ToSrc, formatSolution } from "./_types"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { X, ChevronLeft, ChevronRight, CheckCircle2, ImageIcon, BookImage, ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
+import { Solution, SERVICE_COLORS, TYPE_COLORS, b64ToSrc, formatSolution, copyToClipboard } from "./_types"
+import { SERVICE_SVG_ICONS } from "./_svgs"
+import { Button } from "@/components/ui/button"
 
 type Tab = 'images' | 'examples'
 
@@ -14,17 +15,34 @@ export function ImageViewModal({
 }) {
     const [activeIdx, setActiveIdx] = useState(0)
     const [tab, setTab] = useState<Tab>('images')
+    const [zoomed, setZoomed] = useState(false)
+    const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
+    const imgRef = useRef<HTMLImageElement>(null)
 
     useEffect(() => {
         setActiveIdx(0)
         setTab('images')
+        setZoomed(false)
     }, [solution])
+
+    // Keyboard & ESC
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') { setZoomed(false); onClose() }
+            if (e.key === 'ArrowLeft') prev()
+            if (e.key === 'ArrowRight') next()
+        }
+        if (solution) window.addEventListener('keydown', handler)
+        return () => window.removeEventListener('keydown', handler)
+    }, [solution, activeIdx, tab])
 
     if (!solution) return null
 
     const images = solution.imageData || []
     const examples = solution.examples || []
     const hasExamples = examples.length > 0
+    const currentSet = tab === 'images' ? images : examples
+    const totalItems = currentSet.length
 
     const isClassify = solution.type === 'objectClassify'
     const isGridType = isClassify
@@ -32,18 +50,14 @@ export function ImageViewModal({
         || images.length === 4
         || images.length === 9
 
-    // solutionArr: boolean[] for classify, or index array (e.g. [2,3,5,6,9]) â†’ convert to boolean[]
     const solutionArr: boolean[] = (() => {
         if (!Array.isArray(solution.solution)) return []
         const arr = solution.solution
-        // all booleans â†’ use directly
         if (arr.every((v: any) => typeof v === 'boolean')) return arr
-        // numeric indices â†’ map to boolean grid
         if (arr.every((v: any) => typeof v === 'number')) {
             const result: boolean[] = Array(images.length).fill(false)
             arr.forEach((idx: number) => {
-                // handle both 0-based and 1-based indices
-                const i0 = idx - 1  // try 1-based first
+                const i0 = idx - 1
                 if (i0 >= 0 && i0 < images.length) result[i0] = true
                 else if (idx >= 0 && idx < images.length) result[idx] = true
             })
@@ -52,294 +66,222 @@ export function ImageViewModal({
         return []
     })()
 
+    const prev = useCallback(() => {
+        setActiveIdx(i => (i - 1 + totalItems) % totalItems)
+        setZoomed(false)
+    }, [totalItems])
+
+    const next = useCallback(() => {
+        setActiveIdx(i => (i + 1) % totalItems)
+        setZoomed(false)
+    }, [totalItems])
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!zoomed || !imgRef.current) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = ((e.clientX - rect.left) / rect.width) * 100
+        const y = ((e.clientY - rect.top) / rect.height) * 100
+        setZoomPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) })
+    }
+
+    const ServiceIcon = solution.service ? SERVICE_SVG_ICONS[solution.service?.toLowerCase()] : null
+
     return (
-        <div
-            className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-150"
-            onClick={onClose}
-        >
-            <div
-                className="
-                    bg-card border border-border shadow-2xl
-                    flex flex-col
-                    w-full sm:max-w-lg
-                    rounded-t-2xl sm:rounded-2xl
-                    max-h-[88vh] sm:max-h-[85vh]
-                    animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200
-                "
-                onClick={e => e.stopPropagation()}
-            >
-                {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-                <div className="flex items-start justify-between px-4 py-3 border-b border-border shrink-0">
-                    <div className="flex-1 min-w-0 mr-3">
-                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${SERVICE_COLORS[solution.service] || 'bg-muted text-muted-foreground'}`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="relative bg-background rounded-2xl shadow-2xl w-[95vw] max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* ── Header ── */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center gap-2">
+                            {ServiceIcon && (
+                                <div className="p-1.5 rounded-lg bg-secondary/50">
+                                    <ServiceIcon size={18} className="text-primary/70" />
+                                </div>
+                            )}
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary/80">
                                 {solution.service}
                             </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${TYPE_COLORS[solution.type] || 'bg-muted border-border'}`}>
-                                {solution.type?.replace('object', '') || 'â€”'}
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground/80">
+                                {solution.type}
                             </span>
                         </div>
-                        <h2 className="text-sm font-semibold leading-snug line-clamp-2">{solution.question || '(no question)'}</h2>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 font-mono truncate opacity-60">{solution.hash}</p>
+                        <span className="text-xs text-muted-foreground/50 hidden sm:inline font-mono">
+                            {solution.hash?.slice(0, 16)}
+                        </span>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors shrink-0 mt-0.5">
-                        <X className="w-4 h-4" />
+                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                        <X size={18} />
                     </button>
                 </div>
 
-                {/* â”€â”€ Tabs (only if examples exist) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── Tabs ── */}
                 {hasExamples && (
-                    <div className="flex border-b border-border shrink-0 px-4">
-                        <TabBtn active={tab === 'images'} onClick={() => setTab('images')} count={images.length}>
-                            <ImageIcon className="w-3.5 h-3.5" /> Captcha Images
-                        </TabBtn>
-                        <TabBtn active={tab === 'examples'} onClick={() => setTab('examples')} count={examples.length} accent>
-                            <BookImage className="w-3.5 h-3.5" /> Reference Examples
-                        </TabBtn>
-                    </div>
-                )}
-
-                {/* â”€â”€ Scrollable Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-                <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 space-y-3 min-h-0">
-
-                    {/* â•â• EXAMPLES TAB â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-                    {tab === 'examples' && hasExamples && (
-                        <ExamplesView examples={examples} />
-                    )}
-
-                    {/* â•â• IMAGES TAB â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-                    {tab === 'images' && (
-                        <>
-                            {/* Inline ref strip (when no tabs shown) */}
-                            {!hasExamples && examples.length > 0 && (
-                                <div>
-                                    <SectionLabel dot="teal">Ref Example{examples.length > 1 ? 's' : ''}</SectionLabel>
-                                    <div className="flex gap-2 flex-wrap">
-                                        {examples.map((img, i) => (
-                                            <RefThumb key={i} src={img} label={`Ref ${i + 1}`} />
-                                        ))}
-                                    </div>
-                                    <div className="mt-2.5 border-b border-border" />
-                                </div>
-                            )}
-
-                            {images.length === 0 ? (
-                                <EmptyImages />
-                            ) : isGridType && images.length > 1 ? (
-                                <ClassifyGrid images={images} solutionArr={solutionArr} classNames={solution.classNames} />
-                            ) : (
-                                <CarouselView images={images} activeIdx={activeIdx} setActiveIdx={setActiveIdx} />
-                            )}
-
-                            {/* AI Answer */}
-                            {images.length > 0 && (
-                                <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">AI Answer</p>
-                                    <p className="text-xs font-mono break-all leading-relaxed">{formatSolution(solution.solution, solution.type)}</p>
-                                    <p className="text-[11px] text-muted-foreground mt-1.5">Cached: {new Date(solution.createdAt).toLocaleString()}</p>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
-    )
-}
-
-// â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function TabBtn({ active, onClick, count, children, accent }: {
-    active: boolean, onClick: () => void, count: number, children: React.ReactNode, accent?: boolean
-}) {
-    return (
-        <button
-            onClick={onClick}
-            className={`
-                flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-all
-                ${active
-                    ? accent
-                        ? 'border-teal-500 text-teal-600'
-                        : 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }
-            `}
-        >
-            {children}
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${active
-                ? accent ? 'bg-teal-500/15 text-teal-600' : 'bg-primary/15 text-primary'
-                : 'bg-muted text-muted-foreground'
-                }`}>{count}</span>
-        </button>
-    )
-}
-
-function SectionLabel({ children, dot }: { children: React.ReactNode, dot: string }) {
-    return (
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full bg-${dot}-500 inline-block`} />
-            {children}
-        </p>
-    )
-}
-
-function RefThumb({ src, label }: { src: string, label: string }) {
-    return (
-        <div className="relative rounded-lg overflow-hidden border-2 border-teal-500/60 shadow-[0_0_10px_rgba(20,184,166,0.2)]">
-            <img src={b64ToSrc(src)} alt={label} className="h-16 w-auto object-cover" />
-            <div className="absolute top-1 left-1 px-1 py-0.5 rounded bg-teal-500 text-white text-[9px] font-bold">REF</div>
-        </div>
-    )
-}
-
-function ExamplesView({ examples }: { examples: string[] }) {
-    const [idx, setIdx] = useState(0)
-    return (
-        <div className="flex flex-col gap-3">
-            <p className="text-xs text-muted-foreground">
-                Reference images used as <span className="font-semibold text-teal-600">examples</span> for this captcha type.
-            </p>
-            {/* Navigation */}
-            {examples.length > 1 && (
-                <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">{idx + 1} / {examples.length}</p>
-                    <div className="flex gap-1">
-                        <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
-                            className="p-1 rounded-md hover:bg-secondary disabled:opacity-30 transition-colors">
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setIdx(i => Math.min(examples.length - 1, i + 1))} disabled={idx === examples.length - 1}
-                            className="p-1 rounded-md hover:bg-secondary disabled:opacity-30 transition-colors">
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            )}
-            {/* Main example image */}
-            <div className="rounded-xl overflow-hidden border-2 border-teal-500/50 shadow-[0_0_16px_rgba(20,184,166,0.15)] bg-muted/20">
-                <img src={b64ToSrc(examples[idx])} alt={`Example ${idx + 1}`} className="w-full object-contain max-h-[280px] sm:max-h-[320px]" />
-            </div>
-            {/* Thumbnail strip */}
-            {examples.length > 1 && (
-                <div className="flex gap-1.5 flex-wrap justify-center">
-                    {examples.map((img, i) => (
-                        <button key={i} onClick={() => setIdx(i)}
-                            className={`w-10 h-10 rounded-md overflow-hidden border-2 transition-all ${i === idx ? 'border-teal-500' : 'border-border opacity-50 hover:opacity-90'}`}>
-                            <img src={b64ToSrc(img)} alt="" className="w-full h-full object-cover" />
-                        </button>
-                    ))}
-                </div>
-            )}
-            <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
-                <p className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider mb-1">About Reference Examples</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                    These images were provided as reference/example objects for the captcha challenge. They help identify the target objects.
-                </p>
-            </div>
-        </div>
-    )
-}
-
-function EmptyImages() {
-    return (
-        <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-            <ImageIcon className="w-10 h-10 mb-2 opacity-20" />
-            <p className="text-sm">No images stored</p>
-            <p className="text-xs mt-1 opacity-60">Saved from the next requests onwards</p>
-        </div>
-    )
-}
-
-function ClassifyGrid({ images, solutionArr, classNames }: { 
-    images: string[], 
-    solutionArr: boolean[], 
-    classNames?: string[] 
-}) {
-    return (
-        <div>
-            <p className="text-xs text-muted-foreground mb-2">
-                Grid â€” {images.length} tiles Â·&nbsp;
-                <span className="text-green-600 font-semibold">{solutionArr.filter(Boolean).length} selected</span>
-                {classNames && classNames.length > 0 && (
-                    <span className="ml-2 text-blue-600 font-semibold">
-                        {classNames.length} classes
-                    </span>
-                )}
-            </p>
-            <div className={`grid gap-1.5 ${images.length === 9 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                {images.map((img, i) => (
-                    <div key={i}
-                        className={`relative rounded-md overflow-hidden border-2 transition-all aspect-square ${solutionArr[i]
-                            ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.35)]'
-                            : 'border-border opacity-75'
-                            }`}
-                    >
-                        <img src={b64ToSrc(img)} alt={`Tile ${i + 1}`} className="w-full h-full object-cover" />
-                        {solutionArr[i] && (
-                            <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow">
-                                <CheckCircle2 className="w-3 h-3 text-white" />
-                            </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/55 to-transparent p-1">
-                            <span className="text-white text-[10px] font-bold">#{i + 1}</span>
-                            {classNames && classNames[i] && (
-                                <span className="text-white text-[9px] ml-1 bg-blue-500/60 px-1 rounded">
-                                    {classNames[i]}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-            {classNames && classNames.length > 0 && (
-                <div className="mt-3 p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-1">Detected Classes</p>
-                    <div className="flex flex-wrap gap-1">
-                        {classNames.map((className, i) => (
-                            <span key={i} className="text-xs bg-blue-500/20 text-blue-700 px-1.5 py-0.5 rounded">
-                                {className || `Tile ${i + 1}`}
-                            </span>
+                    <div className="flex border-b border-border/40 px-5 pt-2 gap-1 shrink-0">
+                        {(['images', 'examples'] as Tab[]).map(t => (
+                            <button
+                                key={t}
+                                onClick={() => { setTab(t); setActiveIdx(0); setZoomed(false) }}
+                                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg border border-b-0 transition-all ${
+                                    tab === t
+                                        ? 'bg-background border-border/60 text-foreground -mb-[1px]'
+                                        : 'border-transparent text-muted-foreground/50 hover:text-muted-foreground'
+                                }`}
+                            >
+                                {t === 'images' ? <ImageIcon size={13} /> : <BookImage size={13} />}
+                                {t === 'images' ? `Captcha (${images.length})` : `Examples (${examples.length})`}
+                            </button>
                         ))}
                     </div>
-                </div>
-            )}
-        </div>
-    )
-}
+                )}
 
-function CarouselView({ images, activeIdx, setActiveIdx }: {
-    images: string[], activeIdx: number, setActiveIdx: (fn: (i: number) => number) => void
-}) {
-    return (
-        <div className="flex flex-col gap-2">
-            {images.length > 1 && (
-                <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Image {activeIdx + 1} / {images.length}</p>
-                    <div className="flex gap-1">
-                        <button onClick={() => setActiveIdx(i => Math.max(0, i - 1))} disabled={activeIdx === 0}
-                            className="p-1 rounded-md hover:bg-secondary disabled:opacity-30 transition-colors">
-                            <ChevronLeft className="w-4 h-4" />
+                {/* ── Body ── */}
+                <div className="flex-1 overflow-y-auto p-5">
+                    {/* Carousel controls - top */}
+                    {totalItems > 1 && (
+                        <div className="flex items-center justify-center gap-4 mb-4">
+                            <button onClick={prev}
+                                className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30"
+                                disabled={totalItems <= 1}>
+                                <ChevronLeft size={18} />
+                            </button>
+                            <span className="text-xs text-muted-foreground/70 tabular-nums">
+                                {activeIdx + 1} / {totalItems}
+                            </span>
+                            <button onClick={next}
+                                className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30"
+                                disabled={totalItems <= 1}>
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Zoom controls */}
+                    <div className="flex justify-center gap-2 mb-3">
+                        <button
+                            onClick={() => setZoomed(!zoomed)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                                zoomed
+                                    ? 'bg-primary/10 border-primary/30 text-primary'
+                                    : 'border-border/60 hover:bg-muted text-muted-foreground/70'
+                            }`}
+                        >
+                            {zoomed ? <ZoomOut size={13} /> : <ZoomIn size={13} />}
+                            {zoomed ? 'Zoom Out' : 'Zoom In'}
                         </button>
-                        <button onClick={() => setActiveIdx(i => Math.min(images.length - 1, i + 1))} disabled={activeIdx === images.length - 1}
-                            className="p-1 rounded-md hover:bg-secondary disabled:opacity-30 transition-colors">
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
+                        {zoomed && (
+                            <button
+                                onClick={() => setZoomPos({ x: 50, y: 50 })}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border/60 hover:bg-muted text-muted-foreground/70 transition-all"
+                            >
+                                <RotateCcw size={13} />
+                                Reset
+                            </button>
+                        )}
                     </div>
-                </div>
-            )}
-            <div className="rounded-xl overflow-hidden border border-border w-full bg-muted/20">
-                <img src={b64ToSrc(images[activeIdx])} alt="Captcha" className="w-full object-contain max-h-[260px] sm:max-h-[310px]" />
-            </div>
-            {images.length > 1 && (
-                <div className="flex gap-1.5 flex-wrap justify-center">
-                    {images.map((img, i) => (
-                        <button key={i} onClick={() => setActiveIdx(() => i)}
-                            className={`w-9 h-9 sm:w-11 sm:h-11 rounded-md overflow-hidden border-2 transition-all ${i === activeIdx ? 'border-primary' : 'border-border opacity-50 hover:opacity-90'}`}>
-                            <img src={b64ToSrc(img)} alt="" className="w-full h-full object-cover" />
+
+                    {/* Main image area */}
+                    {currentSet.length > 0 ? (
+                        <div
+                            className={`relative mx-auto flex items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-muted/30 ${
+                                zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
+                            }`}
+                            style={{
+                                maxWidth: 600,
+                                height: zoomed ? 500 : 380,
+                            }}
+                            onClick={() => setZoomed(!zoomed)}
+                            onMouseMove={handleMouseMove}
+                        >
+                            <img
+                                ref={imgRef}
+                                src={b64ToSrc(currentSet[activeIdx])}
+                                alt={`${tab} ${activeIdx + 1}`}
+                                className={`max-w-full max-h-full object-contain transition-all duration-200 ${
+                                    zoomed ? 'scale-[2.5]' : ''
+                                }`}
+                                style={zoomed ? {
+                                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                                } : undefined}
+                                draggable={false}
+                            />
+                            {zoomed && (
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full pointer-events-none">
+                                    Click to zoom out · Hover to pan
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/40">
+                            <ImageIcon size={48} strokeWidth={1} />
+                            <p className="mt-3 text-sm">No images available</p>
+                        </div>
+                    )}
+
+                    {/* Grid/Classify solution overlay */}
+                    {tab === 'images' && isClassify && solutionArr.length > 0 && (
+                        <div className="mt-5">
+                            <h4 className="text-xs font-medium text-muted-foreground/70 mb-2 flex items-center gap-1.5">
+                                <CheckCircle2 size={13} className="text-green-500" />
+                                Solution Grid
+                            </h4>
+                            <div className={`grid gap-1.5 mx-auto`}
+                                style={{
+                                    gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(solutionArr.length))}, 1fr)`,
+                                    maxWidth: 280,
+                                }}
+                            >
+                                {solutionArr.map((checked, i) => (
+                                    <div key={i}
+                                        className={`aspect-square rounded-lg border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                                            checked
+                                                ? 'border-green-500 bg-green-500/10 text-green-600 shadow-lg shadow-green-500/20 scale-105'
+                                                : 'border-border/40 bg-muted/30 text-muted-foreground/30'
+                                        }`}
+                                    >
+                                        {checked ? '✓' : i + 1}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Solution details */}
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground/70">
+                        <div className="bg-muted/30 rounded-lg p-3">
+                            <span className="font-medium text-muted-foreground/50 block mb-0.5">Question</span>
+                            <span>{solution.question || '—'}</span>
+                        </div>
+                        <div className="bg-muted/30 rounded-lg p-3">
+                            <span className="font-medium text-muted-foreground/50 block mb-0.5">Solution</span>
+                            <span className="font-mono text-[11px] break-all">{formatSolution(solution.solution, solution.type)}</span>
+                        </div>
+                        {solution.classNames && solution.classNames.length > 0 && (
+                            <div className="bg-muted/30 rounded-lg p-3 sm:col-span-2">
+                                <span className="font-medium text-muted-foreground/50 block mb-1.5">Class Names</span>
+                                <div className="flex flex-wrap gap-1">
+                                    {solution.classNames.map((cn, i) => (
+                                        <span key={i} className="px-2 py-0.5 rounded-md bg-secondary/80 text-muted-foreground/70 text-[11px] font-mono">
+                                            {cn}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Created at */}
+                    <p className="mt-4 text-[11px] text-muted-foreground/40 text-center">
+                        Created: {solution.createdAt ? new Date(solution.createdAt).toLocaleString() : '—'}
+                        {' · '}
+                        <button
+                            onClick={() => copyToClipboard(solution.id, 'ID copied!')}
+                            className="hover:text-primary/70 underline underline-offset-2 decoration-dotted"
+                        >
+                            Copy ID
                         </button>
-                    ))}
+                    </p>
                 </div>
-            )}
+            </div>
         </div>
     )
 }

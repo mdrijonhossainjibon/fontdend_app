@@ -15,7 +15,6 @@ import {
   Lock,
   ChevronRight,
 } from 'lucide-react'
-import { toast } from "sonner"
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RootState } from '@/modules/rootReducer'
@@ -75,7 +74,6 @@ export default function LoginPage() {
       }
       const desc = messages[err] || 'An error occurred during social login.'
       setOauthError(desc)
-      toast.error('Login Failed', { description: desc })
       window.history.replaceState({}, '', '/auth/login')
     }
   }, [])
@@ -127,14 +125,7 @@ export default function LoginPage() {
 
   /* ── React to Redux state changes ── */
   useEffect(() => {
-    if (reduxError) {
-      toast.error('Login Error', { description: reduxError })
-    }
-  }, [reduxError])
-
-  useEffect(() => {
     if (requiresOTP && step === 'credentials') {
-      toast.info('Verification Required', { description: 'Please enter the 6-digit code sent to your email.' })
       setStep('otp'); setTimer(300); setResendDisabled(true)
     }
   }, [requiresOTP])
@@ -143,7 +134,6 @@ export default function LoginPage() {
 
     console.log('loginSuccess', loginSuccess)
     if (loginSuccess) {
-      toast.success('Welcome Back!', { description: 'You have successfully signed in.' })
       setStep('success')
       setTimeout(() => { navigate('/dashboard') }, 2000)
     }

@@ -7,25 +7,30 @@ import {
     rejectOrderRequest,
     clearOrdersRequest,
 } from '@/modules/admin/orders/actions'
-import { OrdersContent } from './content'
-import { Card, CardContent } from '@/components/ui/card'
+import { OrdersContent, TableSkeleton } from './content'
 import { Button } from '@/components/ui/button'
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
     Search,
-    Filter,
     RefreshCw,
-    CreditCard,
-    CheckCircle,
-    Clock,
-    XCircle,
-    AlertTriangle,
-    DollarSign,
     Trash2,
+    ChevronLeft,
+    ChevronRight,
+    SlidersHorizontal,
 } from 'lucide-react'
 
 export default function OrdersPage() {
     const dispatch = useDispatch()
-    const { orders, stats, pagination, loading } = useSelector(
+    const { orders, pagination, loading } = useSelector(
         (state: RootState) => state.adminOrders,
     )
     const [searchTerm, setSearchTerm] = useState('')
@@ -44,101 +49,72 @@ export default function OrdersPage() {
         )
     }, [dispatch, searchTerm, filterStatus, currentPage])
 
-    useEffect(() => {
-        doFetch()
-    }, [doFetch])
+    useEffect(() => { doFetch() }, [doFetch])
 
-    // Reset to page 1 when search or filter changes
     useEffect(() => {
-        if (currentPage !== 1) {
-            setCurrentPage(1)
-        }
+        if (currentPage !== 1) setCurrentPage(1)
     }, [searchTerm, filterStatus])
 
-    const handleApprove = (id: string) => {
-        dispatch(approveOrderRequest(id))
-    }
+    const [clearDialogOpen, setClearDialogOpen] = useState(false)
 
-    const handleReject = (id: string) => {
-        dispatch(rejectOrderRequest(id))
-    }
+    const handleApprove = (id: string) => dispatch(approveOrderRequest(id))
+    const handleReject = (id: string) => dispatch(rejectOrderRequest(id))
 
     const handleClearAll = () => {
-        if (window.confirm('Are you sure you want to clear all orders? This action cannot be undone.')) {
-            dispatch(clearOrdersRequest({ status: filterStatus || undefined }))
-        }
+        dispatch(clearOrdersRequest({ status: filterStatus || undefined }))
+        setClearDialogOpen(false)
     }
 
-    const statCards = [
-        { label: 'Total Orders', value: stats?.total ?? 0, icon: CreditCard, color: 'text-blue-600' },
-        { label: 'Completed', value: stats?.completed ?? 0, icon: CheckCircle, color: 'text-green-600' },
-        { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-yellow-600' },
-        { label: 'Confirming', value: stats?.confirming ?? 0, icon: AlertTriangle, color: 'text-blue-600' },
-        { label: 'Failed', value: stats?.failed ?? 0, icon: XCircle, color: 'text-red-600' },
-        { label: 'Revenue (USD)', value: `$${(stats?.revenue ?? 0).toFixed(2)}`, icon: DollarSign, color: 'text-emerald-600' },
-    ]
-
     return (
-        <div>
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 mb-6">
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleClearAll}
-                    disabled={loading}
-                    className="gap-2"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    Clear All
-                </Button>
+        <div className="space-y-6">
+            {/* ── Actions Row ── */}
+            <div className="flex items-center justify-end gap-2">
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={doFetch}
                     disabled={loading}
-                    className="gap-2"
+                    className="h-9 gap-1.5 text-xs"
                 >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
+                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                    <span className="hidden sm:inline">Refresh</span>
+                </Button>
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setClearDialogOpen(true)}
+                    disabled={loading}
+                    className="h-9 gap-1.5 text-xs"
+                >
+                    <Trash2 size={14} />
+                    <span className="hidden sm:inline">Clear All</span>
                 </Button>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                {statCards.map((stat, i) => (
-                    <Card key={i} className="border-border/50 bg-secondary/50">
-                        <CardContent className="pt-6">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                                </div>
-                                <stat.icon className={`w-6 h-6 ${stat.color}/60`} />
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-4 mb-6">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            {/* ── Filters ── */}
+            <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[220px] max-w-sm">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
                     <input
                         type="text"
-                        placeholder="Search by user email, name, or transaction hash..."
+                        placeholder="Search by email, name, or tx hash..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2 rounded-lg border border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full h-9 pl-9 pr-3 text-sm rounded-lg border border-border/60 bg-background/50 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/50 transition-all"
                     />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground text-xs"
+                        >✕</button>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-muted-foreground" />
+                    <SlidersHorizontal size={14} className="text-muted-foreground/50" />
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-border bg-secondary text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="h-9 px-3 text-sm rounded-lg border border-border/60 bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/25 cursor-pointer transition-all"
                     >
                         <option value="">All Status</option>
                         <option value="completed">Completed</option>
@@ -149,7 +125,7 @@ export default function OrdersPage() {
                 </div>
             </div>
 
-            {/* Orders Table */}
+            {/* ── Table ── */}
             <OrdersContent
                 orders={orders}
                 loading={loading}
@@ -157,24 +133,25 @@ export default function OrdersPage() {
                 onReject={handleReject}
             />
 
-            {/* Pagination */}
-            {!loading && orders.length > 0 && pagination && (
-                <div className="mt-6 flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                        Showing {((currentPage - 1) * itemsPerPage) + 1} to{' '}
-                        {Math.min(currentPage * itemsPerPage, pagination.total)} of {pagination.total} orders
+            {/* ── Pagination ── */}
+            {!loading && orders.length > 0 && pagination && pagination.pages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-card border border-border/60 rounded-xl px-4 py-3">
+                    <span className="text-xs text-muted-foreground/60">
+                        Showing <span className="font-medium text-foreground/80">{((currentPage - 1) * itemsPerPage) + 1}</span>
+                        {' '}to{' '}
+                        <span className="font-medium text-foreground/80">{Math.min(currentPage * itemsPerPage, pagination.total)}</span>
+                        {' '}of{' '}
+                        <span className="font-medium text-foreground/80">{pagination.total}</span> orders
                     </span>
 
                     <div className="flex items-center gap-1">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage <= 1}
-                            className="h-8 px-3"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-border/60 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                         >
-                            Previous
-                        </Button>
+                            <ChevronLeft size={13} /> Prev
+                        </button>
 
                         {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
                             let pageNum: number
@@ -187,32 +164,50 @@ export default function OrdersPage() {
                             } else {
                                 pageNum = currentPage - 2 + i
                             }
-
                             return (
-                                <Button
+                                <button
                                     key={pageNum}
-                                    variant={currentPage === pageNum ? 'default' : 'outline'}
-                                    size="sm"
                                     onClick={() => setCurrentPage(pageNum)}
-                                    className="h-8 w-8 p-0"
+                                    className={`min-w-[30px] h-8 text-xs rounded-lg border transition-all ${
+                                        currentPage === pageNum
+                                            ? 'bg-primary text-primary-foreground border-primary font-medium shadow-sm'
+                                            : 'border-border/60 hover:bg-muted text-muted-foreground/70'
+                                    }`}
                                 >
                                     {pageNum}
-                                </Button>
+                                </button>
                             )
                         })}
 
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage((p) => Math.min(pagination.pages, p + 1))}
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(pagination.pages, p + 1))}
                             disabled={currentPage >= pagination.pages}
-                            className="h-8 px-3"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-border/60 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                         >
-                            Next
-                        </Button>
+                            Next <ChevronRight size={13} />
+                        </button>
                     </div>
                 </div>
             )}
+
+            {/* ── Clear All Confirm Dialog ── */}
+            <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                <AlertDialogContent className="border-border/60">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Trash2 size={16} className="text-destructive" />
+                            Clear All Orders
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to clear all orders? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="rounded-lg bg-destructive hover:bg-destructive/90" onClick={handleClearAll}>Clear All</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

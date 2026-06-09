@@ -107,6 +107,29 @@ const adminReducer = (state = initialState, action: any) => {
                 isSaving: false,
                 error: action.payload,
             };
+        case types.CLEAR_ADMIN_USERS_REQUEST:
+            return {
+                ...state,
+                loading: true,
+                error: null,
+            };
+        case types.CLEAR_ADMIN_USERS_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                users: [],
+                pagination: {
+                    total: 0, page: 1, limit: 10,
+                    totalPages: 0, hasNextPage: false, hasPrevPage: false
+                },
+                error: null,
+            };
+        case types.CLEAR_ADMIN_USERS_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
 
         // ── Bot Management ──────────────────────────────────────────────────
         case types.FETCH_ADMIN_BOTS_REQUEST:

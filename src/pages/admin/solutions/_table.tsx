@@ -1,11 +1,11 @@
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Database, Loader2, Eye, Trash2, Download } from "lucide-react"
-import { Solution, Pagination, TYPE_ICONS, TYPE_COLORS, SERVICE_COLORS, b64ToSrc, formatSolution } from "./_types"
+import { Database, Eye, Trash2, Download, Copy } from "lucide-react"
+import { Solution, Pagination, TYPE_ICONS, TYPE_COLORS, SERVICE_COLORS, b64ToSrc, formatSolution, copyToClipboard } from "./_types"
+import { SERVICE_SVG_ICONS, TableSkeleton, EmptyStateSvg } from "./_svgs"
 
-// â”€â”€ Solutions Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Solutions Table ─────────────────────────────────────────────────────────
 interface TableProps {
     solutions: Solution[]
     loading: boolean
@@ -23,283 +23,259 @@ export function SolutionsTable({ solutions, loading, pagination, onRowClick, onD
         let interval = Math.floor(seconds / 31536000);
         if (interval >= 1) return interval + "y";
         interval = Math.floor(seconds / 2592000);
-        if (interval >= 1) return interval + "m"; // month
+        if (interval >= 1) return interval + "m";
         interval = Math.floor(seconds / 86400);
         if (interval >= 1) return interval + "d";
         interval = Math.floor(seconds / 3600);
         if (interval >= 1) return interval + "h";
         interval = Math.floor(seconds / 60);
-        if (interval >= 1) return interval + "m"; // minute
+        if (interval >= 1) return interval + "m";
         return Math.floor(seconds) + "s";
     }
+
     const handleDownload = (sol: Solution, e: React.MouseEvent) => {
         e.stopPropagation()
         const images = [...(sol.imageData || []), ...(sol.examples || [])]
         if (images.length === 0) return
 
-        images.forEach((b64, idx) => {
-            const src = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`
-            const a = document.createElement('a')
-            a.href = src
-            const label = idx < (sol.imageData?.length || 0) ? 'img' : 'ref'
-            a.download = `${sol.hash}-${label}-${idx + 1}.png`
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
+        images.forEach((b64, i) => {
+            const link = document.createElement('a')
+            link.download = `captcha_${sol.hash?.slice(0, 8) || i}_${i}.png`
+            link.href = b64ToSrc(b64)
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
         })
     }
 
+    if (loading) {
+        return (
+            <Card className="border-border">
+                <CardHeader className="pb-3">
+                    <div className="h-5 w-40 rounded bg-muted animate-pulse" />
+                    <div className="h-4 w-60 rounded bg-muted/60 animate-pulse" />
+                </CardHeader>
+                <CardContent>
+                    <TableSkeleton rows={6} />
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (!solutions || solutions.length === 0) {
+        return (
+            <Card className="border-border">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                    <EmptyStateSvg />
+                    <h3 className="text-lg font-semibold mt-4 text-muted-foreground/80">No solutions found</h3>
+                    <p className="text-sm text-muted-foreground/50 mt-1 text-center max-w-xs">
+                        Try adjusting your search or filters, or wait for new captcha solutions to be cached.
+                    </p>
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
-        <Card>
+        <Card className="border-border">
             <CardHeader className="pb-3">
-                <CardTitle className="text-base sm:text-lg">Solution Cache</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                    {pagination?.total ?? 0} cached solutions Â· Click a row to view images
-                </CardDescription>
+                <CardTitle className="text-base flex items-center gap-2">
+                    <Database size={16} className="text-primary/70" />
+                    Cached Solutions
+                    {pagination && (
+                        <span className="text-xs font-normal text-muted-foreground ml-1">
+                            ({pagination.total} total)
+                        </span>
+                    )}
+                </CardTitle>
             </CardHeader>
-            <CardContent>
-                {loading ? (
-                    <div className="flex items-center justify-center py-14">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                ) : solutions.length === 0 ? (
-                    <div className="text-center py-14 text-muted-foreground">
-                        <Database className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                        <p className="text-sm">No cached solutions found</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto -mx-4 sm:mx-0">
-                        <table className="w-full min-w-[640px]">
-                            <thead>
-                                <tr className="border-b border-border text-left">
-                                    {["Question", "Service", "Type", "Preview", "Images", "Cached At", "Age", ""].map(h => (
-                                        <th key={h} className="py-2.5 px-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {solutions.map((sol, i) => {
-                                    const TypeIcon = TYPE_ICONS[sol.type] || Database
-                                    const hasImages = sol.imageData?.length > 0
-                                    return (
-                                        <tr key={sol.id}
-                                            className="border-b border-border hover:bg-secondary/60 transition-colors cursor-pointer group"
-                                            style={{ opacity: 0, animation: `slideInUp 0.4s ease-out ${i * 30}ms forwards` }}
-                                            onClick={() => onRowClick(sol)}
-                                        >
-                                            <td className="py-2.5 px-3 text-xs max-w-[180px]">
-                                                <p className="truncate group-hover:text-primary transition-colors" title={sol.question}>{sol.question || 'â€”'}</p>
-                                            </td>
-                                            <td className="py-2.5 px-3">
-                                                <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${SERVICE_COLORS[sol.service] || 'bg-muted text-muted-foreground'}`}>
-                                                    {sol.service}
-                                                </span>
-                                            </td>
-                                            <td className="py-2.5 px-3">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${TYPE_COLORS[sol.type] || 'bg-muted/50 text-muted-foreground border-border'}`}>
-                                                    <TypeIcon className="w-3 h-3" />
-                                                    {sol.type?.replace('object', '') || 'â€”'}
-                                                </span>
-                                            </td>
-                                            <td className="py-2.5 px-3 text-[11px] text-muted-foreground font-mono max-w-[140px] truncate" title={JSON.stringify(sol.solution)}>
-                                                {formatSolution(sol.solution, sol.type)}
-                                            </td>
-                                            <td className="py-2.5 px-3">
-                                                <div className="flex flex-col gap-1">
-                                                    {hasImages ? (
-                                                        <div className="flex items-center gap-1">
-                                                            <div className="flex -space-x-1.5">
-                                                                {sol.imageData.slice(0, 3).map((img, idx) => (
-                                                                    <div key={idx} className="w-6 h-6 rounded overflow-hidden border-2 border-card ring-1 ring-border">
-                                                                        <img src={b64ToSrc(img)} alt="" className="w-full h-full object-cover" />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                            {sol.imageData.length > 3 && (
-                                                                <span className="text-[11px] text-muted-foreground">+{sol.imageData.length - 3}</span>
-                                                            )}
-                                                            <Eye className="w-3 h-3 text-primary/70 ml-0.5" />
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[11px] text-muted-foreground/50">No images</span>
-                                                    )}
-                                                    {sol.examples?.length > 0 && (
-                                                        <div className="flex items-center gap-1">
-                                                            <div className="w-6 h-6 rounded overflow-hidden border-2 border-teal-500/60">
-                                                                <img src={b64ToSrc(sol.examples[0])} alt="ref" className="w-full h-full object-cover" />
-                                                            </div>
-                                                            <span className="text-[10px] font-bold text-teal-600 bg-teal-500/10 px-1 py-0.5 rounded">
-                                                                REF{sol.examples.length > 1 ? ` Ã—${sol.examples.length}` : ''}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="py-2.5 px-3 text-[11px] text-muted-foreground whitespace-nowrap">
-                                                {new Date(sol.createdAt).toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td className="py-2.5 px-3 text-[11px] font-medium text-primary whitespace-nowrap">
-                                                {timeAgo(sol.createdAt)}
-                                            </td>
-                                            <td className="py-2.5 px-3" onClick={e => e.stopPropagation()}>
-                                                <div className="flex items-center gap-1">
-                                                    <Button size="sm" variant="outline"
-                                                        className="bg-transparent border-blue-500/40 text-blue-500 hover:bg-blue-500 hover:text-white h-7 w-7 p-0"
-                                                        onClick={(e) => handleDownload(sol, e)}>
-                                                        <Download className="w-3 h-3" />
+            <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-border/60">
+                                <th className="text-left text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3">Service</th>
+                                <th className="text-left text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3">Hash</th>
+                                <th className="text-left text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3 hidden md:table-cell">Question</th>
+                                <th className="text-left text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3">Type</th>
+                                <th className="text-left text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3">Images</th>
+                                <th className="text-left text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Age</th>
+                                <th className="text-right text-xs text-muted-foreground font-medium uppercase tracking-wider px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {solutions.map((sol, idx) => {
+                                const TypeIcon = TYPE_ICONS[sol.type]
+                                const SvgsIcon = SERVICE_SVG_ICONS[sol.service?.toLowerCase()]
+                                const serviceColorClass = SERVICE_COLORS[sol.service?.toLowerCase()] || "bg-gray-500/10 text-gray-600"
+                                const typeColorClass = TYPE_COLORS[sol.type] || "bg-gray-500/10 text-gray-600"
+                                const imgCount = (sol.imageData?.length || 0) + (sol.examples?.length || 0)
+
+                                return (
+                                    <tr key={sol.id}
+                                        onClick={() => onRowClick(sol)}
+                                        className="border-b border-border/30 hover:bg-muted/40 cursor-pointer transition-colors duration-150 group"
+                                        style={{ animationDelay: `${idx * 30}ms` }}
+                                    >
+                                        {/* Service */}
+                                        <td className="px-4 py-3">
+                                            <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${serviceColorClass}`}>
+                                                {SvgsIcon ? <SvgsIcon size={14} /> : null}
+                                                {sol.service}
+                                            </div>
+                                        </td>
+
+                                        {/* Hash */}
+                                        <td className="px-4 py-3">
+                                            <code className="text-xs font-mono text-muted-foreground/80 bg-muted/50 px-1.5 py-0.5 rounded">
+                                                {sol.hash?.slice(0, 12)}...
+                                            </code>
+                                            <button
+                                                onClick={e => { e.stopPropagation(); copyToClipboard(sol.hash, 'Hash copied!') }}
+                                                className="ml-1.5 inline-flex text-muted-foreground/40 hover:text-primary/70 transition-colors"
+                                                title="Copy hash"
+                                            >
+                                                <Copy size={12} />
+                                            </button>
+                                        </td>
+
+                                        {/* Question */}
+                                        <td className="px-4 py-3 hidden md:table-cell">
+                                            <span className="text-muted-foreground/80 truncate max-w-[200px] block">
+                                                {sol.question || '—'}
+                                            </span>
+                                        </td>
+
+                                        {/* Type */}
+                                        <td className="px-4 py-3">
+                                            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${typeColorClass}`}>
+                                                {TypeIcon ? <TypeIcon size={12} /> : null}
+                                                {sol.type?.replace('object', '') || '—'}
+                                            </div>
+                                        </td>
+
+                                        {/* Images count */}
+                                        <td className="px-4 py-3 text-muted-foreground/70 text-xs">{imgCount}</td>
+
+                                        {/* Age */}
+                                        <td className="px-4 py-3 text-muted-foreground/60 text-xs hidden lg:table-cell">
+                                            {sol.createdAt ? timeAgo(sol.createdAt) : '—'}
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                <Button
+                                                    variant="ghost" size="icon" className="h-7 w-7"
+                                                    onClick={e => { e.stopPropagation(); onRowClick(sol) }}
+                                                    title="View images"
+                                                >
+                                                    <Eye size={13} />
+                                                </Button>
+                                                {imgCount > 0 && (
+                                                    <Button
+                                                        variant="ghost" size="icon" className="h-7 w-7"
+                                                        onClick={e => handleDownload(sol, e)}
+                                                        title="Download all images"
+                                                    >
+                                                        <Download size={13} />
                                                     </Button>
-                                                    <Button size="sm" variant="outline"
-                                                        className="bg-transparent border-red-500/40 text-red-500 hover:bg-red-500 hover:text-white h-7 w-7 p-0"
-                                                        onClick={(e) => onDelete(sol.id, e)}>
-                                                        <Trash2 className="w-3 h-3" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                                )}
+                                                <Button
+                                                    variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                                                    onClick={e => { e.stopPropagation(); onDelete(sol.id, e) }}
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </CardContent>
         </Card>
     )
 }
 
-// â”€â”€ Pagination â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-interface PaginationBarProps {
+// ── Pagination Bar ──────────────────────────────────────────────────────────
+interface PaginationProps {
+    pagination: Pagination | null
     currentPage: number
-    itemsPerPage: number
-    pagination: Pagination
-    loading: boolean
-    solutionCount: number
-    onPrev: () => void
-    onNext: () => void
     onPageChange: (page: number) => void
+    loading: boolean
 }
 
-export function PaginationBar({
-    currentPage,
-    itemsPerPage,
-    pagination,
-    loading,
-    solutionCount,
-    onPrev,
-    onNext,
-    onPageChange
-}: PaginationBarProps) {
-    if (loading || solutionCount === 0) return null
+export function PaginationBar({ pagination, currentPage, onPageChange, loading }: PaginationProps) {
+    if (!pagination || pagination.totalPages <= 1) return null
 
-    const totalPages = pagination.totalPages || 1
-    const [jumpPage, setJumpPage] = useState(currentPage.toString())
+    const totalPages = pagination.totalPages
+    const maxVisible = 5
 
-    useEffect(() => {
-        setJumpPage(currentPage.toString())
-    }, [currentPage])
-
-    const handleJump = (e: React.FormEvent) => {
-        e.preventDefault()
-        const p = parseInt(jumpPage)
-        if (!isNaN(p) && p >= 1 && p <= totalPages) {
-            onPageChange(p)
-        } else {
-            setJumpPage(currentPage.toString())
-        }
-    }
-
-    const getPageNumbers = () => {
-        const pages = []
-        const showMax = 5
-        
-        if (totalPages <= showMax + 2) {
+    const getPages = (): (number | '...')[] => {
+        const pages: (number | '...')[] = []
+        if (totalPages <= maxVisible + 2) {
             for (let i = 1; i <= totalPages; i++) pages.push(i)
-        } else {
-            pages.push(1)
-            if (currentPage > 3) pages.push('...')
-            
-            const start = Math.max(2, currentPage - 1)
-            const end = Math.min(totalPages - 1, currentPage + 1)
-            
-            for (let i = start; i <= end; i++) {
-                if (!pages.includes(i)) pages.push(i)
-            }
-            
-            if (currentPage < totalPages - 2) pages.push('...')
-            pages.push(totalPages)
+            return pages
         }
+
+        pages.push(1)
+        let start = Math.max(2, currentPage - 1)
+        let end = Math.min(totalPages - 1, currentPage + 1)
+
+        if (currentPage <= 3) { start = 2; end = Math.min(maxVisible, totalPages - 1) }
+        if (currentPage >= totalPages - 2) { start = Math.max(2, totalPages - maxVisible + 1); end = totalPages - 1 }
+
+        if (start > 2) pages.push('...')
+        for (let i = start; i <= end; i++) pages.push(i)
+        if (end < totalPages - 1) pages.push('...')
+        pages.push(totalPages)
+
         return pages
     }
 
     return (
-        <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-6 p-4 bg-card/50 rounded-xl border border-border/50">
-            <div className="flex flex-col gap-1">
-                <span className="text-xs sm:text-sm font-medium text-foreground">
-                    Showing {((currentPage - 1) * itemsPerPage) + 1}â€“{Math.min(currentPage * itemsPerPage, pagination.total)}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                    Total {pagination.total} entries
-                </span>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={onPrev} 
-                    disabled={!pagination.hasPrevPage} 
-                    className="h-8 w-8 text-xs rounded-lg"
+        <div className="flex items-center justify-between gap-3 mt-4 px-1">
+            <p className="text-xs text-muted-foreground/60">
+                Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex items-center gap-1">
+                <button
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loading}
+                    className="px-2.5 py-1.5 text-xs rounded-md border border-border/60 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                    <span className="sr-only">Previous</span>
-                    &lt;
-                </Button>
-                
-                <div className="flex items-center gap-1.5 mx-1">
-                    {getPageNumbers().map((p, i) => (
-                        p === '...' ? (
-                            <span key={`dots-${i}`} className="px-1 text-muted-foreground text-xs font-bold tracking-widest">...</span>
-                        ) : (
-                            <Button
-                                key={`page-${p}`}
-                                variant={currentPage === p ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => onPageChange(p as number)}
-                                className={`h-8 min-w-[32px] text-xs font-medium rounded-lg transition-all ${
-                                    currentPage === p 
-                                        ? "shadow-sm shadow-primary/20 scale-105" 
-                                        : "hover:bg-primary/5 hover:border-primary/30"
-                                }`}
-                            >
-                                {p}
-                            </Button>
-                        )
-                    ))}
-                </div>
-
-                <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={onNext} 
-                    disabled={!pagination.hasNextPage} 
-                    className="h-8 w-8 text-xs rounded-lg"
+                    Prev
+                </button>
+                {getPages().map((p, i) =>
+                    p === '...' ? (
+                        <span key={`e${i}`} className="px-1.5 text-xs text-muted-foreground/40">…</span>
+                    ) : (
+                        <button
+                            key={p}
+                            onClick={() => onPageChange(p)}
+                            disabled={p === currentPage || loading}
+                            className={`min-w-[30px] h-8 text-xs rounded-md border transition-all ${
+                                p === currentPage
+                                    ? 'bg-primary text-primary-foreground border-primary font-medium'
+                                    : 'border-border/60 hover:bg-muted disabled:opacity-50'
+                            }`}
+                        >
+                            {p}
+                        </button>
+                    )
+                )}
+                <button
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loading}
+                    className="px-2.5 py-1.5 text-xs rounded-md border border-border/60 hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                    <span className="sr-only">Next</span>
-                    &gt;
-                </Button>
+                    Next
+                </button>
             </div>
-
-            <form onSubmit={handleJump} className="flex items-center gap-2 bg-secondary/30 p-1 rounded-lg border border-border/50">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground ml-2">Go to</span>
-                <input
-                    type="text"
-                    value={jumpPage}
-                    onChange={(e) => setJumpPage(e.target.value)}
-                    className="w-10 h-7 bg-background border border-border/50 rounded text-center text-xs font-medium focus:ring-1 focus:ring-primary/30 outline-none transition-all"
-                />
-                <Button type="submit" variant="ghost" size="sm" className="h-7 text-[10px] font-bold uppercase tracking-tight px-2 hover:bg-primary hover:text-white rounded transition-colors">
-                    Jump
-                </Button>
-            </form>
         </div>
     )
 }

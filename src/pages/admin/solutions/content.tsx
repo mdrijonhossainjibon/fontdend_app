@@ -85,12 +85,12 @@ export default function AdminSolutionsContent() {
             <StatsCards stats={stats} />
 
             <FiltersBar
-                searchTerm={searchInput}
-                serviceFilter={serviceFilter}
-                typeFilter={typeFilter}
-                onSearch={setSearchInput}
-                onService={setServiceFilter}
-                onType={setTypeFilter}
+                search={searchInput}
+                onSearchChange={setSearchInput}
+                service={serviceFilter}
+                onServiceChange={setServiceFilter}
+                type={typeFilter}
+                onTypeChange={setTypeFilter}
                 onRefresh={() =>
                     dispatch(
                         fetchSolutionsRequest({
@@ -103,7 +103,7 @@ export default function AdminSolutionsContent() {
                     )
                 }
                 onClearAll={handleClearAll}
-                isSearching={searchInput !== debouncedSearch}
+                refreshing={searchInput !== debouncedSearch}
             />
 
             <SolutionsTable
@@ -114,20 +114,12 @@ export default function AdminSolutionsContent() {
                 onDelete={handleDelete}
             />
 
-            {pagination && (
-                <PaginationBar
-                    currentPage={currentPage}
-                    itemsPerPage={itemsPerPage}
-                    pagination={pagination}
-                    loading={loading}
-                    solutionCount={solutions.length}
-                    onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    onNext={() =>
-                        setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-                    }
-                    onPageChange={setCurrentPage}
-                />
-            )}
+            <PaginationBar
+                pagination={pagination}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                loading={loading}
+            />
 
             {/* Delete Solution Confirmation */}
             <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>

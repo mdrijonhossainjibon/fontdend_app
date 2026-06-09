@@ -12,7 +12,6 @@ import {
   Lock,
   Mail,
 } from 'lucide-react'
-import { toast } from "sonner"
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RootState } from '@/modules/rootReducer'
@@ -45,15 +44,13 @@ export default function ForgotPasswordPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error('Reset Failed', { description: data.error || 'Failed to send reset email.' })
         setIsLoading(false)
         return
       }
-      toast.success('Email Sent', { description: 'Password reset email sent! Please check your inbox.' })
       setIsSubmitted(true)
       setCountdown(60)
     } catch {
-      toast.error('Error', { description: 'An error occurred. Please try again.' })
+      setIsLoading(false)
     } finally {
       setIsLoading(false)
     }
@@ -70,14 +67,12 @@ export default function ForgotPasswordPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error('Resend Failed', { description: data.error || 'Failed to resend email.' })
         setIsLoading(false)
         return
       }
-      toast.success('Email Resent', { description: 'Password reset email resent! Please check your inbox.' })
       setCountdown(60)
     } catch {
-      toast.error('Error', { description: 'An error occurred. Please try again.' })
+      setIsLoading(false)
     } finally {
       setIsLoading(false)
     }

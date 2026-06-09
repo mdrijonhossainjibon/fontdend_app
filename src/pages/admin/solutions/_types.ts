@@ -1,3 +1,5 @@
+import { Copy } from "lucide-react"
+import { toast } from 'sonner'
 import {
     Grid3X3, MousePointerClick, Grip, Tag,
 } from "lucide-react"
@@ -47,6 +49,20 @@ export const SERVICE_COLORS: Record<string, string> = {
     hcaptcha: "bg-teal-500/10 text-teal-600",
     awswaf: "bg-orange-500/10 text-orange-600",
     recaptcha: "bg-indigo-500/10 text-indigo-600",
+    kbs: "bg-rose-500/10 text-rose-600",
+}
+
+export function copyToClipboard(text: string, label = "Copied!") {
+    navigator.clipboard.writeText(text).then(() => toast.success(label)).catch(() => {
+        // fallback
+        const ta = document.createElement('textarea')
+        ta.value = text
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        toast.success(label)
+    })
 }
 
 export function formatSolution(solution: any, type: string): string {
