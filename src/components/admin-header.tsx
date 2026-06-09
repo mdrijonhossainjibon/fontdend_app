@@ -212,7 +212,7 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
                             <button className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-secondary/80 transition-all duration-300 group outline-none">
                                 <div className="relative">
                                     <Avatar className="w-8 h-8 ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300">
-                                        <AvatarImage src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || 'Admin')}&backgroundColor=4f46e5`} alt={user?.name || 'Admin'} />
+                                        <AvatarImage src={user?.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || 'Admin')}&backgroundColor=4f46e5`} alt={user?.name || 'Admin'} />
                                         <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-sm font-bold">{initials}</AvatarFallback>
                                     </Avatar>
                                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />

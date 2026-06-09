@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (oauthToken) {
       localStorage.setItem('authToken', oauthToken)
+      localStorage.setItem('tokenExpiry', String(Date.now() + 7 * 24 * 60 * 60 * 1000))
       window.history.replaceState({}, '', window.location.pathname)
     }
 

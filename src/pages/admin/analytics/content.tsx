@@ -6,11 +6,15 @@ import {
   TrendingUp, TrendingDown, RefreshCw, ChevronDown
 } from "lucide-react"
 import { fetchAdminAnalyticsRequest } from '@/modules/admin/actions'
+import { useAdminAnalyticsSocket } from '@/hooks/useAdminAnalyticsSocket'
 
 export default function AdminAnalyticsContent() {
   const dispatch = useDispatch()
   const { analytics, analyticsLoading } = useSelector((state: any) => state.admin)
   const [days, setDays] = useState(30)
+
+  // Live refresh via WebSocket
+  useAdminAnalyticsSocket(days)
 
   useEffect(() => {
     dispatch(fetchAdminAnalyticsRequest(days))

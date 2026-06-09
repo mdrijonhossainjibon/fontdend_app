@@ -55,6 +55,7 @@ function* registerFlow(): Generator<any, any, any> {
         });
         localStorage.setItem('authToken', verifyResult.response.token);
         localStorage.setItem('user', JSON.stringify(verifyResult.response.user));
+        localStorage.setItem('tokenExpiry', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
 
         // Step 3: Fetch current user
         const userResult: APIResponse = yield call(API_CALL, {
@@ -148,7 +149,7 @@ function* loginFlow(): Generator<any, any, any> {
             if (!result.response?.requiresOTP) {
                 localStorage.setItem('authToken', result.response.token);
                 localStorage.setItem('user', JSON.stringify(result.response.user));
-                const ms = action.payload.rememberMe ? 3 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
+                const ms = action.payload.rememberMe ? 7 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
                 localStorage.setItem('tokenExpiry', String(Date.now() + ms));
             }
         } else {
@@ -173,6 +174,7 @@ function* verifyOtpSaga(action: any): Generator<any, any, any> {
             yield put(actions.verifyOtpSuccess(response));
             localStorage.setItem('authToken', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
+            localStorage.setItem('tokenExpiry', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
             toast.success('Verified', { description: 'Login successful!' });
         } else {
             const err = response?.error || 'Invalid verification code.';
@@ -224,6 +226,7 @@ function* googleLoginSaga(action: any): Generator<any, any, any> {
             yield put(actions.googleLoginSuccess(result.response));
             localStorage.setItem('authToken', result.response.token);
             localStorage.setItem('user', JSON.stringify(result.response.user));
+            localStorage.setItem('tokenExpiry', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
             toast.success('Welcome Back!', {
                 description: 'Successfully signed in with Google.',
             });
