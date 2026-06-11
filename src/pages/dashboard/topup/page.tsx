@@ -262,8 +262,15 @@ export default function DashboardTopupPage() {
                 <h3 className="font-semibold text-sm mb-1">Select Cryptocurrency</h3>
                 <p className="text-xs text-muted-foreground mb-3">Choose a coin to deposit with CP (CaptchaMaster)</p>
                 {configsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <div className="space-y-3 py-2">
+                    <div className="h-11 rounded-lg bg-muted animate-pulse" />
+                    {[1,2,3,4].map((i) => (
+                      <div key={i} className="flex items-center gap-3 h-11 px-4 rounded-lg bg-muted animate-pulse">
+                        <div className="w-7 h-7 rounded-full bg-border" />
+                        <div className="h-4 w-24 rounded bg-border" />
+                        <div className="h-3 w-16 rounded bg-border ml-auto" />
+                      </div>
+                    ))}
                   </div>
                 ) : activeConfigs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
