@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Loader2,
+  AlertCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -56,7 +57,7 @@ export default function DashboardTopupPage() {
     cryptomusCreating, cryptomusUrl, cryptomusInvoiceId, cryptomusError,
     cryptomusStatus, cryptomusWalletAddress, cryptomusNetwork, cryptomusPaymentAmount,
   } = topupState
-  const { configs: cryptoConfigs, loading: configsLoading } = useSelector(
+  const { configs: cryptoConfigs, loading: configsLoading, error: configsError } = useSelector(
     (state: RootState) => state.crypto
   )
 
@@ -106,6 +107,14 @@ export default function DashboardTopupPage() {
     dispatch(fetchCryptoConfigRequest())
     dispatch(checkPendingDepositRequest())
   }, [dispatch])
+
+  // Auto-retry crypto config on failure
+  useEffect(() => {
+    if (configsError) {
+      const timer = setTimeout(() => dispatch(fetchCryptoConfigRequest()), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [configsError, dispatch])
 
   useEffect(() => {
     return () => {
@@ -253,8 +262,20 @@ export default function DashboardTopupPage() {
                   </div>
                 ) : activeConfigs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Coins className="w-10 h-10 text-muted-foreground/50 mb-3" />
-                    <p className="text-sm text-muted-foreground">No cryptocurrencies available</p>
+                    {configsError ? (
+                      <>
+                        <AlertCircle className="w-10 h-10 text-red-500/50 mb-3" />
+                        <p className="text-sm text-red-500/70 mb-3">Failed to load cryptocurrencies</p>
+                        <Button variant="outline" size="sm" onClick={() => dispatch(fetchCryptoConfigRequest())}>
+                          <Loader2 className="w-3 h-3 mr-2" /> Retry
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Coins className="w-10 h-10 text-muted-foreground/50 mb-3" />
+                        <p className="text-sm text-muted-foreground">No cryptocurrencies available</p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="relative" ref={dropdownRef}>

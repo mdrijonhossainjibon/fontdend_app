@@ -379,7 +379,7 @@ function FinalStatusView({ data }: { data: DepositData }) {
 // ── Main Component ──
 export default function DepositInvoiceCard(props: DepositInvoiceCardProps) {
   const { data, hideActions } = props
-  const isActive = data.status === 'pending' || data.status === 'confirming' || data.status === 'pending_funds'
+  const isActive = data.status === 'pending' || data.status === 'confirming' || data.status === 'pending_funds' || data.status === 'check'
 
   if (hideActions || !isActive) {
     return <FinalStatusView data={data} />
