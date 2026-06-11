@@ -269,8 +269,10 @@ export function DashboardHistoryContent() {
                         )}
                         <button
                           onClick={() => {
-                            if (window.confirm('Cancel this deposit?')) {
-                              dispatch(cancelDepositRequest(item.id))
+                            const modal = document.getElementById('cancel-modal') as HTMLDialogElement
+                            if (modal) {
+                              modal.dataset.depositId = item.id
+                              modal.showModal()
                             }
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
@@ -332,5 +334,42 @@ export function DashboardHistoryContent() {
         </div>
       )}
     </div>
+
+      {/* ── Cancel Confirmation Modal ── */}
+      <dialog
+        id="cancel-modal"
+        className="fixed inset-0 z-50 m-auto w-full max-w-sm rounded-xl border bg-card p-0 shadow-2xl backdrop:bg-black/50 open:flex flex-col"
+        onClick={(e) => { if (e.target === e.currentTarget) (e.target as HTMLDialogElement).close() }}
+      >
+        <div className="p-6 text-center">
+          <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+            <XCircle className="w-6 h-6 text-destructive" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Cancel Deposit?</h3>
+          <p className="text-sm text-muted-foreground mb-6">This action cannot be undone.</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                const modal = document.getElementById('cancel-modal') as HTMLDialogElement
+                modal?.close()
+              }}
+              className="px-5 py-2 rounded-lg border text-sm font-medium hover:bg-secondary/60 transition-colors"
+            >
+              No, keep it
+            </button>
+            <button
+              onClick={() => {
+                const modal = document.getElementById('cancel-modal') as HTMLDialogElement
+                const id = modal?.dataset.depositId
+                if (id) dispatch(cancelDepositRequest(id))
+                modal?.close()
+              }}
+              className="px-5 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
+            >
+              Yes, cancel
+            </button>
+          </div>
+        </div>
+      </dialog>
   )
 }
