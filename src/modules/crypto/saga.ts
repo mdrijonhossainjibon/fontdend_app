@@ -6,28 +6,44 @@ import { toast } from "sonner";
 import { updateUserBalance } from '../dashboard/actions';
 
 function* fetchCryptoConfigSaga(): Generator {
-    try {
-        console.log('[crypto/saga] FETCH_CRYPTO_CONFIG_REQUEST dispatched');
-        const { response, status }: APIResponse = yield call(API_CALL, {
-            method: 'GET',
-            url: '/crypto/config'
-        });
+    const maxRetries = 3;
+    let retryCount = 0;
 
-        console.log('[crypto/saga] API response status:', status);
-        console.log('[crypto/saga] API response body:', JSON.stringify(response));
+    while (retryCount < maxRetries) {
+        try {
+            console.log(`[crypto/saga] FETCH_CRYPTO_CONFIG_REQUEST (attempt ${retryCount + 1}/${maxRetries})`);
+            const { response, status }: APIResponse = yield call(API_CALL, {
+                method: 'GET',
+                url: '/crypto/config'
+            });
 
-        if (status === 200 && response.success) {
-            const data = response.data;
-            console.log('[crypto/saga] SUCCESS - data length:', data?.length);
-            console.log('[crypto/saga] SUCCESS - data items:', JSON.stringify(data));
-            yield put(actions.fetchCryptoConfigSuccess(data));
-        } else {
-            console.log('[crypto/saga] FAILURE - response:', JSON.stringify(response));
-            yield put(actions.fetchCryptoConfigFailure(response?.error || 'Failed to fetch config'));
+            console.log('[crypto/saga] API response status:', status);
+            console.log('[crypto/saga] API response body:', JSON.stringify(response));
+
+            if (status === 200 && response.success) {
+                const data = response.data;
+                console.log('[crypto/saga] SUCCESS - data length:', data?.length);
+                console.log('[crypto/saga] SUCCESS - items:', JSON.stringify(data));
+                yield put(actions.fetchCryptoConfigSuccess(data));
+                return;
+            } else {
+                console.log('[crypto/saga] FAILURE - status:', status, 'response:', JSON.stringify(response));
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    yield put(actions.fetchCryptoConfigFailure(response?.error || 'Failed to fetch config'));
+                    return;
+                }
+                yield delay(2000 * retryCount);
+            }
+        } catch (error: any) {
+            console.log('[crypto/saga] EXCEPTION (attempt', retryCount + 1, '):', error.message);
+            retryCount++;
+            if (retryCount >= maxRetries) {
+                yield put(actions.fetchCryptoConfigFailure(error.message));
+                return;
+            }
+            yield delay(2000 * retryCount);
         }
-    } catch (error: any) {
-        console.log('[crypto/saga] EXCEPTION:', error.message);
-        yield put(actions.fetchCryptoConfigFailure(error.message));
     }
 }
 
