@@ -10,7 +10,7 @@ interface CryptoConfig {
     bg: string
     borderGlow: string
     networks: any[]
-    isActive: boolean
+    status: string
 }
 
 interface CryptoCoinSelectorProps {
@@ -30,7 +30,7 @@ export function CryptoCoinSelector({ configs, selectedId, onSelect }: CryptoCoin
 
     return (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-            {configs.filter(c => c.isActive).map((coin) => (
+            {configs.filter(c => c.status === 'active').map((coin) => (
                 <button
                     key={coin.id}
                     onClick={() => onSelect(coin.id)}

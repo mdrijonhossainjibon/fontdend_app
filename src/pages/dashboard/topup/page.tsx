@@ -153,7 +153,7 @@ export default function DashboardTopupPage() {
     return () => clearInterval(interval)
   }, [expiryTime])
 
-  const activeConfigs = cryptoConfigs.filter((c: any) => c.isActive)
+  const activeConfigs = cryptoConfigs.filter((c: any) => c.status === 'active')
   const selectedCoinConfig = activeConfigs.find((c: any) => c.id === selectedCoin)
   const activeNetworks = selectedCoinConfig?.networks || []
 

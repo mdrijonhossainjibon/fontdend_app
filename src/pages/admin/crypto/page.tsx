@@ -9,6 +9,13 @@ import {
     Trash2,
     RefreshCw
 } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,7 +67,7 @@ interface Network {
     address: string
     badge?: string
     badgeColor?: string
-    isActive: boolean
+    status: string
 }
 
 interface CryptoConfig {
@@ -72,7 +79,7 @@ interface CryptoConfig {
     bg: string
     borderGlow: string
     networks: Network[]
-    isActive: boolean
+    status: string
 }
 
 export default function AdminCrypto() {
@@ -86,9 +93,9 @@ export default function AdminCrypto() {
         id: '',
         name: '',
         fullName: '',
-        isActive: true,
+        status: 'active',
     })
-    const [networks, setNetworks] = useState<{ id: string; name: string }[]>([])
+    const [networks, setNetworks] = useState<{ id: string; name: string; status: string }[]>([])
 
     // Delete dialog state
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
@@ -121,15 +128,15 @@ export default function AdminCrypto() {
             id: config.id,
             name: config.name,
             fullName: config.fullName,
-            isActive: config.isActive,
+            status: config.status,
         })
-        setNetworks(config.networks.map(n => ({ id: n.id, name: n.name })))
+        setNetworks(config.networks.map(n => ({ id: n.id, name: n.name, status: n.status ?? 'active' })))
         setIsModalOpen(true)
     }
 
     const handleAddNew = () => {
         setEditingConfig(null)
-        setFormData({ id: '', name: '', fullName: '', isActive: true })
+        setFormData({ id: '', name: '', fullName: '', status: 'active' })
         setNetworks([])
         setIsModalOpen(true)
     }
@@ -182,14 +189,14 @@ export default function AdminCrypto() {
     }
 
     const addNetwork = () => {
-        setNetworks(prev => [...prev, { id: '', name: '' }])
+        setNetworks(prev => [...prev, { id: '', name: '', status: 'active' }])
     }
 
     const removeNetwork = (index: number) => {
         setNetworks(prev => prev.filter((_, i) => i !== index))
     }
 
-    const updateNetwork = (index: number, field: 'id' | 'name', value: string) => {
+    const updateNetwork = (index: number, field: 'id' | 'name' | 'status', value: string) => {
         setNetworks(prev => prev.map((net, i) => (i === index ? { ...net, [field]: value } : net)))
     }
 
@@ -263,14 +270,14 @@ export default function AdminCrypto() {
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1">
                                                 {config.networks.map(n => (
-                                                    <Badge key={n.id} variant={n.isActive ? 'secondary' : 'outline'} className="text-[10px]">
+                                                    <Badge key={n.id} variant={n.status === 'active' ? 'secondary' : 'outline'} className="text-[10px]">
                                                         {n.name}
                                                     </Badge>
                                                 ))}
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {config.isActive ? (
+                                            {config.status === 'active' ? (
                                                 <Badge variant="default" className="bg-green-500">Active</Badge>
                                             ) : (
                                                 <Badge variant="destructive">Inactive</Badge>
@@ -339,13 +346,17 @@ export default function AdminCrypto() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <Switch
-                                checked={formData.isActive}
-                                onCheckedChange={checked => setFormData(prev => ({ ...prev, isActive: checked }))}
-                                id="isActive"
-                            />
-                            <label htmlFor="isActive" className="text-sm font-medium">Is Active</label>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Status</label>
+                            <Select value={formData.status} onValueChange={v => setFormData(prev => ({ ...prev, status: v }))}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <Separator className="my-6" />
@@ -383,6 +394,18 @@ export default function AdminCrypto() {
                                                 required
                                             />
                                         </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3">
+                                        <Select value={net.status ?? 'active'} onValueChange={v => updateNetwork(index, 'status', v)}>
+                                            <SelectTrigger className="h-8 w-[130px]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="inactive">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <label className="text-sm text-muted-foreground">Status</label>
                                     </div>
                                 </div>
                             ))}
