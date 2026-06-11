@@ -270,7 +270,7 @@ export function DashboardHistoryContent() {
                         <button
                           onClick={() => {
                             if (window.confirm('Cancel this deposit?')) {
-                              dispatch(cancelDepositRequest(item._id))
+                              dispatch(cancelDepositRequest(item.id))
                             }
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"

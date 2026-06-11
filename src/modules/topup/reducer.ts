@@ -92,6 +92,8 @@ export interface TopupState {
     invoice: any | null
     invoiceLoading: boolean
     invoiceError: string | null
+
+    cancelling: boolean
 }
 
 const initialState: TopupState = {
@@ -123,6 +125,8 @@ const initialState: TopupState = {
     invoice: null,
     invoiceLoading: false,
     invoiceError: null,
+
+    cancelling: false,
 }
 
 const topupReducer = (state = initialState, action: any): TopupState => {
