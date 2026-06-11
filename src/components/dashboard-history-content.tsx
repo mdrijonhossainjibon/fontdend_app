@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import { fetchHistoryRequest, cancelDepositRequest } from "@/modules/topup/actions"
-import { useEffect, useState } from "react"
 import {
   History,
   Search,

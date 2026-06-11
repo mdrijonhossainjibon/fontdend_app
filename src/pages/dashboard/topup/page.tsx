@@ -229,7 +229,7 @@ export default function DashboardTopupPage() {
               networkName: pendingDeposit.networkName || '',
               address: pendingDeposit.address || '',
               status: pendingDeposit.status || 'pending',
-              invoiceId: pendingDeposit.invoiceId || pendingDeposit.notes || '',
+              invoiceId: pendingDeposit.invoiceId  ||  '',
             }}
             countdown={pendingCountdown}
             copied={copied}
