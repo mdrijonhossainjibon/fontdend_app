@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import { fetchHistoryRequest, cancelDepositRequest } from "@/modules/topup/actions"
+import { useEffect, useState } from "react"
 import {
   History,
   Search,
@@ -43,6 +44,35 @@ const tabs = [
   { key: 'pending', label: 'Pending' },
   { key: 'failed', label: 'Failed' },
 ]
+
+// ── Countdown Timer ──
+function ExpiryCountdown({ expiresAt }: { expiresAt: string | null }) {
+  const [display, setDisplay] = useState('')
+
+  useEffect(() => {
+    if (!expiresAt) { setDisplay(''); return }
+
+    const tick = () => {
+      const diff = new Date(expiresAt).getTime() - Date.now()
+      if (diff <= 0) { setDisplay('Expired'); return }
+      const m = Math.floor(diff / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setDisplay(`${m}:${String(s).padStart(2, '0')}`)
+    }
+
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [expiresAt])
+
+  if (!display) return null
+  const isExpired = display === 'Expired'
+  return (
+    <span className={`text-[10px] tabular-nums ${isExpired ? 'text-red-500' : 'text-amber-500'}`}>
+      {isExpired ? 'Expired' : `${display} left`}
+    </span>
+  )
+}
 
 export function DashboardHistoryContent() {
   const dispatch = useDispatch()
@@ -252,6 +282,9 @@ export function DashboardHistoryContent() {
                   <div className="col-span-2 text-right">
                     <p className="text-sm text-muted-foreground tabular-nums">{item.date}</p>
                     {item.time && <p className="text-[10px] text-muted-foreground/60">{item.time}</p>}
+                    {item.type === 'deposit' && item.status === 'pending' && item.expiresAt && (
+                      <ExpiryCountdown expiresAt={item.expiresAt} />
+                    )}
                   </div>
 
                   {/* Action */}
@@ -333,8 +366,6 @@ export function DashboardHistoryContent() {
           </div>
         </div>
       )}
-    </div>
-
       {/* ── Cancel Confirmation Modal ── */}
       <dialog
         id="cancel-modal"
@@ -371,5 +402,6 @@ export function DashboardHistoryContent() {
           </div>
         </div>
       </dialog>
+    </div>
   )
 }
