@@ -3,7 +3,7 @@ import * as types from './constants';
 const initialState = {
     configs: [],
     prices: {} as Record<string, number>,
-    loading: false,
+    loading: true,
     loadingPrice: false,
     recording: false,
     depositAddress: null as string | null,
