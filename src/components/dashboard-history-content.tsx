@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
-import { fetchHistoryRequest } from "@/modules/topup/actions"
+import { fetchHistoryRequest, cancelDepositRequest } from "@/modules/topup/actions"
 import {
   History,
   Search,
@@ -16,6 +16,7 @@ import {
   Coins,
   Gift,
   Wallet,
+  XCircle,
 } from "lucide-react"
 import { CryptoIcon } from "@/components/CryptoIcon"
 import { cn } from "@/lib/utils"
@@ -255,14 +256,29 @@ export function DashboardHistoryContent() {
 
                   {/* Action */}
                   <div className="col-span-2 flex justify-end">
-                    {item.type === 'deposit' && item.status === 'pending' && item.invoiceId ? (
-                      <Link
-                        to={`/topup?invoice=${item.invoiceId}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-                      >
-                        <Wallet className="w-3 h-3" />
-                        Pay
-                      </Link>
+                    {item.type === 'deposit' && item.status === 'pending' ? (
+                      <div className="flex items-center gap-1.5">
+                        {item.invoiceId && (
+                          <Link
+                            to={`/topup?invoice=${item.invoiceId}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                          >
+                            <Wallet className="w-3 h-3" />
+                            Pay
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Cancel this deposit?')) {
+                              dispatch(cancelDepositRequest(item._id))
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
+                        >
+                          <XCircle className="w-3 h-3" />
+                          Cancel
+                        </button>
+                      </div>
                     ) : null}
                   </div>
                 </div>

@@ -169,6 +169,29 @@ function* pollCryptomusStatusSaga(action: ReturnType<typeof actions.startCryptom
     }
 }
 
+// ── Cancel Deposit ──
+function* cancelDepositSaga(action: ReturnType<typeof actions.cancelDepositRequest>): Generator {
+    try {
+        const { response, status }: APIResponse = yield call(API_CALL, {
+            method: 'POST',
+            url: '/topup/cancel-deposit',
+            body: { depositId: action.payload },
+        })
+        if (status === 200 && (response as any).success) {
+            toast.success('Deposit cancelled')
+            yield put(actions.cancelDepositSuccess((response as any).data))
+            yield put(actions.fetchHistoryRequest())
+        } else {
+            const msg = (response as any)?.error || 'Failed to cancel deposit'
+            toast.error(msg)
+            yield put(actions.cancelDepositFailure(msg))
+        }
+    } catch (error: any) {
+        toast.error(error.message)
+        yield put(actions.cancelDepositFailure(error.message))
+    }
+}
+
 // ── Fetch Invoice ──
 function* fetchInvoiceSaga(action: ReturnType<typeof actions.fetchInvoiceRequest>): Generator {
     try {
@@ -197,4 +220,5 @@ export default function* topupSaga() {
     yield takeLatest(types.POLL_CRYPTOMUS_STATUS_START, pollCryptomusStatusSaga)
     yield takeLatest(types.FETCH_INVOICE_REQUEST, fetchInvoiceSaga)
     yield takeLatest(types.CHECK_PENDING_DEPOSIT_REQUEST, checkPendingDepositSaga)
+    yield takeLatest(types.CANCEL_DEPOSIT_REQUEST, cancelDepositSaga)
 }

@@ -200,6 +200,12 @@ const topupReducer = (state = initialState, action: any): TopupState => {
             return { ...state, invoiceLoading: false, invoiceError: action.payload }
         case types.RESET_INVOICE:
             return { ...state, invoice: null, invoiceLoading: false, invoiceError: null }
+        case types.CANCEL_DEPOSIT_REQUEST:
+            return { ...state, cancelling: true }
+        case types.CANCEL_DEPOSIT_SUCCESS:
+            return { ...state, cancelling: false, pendingDeposit: null }
+        case types.CANCEL_DEPOSIT_FAILURE:
+            return { ...state, cancelling: false }
 
         default:
             return state
