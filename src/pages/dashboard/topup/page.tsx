@@ -61,6 +61,11 @@ export default function DashboardTopupPage() {
     (state: RootState) => state.crypto
   )
 
+  // Debug logs for VPS issue
+  console.log('[topup] cryptoConfigs:', cryptoConfigs?.length, JSON.stringify(cryptoConfigs))
+  console.log('[topup] configsLoading:', configsLoading)
+  console.log('[topup] configsError:', configsError)
+
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null)
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null)
   const [coinSearch, setCoinSearch] = useState('')

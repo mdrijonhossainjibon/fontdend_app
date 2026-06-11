@@ -7,17 +7,26 @@ import { updateUserBalance } from '../dashboard/actions';
 
 function* fetchCryptoConfigSaga(): Generator {
     try {
+        console.log('[crypto/saga] FETCH_CRYPTO_CONFIG_REQUEST dispatched');
         const { response, status }: APIResponse = yield call(API_CALL, {
             method: 'GET',
             url: '/crypto/config'
         });
 
+        console.log('[crypto/saga] API response status:', status);
+        console.log('[crypto/saga] API response body:', JSON.stringify(response));
+
         if (status === 200 && response.success) {
-            yield put(actions.fetchCryptoConfigSuccess(response.data));
+            const data = response.data;
+            console.log('[crypto/saga] SUCCESS - data length:', data?.length);
+            console.log('[crypto/saga] SUCCESS - data items:', JSON.stringify(data));
+            yield put(actions.fetchCryptoConfigSuccess(data));
         } else {
+            console.log('[crypto/saga] FAILURE - response:', JSON.stringify(response));
             yield put(actions.fetchCryptoConfigFailure(response?.error || 'Failed to fetch config'));
         }
     } catch (error: any) {
+        console.log('[crypto/saga] EXCEPTION:', error.message);
         yield put(actions.fetchCryptoConfigFailure(error.message));
     }
 }
