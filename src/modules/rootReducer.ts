@@ -14,7 +14,8 @@ import adminDatabaseReducer from './admin/database/reducer';
 import adminRedeemCodesReducer from './admin/redeem-codes/reducer';
 import adminPricingPlansReducer from './admin/pricing-plans/reducer';
 import adminPromoOffersReducer from './admin/promo-offers/reducer';
-import adminUserPackagesReducer from './admin/user-packages/reducer';
+import adminUserPackagesReducer from './admin/user-packages/reducer'
+import adminCreditPackagesReducer from './admin/credit-packages/reducer';
 import adminUserDetailsReducer from './admin/user-details/reducer';
 import adminPermissionsReducer from './admin/permissions/reducer';
 import adminDatabaseTransferReducer from './admin/database-transfer/reducer';
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     adminPromoOffers: adminPromoOffersReducer,
     adminPricingPlans: adminPricingPlansReducer,
     adminUserPackages: adminUserPackagesReducer,
+  adminCreditPackages: adminCreditPackagesReducer,
     adminUserDetails: adminUserDetailsReducer,
     adminPermissions: adminPermissionsReducer,
     adminDatabaseTransfer: adminDatabaseTransferReducer,

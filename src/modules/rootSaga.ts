@@ -14,7 +14,8 @@ import adminDatabaseSaga from './admin/database/saga';
 import adminRedeemCodesSaga from './admin/redeem-codes/saga';
 import adminPromoOffersSaga from './admin/promo-offers/saga';
 import adminPricingPlansSaga from './admin/pricing-plans/saga';
-import adminUserPackagesSaga from './admin/user-packages/saga';
+import adminUserPackagesSaga from './admin/user-packages/saga'
+import adminCreditPackagesSaga from './admin/credit-packages/saga';
 import adminUserDetailsSaga from './admin/user-details/saga';
 import adminPermissionsSaga from './admin/permissions/saga';
 import adminDatabaseTransferSaga from './admin/database-transfer/saga';
@@ -44,6 +45,7 @@ export default function* rootSaga(): Generator {
         adminPromoOffersSaga(),
         adminPricingPlansSaga(),
         adminUserPackagesSaga(),
+  adminCreditPackagesSaga(),
         adminUserDetailsSaga(),
         adminPermissionsSaga(),
         adminDatabaseTransferSaga(),

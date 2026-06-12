@@ -62,18 +62,21 @@ function* fetchAdminUsersSaga(action: any): Generator {
 
 function* updateAdminUserSaga(action: any): Generator {
     try {
-        const { userId, name, balance, status: userStatus, role } = action.payload;
+        const { userId, name, balance, status: userStatus, role, password } = action.payload;
         const cleanBalance = typeof balance === 'string' ? parseFloat(balance.replace(/[^0-9.-]/g, '')) || 0 : balance;
+
+        const body: Record<string, unknown> = {
+            name,
+            balance: cleanBalance,
+            status: userStatus,
+            role
+        }
+        if (password) body.password = password
 
         const { response, status }: APIResponse = yield call(API_CALL, {
             method: 'PATCH',
             url: `/admin/users/${userId}`,
-            body: {
-                name,
-                balance: cleanBalance,
-                status: userStatus,
-                role
-            }
+            body
         });
 
         if (response && response.success) {

@@ -84,7 +84,7 @@ export default function AdminUsersContent() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [editForm, setEditForm] = useState({ name: "", balance: "", status: "", role: "" })
+  const [editForm, setEditForm] = useState({ name: "", balance: "", status: "", role: "", password: "" })
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
 
@@ -174,13 +174,15 @@ export default function AdminUsersContent() {
   const handleEditUser = () => {
     if (!selectedUser) return
 
-    dispatch(updateAdminUserRequest({
+    const payload: any = {
       userId: selectedUser.id,
       name: editForm.name,
       balance: editForm.balance,
       status: editForm.status,
       role: editForm.role
-    }))
+    }
+    if (editForm.password) payload.password = editForm.password
+    dispatch(updateAdminUserRequest(payload))
 
     // Optimistically close modal
     setIsEditModalOpen(false)
@@ -407,7 +409,7 @@ export default function AdminUsersContent() {
                                 className="bg-transparent border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-white text-xs gap-1 h-8 px-3"
                                 onClick={() => {
                                   setSelectedUser(user)
-                                  setEditForm({ name: user.name, balance: `$${user.balance}`, status: user.status, role: user.role || 'user' })
+                                  setEditForm({ name: user.name, balance: `$${user.balance}`, status: user.status, role: user.role || 'user', password: '' })
                                   setIsEditModalOpen(true)
                                 }}
                               >
@@ -619,6 +621,20 @@ export default function AdminUsersContent() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">
+                  New Password <span className="text-muted-foreground font-normal">(leave blank to keep current)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter new password"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-foreground outline-none transition-all"
+                />
               </div>
 
               {/* User Info Display */}

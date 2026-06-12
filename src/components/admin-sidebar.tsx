@@ -48,6 +48,7 @@ const mainNavItems = [
 
 const managementItems = [
   { href: "/admin/packages", label: "Packages", icon: Package },
+  { href: "/admin/credit-packages", label: "Credit Packages", icon: CreditCard },
   { href: "/admin/extensions", label: "Extensions", icon: Puzzle },
 
   { href: "/admin/solutions", label: "Solution Cache", icon: Database },
