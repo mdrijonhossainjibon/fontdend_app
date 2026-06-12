@@ -2,6 +2,9 @@ import {
     FETCH_USER_PACKAGES_REQUEST,
     FETCH_USER_PACKAGES_SUCCESS,
     FETCH_USER_PACKAGES_FAILURE,
+    FETCH_ALL_USER_PACKAGES_REQUEST,
+    FETCH_ALL_USER_PACKAGES_SUCCESS,
+    FETCH_ALL_USER_PACKAGES_FAILURE,
     UPDATE_USER_PACKAGE_REQUEST,
     UPDATE_USER_PACKAGE_SUCCESS,
     UPDATE_USER_PACKAGE_FAILURE,
@@ -29,59 +32,96 @@ export interface UserPackageItem {
     createdAt: string
 }
 
-export interface UserPackagesState {
+interface UserPackageState {
     packages: UserPackageItem[]
     loading: boolean
+    error: string | null
+    allPackages: UserPackageItem[]
+    allLoading: boolean
+    allError: string | null
     updating: boolean
+    deleting: boolean
     assigning: boolean
     assignSuccess: boolean
-    error: string | null
 }
 
-const initialState: UserPackagesState = {
+const initialState: UserPackageState = {
     packages: [],
     loading: false,
+    error: null,
+    allPackages: [],
+    allLoading: false,
+    allError: null,
     updating: false,
+    deleting: false,
     assigning: false,
     assignSuccess: false,
-    error: null,
 }
 
-const adminUserPackagesReducer = (state = initialState, action: any): UserPackagesState => {
+export default function userPackageReducer(state = initialState, action: any): UserPackageState {
     switch (action.type) {
         case FETCH_USER_PACKAGES_REQUEST:
             return { ...state, loading: true, error: null }
         case FETCH_USER_PACKAGES_SUCCESS:
-            return { ...state, loading: false, packages: action.payload, error: null }
+            return { ...state, packages: action.payload, loading: false }
         case FETCH_USER_PACKAGES_FAILURE:
-            return { ...state, loading: false, error: action.payload }
+            return { ...state, error: action.payload, loading: false }
+
+        case FETCH_ALL_USER_PACKAGES_REQUEST:
+            return { ...state, allLoading: true, allError: null }
+        case FETCH_ALL_USER_PACKAGES_SUCCESS:
+            return { ...state, allPackages: action.payload, allLoading: false }
+        case FETCH_ALL_USER_PACKAGES_FAILURE:
+            return { ...state, allError: action.payload, allLoading: false }
+
         case UPDATE_USER_PACKAGE_REQUEST:
-            return { ...state, updating: true, error: null }
+            return { ...state, updating: true }
         case UPDATE_USER_PACKAGE_SUCCESS:
             return {
                 ...state,
                 updating: false,
-                packages: state.packages.map(p => (p._id === action.payload.package._id ? { ...p, ...action.payload.package } : p)),
+                packages: state.packages.map((p: any) =>
+                    p._id === action.payload._id ? action.payload : p
+                ),
+                allPackages: state.allPackages.map((p: any) =>
+                    p._id === action.payload._id ? {
+                        ...p,
+                        ...action.payload,
+                        userId: action.payload.userId && typeof action.payload.userId === 'object'
+                            ? { ...(typeof p.userId === 'object' ? p.userId : {}), ...action.payload.userId }
+                            : p.userId
+                    } : p
+                ),
             }
         case UPDATE_USER_PACKAGE_FAILURE:
-            return { ...state, updating: false, error: action.payload }
+            return { ...state, updating: false }
+
         case DELETE_USER_PACKAGE_REQUEST:
-            return { ...state, error: null }
+            return { ...state, deleting: true }
         case DELETE_USER_PACKAGE_SUCCESS:
-            return { ...state, packages: state.packages.filter(p => p._id !== action.payload) }
+            return {
+                ...state,
+                deleting: false,
+                packages: state.packages.filter((p: any) => p._id !== action.payload),
+            }
         case DELETE_USER_PACKAGE_FAILURE:
-            return { ...state, error: action.payload }
+            return { ...state, deleting: false }
+
         case ASSIGN_PACKAGE_REQUEST:
-            return { ...state, assigning: true, error: null }
+            return { ...state, assigning: true, assignSuccess: false }
         case ASSIGN_PACKAGE_SUCCESS:
-            return { ...state, assigning: false, assignSuccess: true, packages: [...state.packages, action.payload] }
+            return {
+                ...state,
+                assigning: false,
+                assignSuccess: true,
+                packages: [...state.packages, action.payload],
+            }
         case ASSIGN_PACKAGE_FAILURE:
-            return { ...state, assigning: false, assignSuccess: false, error: action.payload }
+            return { ...state, assigning: false }
         case RESET_ASSIGN_SUCCESS:
             return { ...state, assignSuccess: false }
+
         default:
             return state
     }
 }
-
-export default adminUserPackagesReducer

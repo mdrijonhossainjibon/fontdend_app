@@ -2,6 +2,7 @@ import { call, put, takeLatest } from 'redux-saga/effects'
 import { API_CALL } from '@/lib/auth-fingerprint'
 import {
     FETCH_USER_PACKAGES_REQUEST,
+    FETCH_ALL_USER_PACKAGES_REQUEST,
     UPDATE_USER_PACKAGE_REQUEST,
     DELETE_USER_PACKAGE_REQUEST,
     ASSIGN_PACKAGE_REQUEST,
@@ -9,6 +10,8 @@ import {
 import {
     fetchUserPackagesSuccess,
     fetchUserPackagesFailure,
+    fetchAllUserPackagesSuccess,
+    fetchAllUserPackagesFailure,
     updateUserPackageSuccess,
     updateUserPackageFailure,
     deleteUserPackageSuccess,
@@ -27,51 +30,45 @@ function* fetchUserPackagesSaga(action: any): Generator<any, void, any> {
     }
 }
 
+function* fetchAllUserPackagesSaga(): Generator<any, void, any> {
+    try {
+        const { response } = yield call(API_CALL, { method: 'GET', url: '/admin/users/packages/all' })
+        yield put(fetchAllUserPackagesSuccess(response.packages || []))
+    } catch (error: any) {
+        yield put(fetchAllUserPackagesFailure(error?.message || 'Failed to load all user packages'))
+    }
+}
+
 function* updateUserPackageSaga(action: any): Generator<any, void, any> {
     try {
         const { response } = yield call(API_CALL, { method: 'PATCH', url: '/admin/users/packages', body: action.payload })
-        if (response.success) {
-            yield put(updateUserPackageSuccess(response))
-        } else {
-            yield put(updateUserPackageFailure(response.error || 'Update failed'))
-        }
+        yield put(updateUserPackageSuccess(response.package || response))
     } catch (error: any) {
-        yield put(updateUserPackageFailure(error?.message || 'Update failed'))
+        yield put(updateUserPackageFailure(error?.message || 'Failed to update package'))
     }
 }
 
 function* deleteUserPackageSaga(action: any): Generator<any, void, any> {
     try {
-        const { response } = yield call(API_CALL, { method: 'DELETE', url: `/admin/users/packages?packageId=${action.payload}` })
-        if (response.success) {
-            yield put(deleteUserPackageSuccess(action.payload))
-        } else {
-            yield put(deleteUserPackageFailure(response.error || 'Delete failed'))
-        }
+        yield call(API_CALL, { method: 'DELETE', url: `/admin/users/packages`, body: { packageId: action.payload } })
+        yield put(deleteUserPackageSuccess(action.payload))
     } catch (error: any) {
-        yield put(deleteUserPackageFailure(error?.message || 'Delete failed'))
+        yield put(deleteUserPackageFailure(error?.message || 'Failed to delete package'))
     }
 }
 
 function* assignPackageSaga(action: any): Generator<any, void, any> {
     try {
-        const { response } = yield call(API_CALL, { method: 'POST', url: '/admin/users/assign-package', body: action.payload })
-        if (response.success) {
-            yield put(assignPackageSuccess(response.package))
-            // Update user balance in store if returned
-            if (response.balance !== undefined && action.payload.userId) {
-                yield put(updateAdminUserSuccess({ id: action.payload.userId, balance: response.balance }))
-            }
-        } else {
-            yield put(assignPackageFailure(response.error || 'Assign failed'))
-        }
+        const { response } = yield call(API_CALL, { method: 'POST', url: '/admin/users/packages/assign', body: action.payload })
+        yield put(assignPackageSuccess(response.package || response))
     } catch (error: any) {
-        yield put(assignPackageFailure(error?.message || 'Assign failed'))
+        yield put(assignPackageFailure(error?.message || 'Failed to assign package'))
     }
 }
 
-export default function* adminUserPackagesSaga() {
+export default function* watchUserPackages() {
     yield takeLatest(FETCH_USER_PACKAGES_REQUEST, fetchUserPackagesSaga)
+    yield takeLatest(FETCH_ALL_USER_PACKAGES_REQUEST, fetchAllUserPackagesSaga)
     yield takeLatest(UPDATE_USER_PACKAGE_REQUEST, updateUserPackageSaga)
     yield takeLatest(DELETE_USER_PACKAGE_REQUEST, deleteUserPackageSaga)
     yield takeLatest(ASSIGN_PACKAGE_REQUEST, assignPackageSaga)

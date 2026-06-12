@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: parseInt(env.VITE_DEV_PORT || '5173', 10),
       proxy: {
-        '/api': {
+        '/api/': {
           target: env.VITE_API_URL || 'http://localhost:8888',
           changeOrigin: true,
           timeout: 300000,

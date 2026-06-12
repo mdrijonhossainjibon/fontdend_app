@@ -2,6 +2,9 @@ import {
     FETCH_USER_PACKAGES_REQUEST,
     FETCH_USER_PACKAGES_SUCCESS,
     FETCH_USER_PACKAGES_FAILURE,
+    FETCH_ALL_USER_PACKAGES_REQUEST,
+    FETCH_ALL_USER_PACKAGES_SUCCESS,
+    FETCH_ALL_USER_PACKAGES_FAILURE,
     UPDATE_USER_PACKAGE_REQUEST,
     UPDATE_USER_PACKAGE_SUCCESS,
     UPDATE_USER_PACKAGE_FAILURE,
@@ -18,7 +21,11 @@ export const fetchUserPackagesRequest = (userId: string) => ({ type: FETCH_USER_
 export const fetchUserPackagesSuccess = (packages: any[]) => ({ type: FETCH_USER_PACKAGES_SUCCESS, payload: packages })
 export const fetchUserPackagesFailure = (error: string) => ({ type: FETCH_USER_PACKAGES_FAILURE, payload: error })
 
-export const updateUserPackageRequest = (data: { packageId: string; credits: number }) => ({ type: UPDATE_USER_PACKAGE_REQUEST, payload: data })
+export const fetchAllUserPackagesRequest = () => ({ type: FETCH_ALL_USER_PACKAGES_REQUEST })
+export const fetchAllUserPackagesSuccess = (packages: any[]) => ({ type: FETCH_ALL_USER_PACKAGES_SUCCESS, payload: packages })
+export const fetchAllUserPackagesFailure = (error: string) => ({ type: FETCH_ALL_USER_PACKAGES_FAILURE, payload: error })
+
+export const updateUserPackageRequest = (data: { packageId: string; credits?: number; status?: string; endDate?: string }) => ({ type: UPDATE_USER_PACKAGE_REQUEST, payload: data })
 export const updateUserPackageSuccess = (data: any) => ({ type: UPDATE_USER_PACKAGE_SUCCESS, payload: data })
 export const updateUserPackageFailure = (error: string) => ({ type: UPDATE_USER_PACKAGE_FAILURE, payload: error })
 

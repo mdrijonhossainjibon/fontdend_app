@@ -33,7 +33,6 @@ const AdminUserDetail = lazy(() => import('@/pages/admin/users/[id]/page'))
 const AdminAnalytics = lazy(() => import('@/pages/admin/analytics/page'))
 const AdminSolutions = lazy(() => import('@/pages/admin/solutions/page'))
 const AdminPackages = lazy(() => import('@/pages/admin/packages/page'))
-const AdminCreditPackages = lazy(() => import('@/pages/admin/credit-packages/page'))
 const AdminExtensions = lazy(() => import('@/pages/admin/extensions/page'))
 const AdminCrypto = lazy(() => import('@/pages/admin/crypto/page'))
 const AdminOrders = lazy(() => import('@/pages/admin/orders/page'))
@@ -54,6 +53,7 @@ const AdminHealthCheck = lazy(() => import('@/pages/admin/ai-training/health-che
 const AdminTrainingData = lazy(() => import('@/pages/admin/ai-training/training-data/page'))
 const AdminSmtp = lazy(() => import('@/pages/admin/system/smtp/page'))
 const AdminPermissions = lazy(() => import('@/pages/admin/permissions/page'))
+const AdminUserPackages = lazy(() => import('@/pages/admin/user-packages/page'))
 
 // Public pages
 const AboutPage = lazy(() => import('@/pages/about/page'))
@@ -116,7 +116,6 @@ export default function App() {
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="solutions" element={<AdminSolutions />} />
           <Route path="packages" element={<AdminPackages />} />
-          <Route path="credit-packages" element={<AdminCreditPackages />} />
           <Route path="extensions" element={<AdminExtensions />} />
           <Route path="crypto" element={<AdminCrypto />} />
           <Route path="orders" element={<AdminOrders />} />
@@ -137,6 +136,7 @@ export default function App() {
           <Route path="ai-training/training-data" element={<AdminTrainingData />} />
           <Route path="system/smtp" element={<AdminSmtp />} />
           <Route path="permissions" element={<AdminPermissions />} />
+          <Route path="user-packages" element={<AdminUserPackages />} />
         </Route>
 
         {/* Public pages */}

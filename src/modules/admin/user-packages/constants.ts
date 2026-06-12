@@ -1,12 +1,19 @@
 export const FETCH_USER_PACKAGES_REQUEST = 'admin/user-packages/FETCH_REQUEST'
 export const FETCH_USER_PACKAGES_SUCCESS = 'admin/user-packages/FETCH_SUCCESS'
 export const FETCH_USER_PACKAGES_FAILURE = 'admin/user-packages/FETCH_FAILURE'
+
+export const FETCH_ALL_USER_PACKAGES_REQUEST = 'admin/user-packages/FETCH_ALL_REQUEST'
+export const FETCH_ALL_USER_PACKAGES_SUCCESS = 'admin/user-packages/FETCH_ALL_SUCCESS'
+export const FETCH_ALL_USER_PACKAGES_FAILURE = 'admin/user-packages/FETCH_ALL_FAILURE'
+
 export const UPDATE_USER_PACKAGE_REQUEST = 'admin/user-packages/UPDATE_REQUEST'
 export const UPDATE_USER_PACKAGE_SUCCESS = 'admin/user-packages/UPDATE_SUCCESS'
 export const UPDATE_USER_PACKAGE_FAILURE = 'admin/user-packages/UPDATE_FAILURE'
+
 export const DELETE_USER_PACKAGE_REQUEST = 'admin/user-packages/DELETE_REQUEST'
 export const DELETE_USER_PACKAGE_SUCCESS = 'admin/user-packages/DELETE_SUCCESS'
 export const DELETE_USER_PACKAGE_FAILURE = 'admin/user-packages/DELETE_FAILURE'
+
 export const ASSIGN_PACKAGE_REQUEST = 'admin/user-packages/ASSIGN_REQUEST'
 export const ASSIGN_PACKAGE_SUCCESS = 'admin/user-packages/ASSIGN_SUCCESS'
 export const ASSIGN_PACKAGE_FAILURE = 'admin/user-packages/ASSIGN_FAILURE'

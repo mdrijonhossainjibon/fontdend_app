@@ -7,6 +7,13 @@ import type { RootState } from '@/modules/rootReducer'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/landing/footer'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import {
   Menu,
   ChevronDown,
   ChevronLeft,
@@ -33,6 +40,9 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  Package,
+  Loader2,
+  XIcon,
 } from 'lucide-react'
 
 /* ─────────────── Data ─────────────── */
@@ -41,13 +51,28 @@ const sidebarSections = [
   { id: 'introduction', label: 'Introduction', icon: BookOpen },
   { id: 'authentication', label: 'Authentication', icon: Lock },
   { id: 'endpoints', label: 'Endpoints', icon: Server },
+  { id: 'packages', label: 'Packages', icon: Package },
   { id: 'parameters', label: 'Parameters', icon: Settings },
   { id: 'responses', label: 'Responses', icon: FileText },
   { id: 'error-codes', label: 'Error Codes', icon: AlertTriangle },
   { id: 'examples', label: 'Examples', icon: Code2 },
 ]
 
+const globalRateLimit = '1,000 requests per 15 minutes per IP'
+const authRateLimit = '5 requests per 15 minutes (auth endpoints)'
+const apiRateLimit = '1,000 requests per 15 minutes (API endpoints)'
+
 const endpoints = [
+  {
+    method: 'GET',
+    methodColor: 'text-green-400 bg-green-500/10 border-green-500/30',
+    path: '/api/pricing',
+    description: 'Fetch available credit packages & pricing plans.',
+    params: [
+      { name: 'type', type: 'string', required: false, description: 'Filter by plan type: count, daily, minute. Omit for all active plans.' },
+    ],
+    response: JSON.stringify({ success: true, data: [{ id: 'abc123', type: 'count', code: 'STARTER', price: '$9.99', priceValue: 9.99, validity: '30 days', recognition: '1000', count: 1000 }], count: 1 }, null, 2),
+  },
   {
     method: 'POST',
     methodColor: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
@@ -105,7 +130,7 @@ const errorCodes = [
 const codeSnippets = [
   {
     lang: 'cURL',
-    code: `curl -X POST https://api.captchamaster.io/v1/solve \\
+    code: `curl -X POST https://captchamaster.org/api/captcha/solve \\
   -H "Authorization: Bearer cm_live_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -223,93 +248,193 @@ function CodeBlock({ code, lang, className = '' }: { code: string; lang?: string
 
 function EndpointCard({ ep, index }: { ep: (typeof endpoints)[0]; index: number }) {
   const [open, setOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [payload, setPayload] = useState('')
+  const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const baseUrl = import.meta.env.VITE_API_URL || window.location.origin
+
+  useEffect(() => {
+    if (ep.method === 'GET') setPayload('')
+    else setPayload(ep.response)
+  }, [ep])
+
+  const handleSend = async () => {
+    setLoading(true)
+    setError('')
+    setResponse('')
+    try {
+      const opts: RequestInit = {
+        method: ep.method,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      }
+      if (ep.method !== 'GET' && payload.trim()) {
+        opts.body = payload
+      }
+      const res = await fetch(`${baseUrl}${ep.path}`, opts)
+      const text = await res.text()
+      try {
+        setResponse(JSON.stringify(JSON.parse(text), null, 2))
+      } catch {
+        setResponse(text)
+      }
+      if (!res.ok) setError(`HTTP ${res.status}`)
+    } catch (e: any) {
+      setError(e.message || 'Request failed')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div
-      id={`endpoint-${index}`}
-      className="group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 overflow-hidden"
-    >
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-4 p-5 text-left"
-      >
-        <span
-          className={`shrink-0 px-3 py-1 rounded-md text-xs font-mono font-semibold border ${ep.methodColor}`}
-        >
-          {ep.method}
-        </span>
-        <code className="flex-1 text-sm font-mono text-primary/90 font-medium">{ep.path}</code>
-        <p className="hidden lg:block flex-1 text-sm text-muted-foreground truncate">{ep.description}</p>
-        <ChevronDown
-          className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-
+    <>
       <div
-        className={`grid transition-all duration-300 ease-in-out ${
-          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-        }`}
+        id={`endpoint-${index}`}
+        className="group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 overflow-hidden"
       >
-        <div className="overflow-hidden">
-          <div className="px-5 pb-5 border-t border-border/40 pt-4 space-y-5">
-            {/* Description */}
-            <p className="text-sm text-muted-foreground lg:hidden">{ep.description}</p>
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center gap-4 p-5 text-left"
+        >
+          <span
+            className={`shrink-0 px-3 py-1 rounded-md text-xs font-mono font-semibold border ${ep.methodColor}`}
+          >
+            {ep.method}
+          </span>
+          <code className="flex-1 text-sm font-mono text-primary/90 font-medium">{ep.path}</code>
+          <p className="hidden lg:block flex-1 text-sm text-muted-foreground truncate">{ep.description}</p>
+          <ChevronDown
+            className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+          />
+        </button>
 
-            {/* Parameters */}
-            {ep.params.length > 0 && (
-              <div>
-                <h5 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-2">Parameters</h5>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/40">
-                        <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Name</th>
-                        <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Type</th>
-                        <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Required</th>
-                        <th className="text-left py-2 text-muted-foreground font-medium">Description</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ep.params.map((p) => (
-                        <tr key={p.name} className="border-b border-border/20 last:border-0">
-                          <td className="py-2 pr-4 font-mono text-primary/80">{p.name}</td>
-                          <td className="py-2 pr-4 text-xs text-muted-foreground">{p.type}</td>
-                          <td className="py-2 pr-4">
-                            {p.required ? (
-                              <span className="text-xs text-red-400 font-medium">Required</span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Optional</span>
-                            )}
-                          </td>
-                          <td className="py-2 text-xs text-muted-foreground">{p.description}</td>
+        <div
+          className={`grid transition-all duration-300 ease-in-out ${
+            open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="px-5 pb-5 border-t border-border/40 pt-4 space-y-5">
+              {/* Description */}
+              <p className="text-sm text-muted-foreground lg:hidden">{ep.description}</p>
+
+              {/* Parameters */}
+              {ep.params.length > 0 && (
+                <div>
+                  <h5 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-2">Parameters</h5>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/40">
+                          <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Name</th>
+                          <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Type</th>
+                          <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Required</th>
+                          <th className="text-left py-2 text-muted-foreground font-medium">Description</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {ep.params.map((p) => (
+                          <tr key={p.name} className="border-b border-border/20 last:border-0">
+                            <td className="py-2 pr-4 font-mono text-primary/80">{p.name}</td>
+                            <td className="py-2 pr-4 text-xs text-muted-foreground">{p.type}</td>
+                            <td className="py-2 pr-4">
+                              {p.required ? (
+                                <span className="text-xs text-red-400 font-medium">Required</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Optional</span>
+                              )}
+                            </td>
+                            <td className="py-2 text-xs text-muted-foreground">{p.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+              )}
+
+              {/* Response */}
+              <div>
+                <h5 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-2">Example Response</h5>
+                <CodeBlock code={ep.response} />
               </div>
-            )}
 
-            {/* Response */}
-            <div>
-              <h5 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-2">Example Response</h5>
-              <CodeBlock code={ep.response} />
+              {/* Try It */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setModalOpen(true)}
+                className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+              >
+                <Terminal className="w-4 h-4" />
+                Try it out
+                <ExternalLink className="w-3 h-3" />
+              </Button>
             </div>
-
-            {/* Try It */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
-            >
-              <Terminal className="w-4 h-4" />
-              Try it out
-              <ExternalLink className="w-3 h-3" />
-            </Button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Try It Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold border ${ep.methodColor}`}>
+                {ep.method}
+              </span>
+              <code className="text-sm font-mono">{ep.path}</code>
+            </DialogTitle>
+            <DialogDescription>{ep.description}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Request body */}
+            {ep.method !== 'GET' && (
+              <div>
+                <label className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-1.5 block">
+                  Request Body (JSON)
+                </label>
+                <textarea
+                  value={payload}
+                  onChange={(e) => setPayload(e.target.value)}
+                  className="w-full h-40 p-3 rounded-xl border border-border/40 bg-background font-mono text-sm text-foreground resize-y focus:outline-none focus:border-primary/50"
+                  spellCheck={false}
+                />
+              </div>
+            )}
+
+            {/* Send */}
+            <Button onClick={handleSend} disabled={loading} className="gap-2 w-full">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Terminal className="w-4 h-4" />}
+              {loading ? 'Sending...' : 'Send Request'}
+            </Button>
+
+            {/* Response */}
+            {(response || error) && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <h5 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider">Response</h5>
+                  {error && <span className="text-xs text-red-400">{error}</span>}
+                </div>
+                <pre className="relative p-3 rounded-xl border border-border/40 bg-background font-mono text-sm text-foreground overflow-x-auto max-h-60">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(response)}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors"
+                    title="Copy"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                  <code>{response || error}</code>
+                </pre>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -402,6 +527,8 @@ export default function ApiDocsPage() {
   const [activeSection, setActiveSection] = useState('introduction')
   const [heroVisible, setHeroVisible] = useState(false)
   const [activeSnippet, setActiveSnippet] = useState(0)
+  const [packages, setPackages] = useState<any[]>([])
+  const [packagesLoading, setPackagesLoading] = useState(true)
 
   const handleLogout = () => {
     dispatch(logoutRequest())
@@ -426,6 +553,18 @@ export default function ApiDocsPage() {
 
   useEffect(() => {
     setHeroVisible(true)
+  }, [])
+
+  useEffect(() => {
+    const baseUrl = import.meta.env.VITE_API_URL || ''
+    fetch(`${baseUrl}/api/pricing`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) setPackages(res.data)
+        else setPackages([])
+      })
+      .catch(() => setPackages([]))
+      .finally(() => setPackagesLoading(false))
   }, [])
 
   useEffect(() => {
@@ -656,7 +795,7 @@ export default function ApiDocsPage() {
                       <span>{s.label}</span>
                       {s.id === 'endpoints' && (
                         <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-mono">
-                          4
+                          5
                         </span>
                       )}
                     </button>
@@ -755,6 +894,16 @@ Authorization: Bearer cm_live_xxxxxxxxxxxx
                   lang="HTTP Headers"
                 />
 
+                <div className="mt-6 p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 flex gap-3">
+                  <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground mb-1">Rate Limits</p>
+                    <p className="text-sm text-muted-foreground">
+                      {apiRateLimit}. Non-authenticated endpoints (pricing, offers) share a separate pool of {globalRateLimit}.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="mt-6 p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 flex gap-3">
                   <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
                   <div>
@@ -781,13 +930,122 @@ Authorization: Bearer cm_live_xxxxxxxxxxxx
                 <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-4 mb-4">API Endpoints</h2>
                 <p className="text-muted-foreground leading-relaxed mb-6 max-w-3xl">
                   Our API is organized around RESTful principles. All requests should be made to the base URL 
-                  <code className="mx-1.5 px-2 py-0.5 rounded bg-black/40 text-primary font-mono text-xs">https://api.captchamaster.io/v1</code>.
+                  <code className="mx-1.5 px-2 py-0.5 rounded bg-black/40 text-primary font-mono text-xs">https://captchamaster.org/api</code>.
                 </p>
 
                 <div className="space-y-3">
                   {endpoints.map((ep, i) => (
                     <EndpointCard key={ep.path} ep={ep} index={i} />
                   ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Packages */}
+            <section
+              id="packages"
+              ref={setSectionRef('packages')}
+              className="scroll-mt-24 animate-slideUp"
+            >
+              <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm p-6 sm:p-8 lg:p-10 shadow-xl shadow-black/5">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <Package className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-xs font-semibold text-primary/60 uppercase tracking-widest">Plans</span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-4 mb-4">Available Packages</h2>
+                <p className="text-muted-foreground leading-relaxed mb-6 max-w-3xl">
+                  Browse all credit packages available on the platform. These plans determine how many
+                  recognitions you get, validity periods, and daily usage limits.
+                </p>
+
+                {packagesLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="rounded-xl border border-border/40 p-6 animate-pulse">
+                        <div className="h-5 w-24 bg-muted rounded mb-3" />
+                        <div className="h-8 w-20 bg-muted rounded mb-3" />
+                        <div className="h-4 w-32 bg-muted rounded mb-2" />
+                        <div className="h-4 w-28 bg-muted rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : packages.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <Package className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                    <p>No packages available at the moment.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {packages.map((pkg: any, i: number) => (
+                      <div
+                        key={pkg._id || i}
+                        className="rounded-xl border border-border/40 bg-card/60 p-6 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all group"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <span className="text-xs font-semibold text-primary/60 uppercase tracking-widest">
+                              {pkg.code || pkg.type}
+                            </span>
+                            <h3 className="text-lg font-bold text-foreground mt-0.5">{pkg.priceDisplay || pkg.type}</h3>
+                          </div>
+                          <div className="text-2xl font-bold text-primary">
+                            {pkg.price ? `$${pkg.price}` : 'Free'}
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 text-sm text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>Credits</span>
+                            <span className="text-foreground font-mono">{pkg.count || pkg.dailyLimit || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Validity</span>
+                            <span className="text-foreground">{pkg.validity || `${pkg.validityDays || 30} days`}</span>
+                          </div>
+                          {pkg.dailyLimit ? (
+                            <div className="flex justify-between">
+                              <span>Daily Limit</span>
+                              <span className="text-foreground font-mono">{pkg.dailyLimit}</span>
+                            </div>
+                          ) : null}
+                          {pkg.rateLimit ? (
+                            <div className="flex justify-between">
+                              <span>Rate Limit</span>
+                              <span className="text-foreground font-mono">{pkg.rateLimit}/s</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        {pkg.features && pkg.features.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-border/40">
+                            <p className="text-xs text-muted-foreground mb-2">Features</p>
+                            <ul className="space-y-1">
+                              {pkg.features.map((f: string, fi: number) => (
+                                <li key={fi} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <CheckCircle2 className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-1">API Reference</p>
+                      <p className="text-sm text-muted-foreground">
+                        Use <code className="px-1.5 py-0.5 rounded bg-black/40 text-primary font-mono text-xs">GET /api/pricing</code> to fetch all available plans.
+                        Optional query parameter <code className="px-1.5 py-0.5 rounded bg-black/40 text-primary font-mono text-xs">?type=count</code> filters by plan type.
+                        See the <a href="#endpoints" className="text-primary underline underline-offset-2 hover:no-underline">Endpoints</a> section above for the full endpoint reference.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
