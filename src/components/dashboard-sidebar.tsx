@@ -17,9 +17,9 @@ import { Button } from "@/components/ui/button"
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/topup", label: "Top Up", icon: CreditCard },
+  { href: "/dashboard/pricing", label: "Pricing", icon: Package },
   { href: "/dashboard/redeem", label: "Redeem Code", icon: Gift },
   { href: "/dashboard/history", label: "Transaction History", icon: History },
-  { href: "/dashboard/pricing", label: "Pricing", icon: Package },
   { href: "/dashboard/referrals", label: "Invite & Earn", icon: Users },
 ]
 
