@@ -59,7 +59,7 @@ function* deleteUserPackageSaga(action: any): Generator<any, void, any> {
 
 function* assignPackageSaga(action: any): Generator<any, void, any> {
     try {
-        const { response } = yield call(API_CALL, { method: 'POST', url: '/admin/users/packages/assign', body: action.payload })
+        const { response } = yield call(API_CALL, { method: 'POST', url: '/admin/users/assign-package', body: action.payload })
         yield put(assignPackageSuccess(response.package || response))
     } catch (error: any) {
         yield put(assignPackageFailure(error?.message || 'Failed to assign package'))
