@@ -220,7 +220,7 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
                                 </div>
                                 <div className="hidden lg:block text-left">
                                     <p className="text-sm font-medium text-foreground">{user?.name || "Admin User"}</p>
-                                    <p className="text-xs text-muted-foreground">{user?.role === 'admin' ? 'Super Admin' : 'Admin'}</p>
+                                    <p className="text-xs text-muted-foreground">{user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : user?.role || 'Admin'}</p>
                                 </div>
                             </button>
                         </DropdownMenuTrigger>

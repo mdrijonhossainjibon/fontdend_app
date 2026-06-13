@@ -103,7 +103,7 @@ export function DashboardSidebar({ isMobileMenuOpen = false, onCloseMobileMenu }
 
   function ResellerNav() {
     const { user } = useAuth()
-    if (!['reseller', 'admin', 'superadmin'].includes(user?.role || '')) return null
+    if (!['reseller', 'superadmin'].includes(user?.role || '')) return null
     return (
       <div className="space-y-1">
         <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

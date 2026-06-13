@@ -24,7 +24,6 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
   const { userData, loading: isLoadingBalance } = useSelector((state: RootState) => state.dashboard)
   const balance = userData?.balance || 0
 
-  const isAdmin = userData?.role === "admin"
   const location = useLocation()
 
   const pageTitles: Record<string, string> = {
@@ -169,7 +168,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                     </DropdownMenuItem>
                   </Link>
 
-                  {isAdmin && (
+                  {['admin', 'superadmin'].includes(userData?.role || '') && (
                     <Link to="/admin">
                       <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors text-destructive-foreground/90">
                         <Shield className="w-4 h-4 text-destructive" />

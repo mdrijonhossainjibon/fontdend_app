@@ -5,7 +5,6 @@ import { ResellerSidebar } from "@/components/reseller-sidebar"
 import { Suspense, useState } from "react"
 import { cn } from "@/lib/utils"
 import { ResellerHeader } from "@/components/reseller-header"
-
 export default function ResellerLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 

@@ -104,15 +104,14 @@ export default function ResellerPackages() {
 
     const fetchPackages = async (showLoader = true) => {
         if (showLoader) setLoading(true)
-        try {
-            const res = await API_CALL({ method: 'GET', url: '/reseller/packages' })
+        const res = await API_CALL({ method: 'GET', url: '/reseller/packages' })
+        if (res.status >= 200 && res.status < 300) {
             setPackages(res.response.packages || [])
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to load packages')
-        } finally {
-            setLoading(false)
-            setRefreshing(false)
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to load packages')
         }
+        setLoading(false)
+        setRefreshing(false)
     }
 
     useEffect(() => { fetchPackages() }, [])
@@ -153,33 +152,33 @@ export default function ResellerPackages() {
     }
 
     const regenerateKey = async (id: string) => {
-        try {
-            const res = await API_CALL({ method: 'PUT', url: `/reseller/api-keys/${id}/regenerate` })
+        const res = await API_CALL({ method: 'PUT', url: `/reseller/api-keys/${id}/regenerate` })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key regenerated')
             setPackages(prev => prev.map(p => p._id === id ? { ...p, key: res.response.apiKey.key } : p))
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to regenerate')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to regenerate')
         }
     }
 
     const deleteKey = async (id: string) => {
-        try {
-            await API_CALL({ method: 'DELETE', url: `/reseller/api-keys/${id}` })
+        const res = await API_CALL({ method: 'DELETE', url: `/reseller/api-keys/${id}` })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key deleted')
             setPackages(prev => prev.filter(p => p._id !== id))
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to delete')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to delete')
         }
     }
 
     const deleteCustomerPackage = async (pkgId: string) => {
-        try {
-            const res = await API_CALL({ method: 'DELETE', url: `/reseller/packages/${pkgId}` })
+        const res = await API_CALL({ method: 'DELETE', url: `/reseller/packages/${pkgId}` })
+        if (res.status >= 200 && res.status < 300) {
             toast.success(res.response?.message || 'Customer package deleted')
             setPackages(prev => prev.filter(p => p._id !== pkgId))
             setDeleteTarget(null)
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to delete customer package')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to delete customer package')
         }
     }
 

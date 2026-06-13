@@ -22,7 +22,7 @@ const ResellerRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) return <Navigate to="/auth/login" replace />;
-  if (!['reseller', 'admin', 'superadmin'].includes(user.role)) return <Navigate to="/dashboard" replace />;
+  if (!['reseller', 'superadmin'].includes(user.role)) return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
 };

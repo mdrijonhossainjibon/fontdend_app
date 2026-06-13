@@ -16,7 +16,7 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
         return <Navigate to="/auth/login" replace />;
     }
 
-    if (user.role !== 'admin') {
+    if (!['admin', 'superadmin'].includes(user.role)) {
         return <Navigate to="/dashboard" replace />;
     }
 

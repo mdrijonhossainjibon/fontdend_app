@@ -13,7 +13,7 @@ export function useAdminAnalyticsSocket(days: number = 30) {
 
   useEffect(() => {
     if (!user?._id) return;
-    if (user.role !== 'admin') return;
+    if (!['admin', 'superadmin'].includes(user.role)) return;
 
     const socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],

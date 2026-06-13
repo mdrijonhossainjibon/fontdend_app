@@ -28,16 +28,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import {
   Search, MoreVertical, Ban, Unlock, Edit, Trash2, Loader2, Eye, Package, RefreshCw,
+  User, Shield, Crown, Store,
 } from "lucide-react"
 import { Suspense } from "react"
 import { useNavigate } from 'react-router-dom'
 import Loading from "./loading"
 import { RootState } from "@/modules/rootReducer"
+import { useAuth } from "@/components/AuthProvider"
 import {
   fetchAdminUsersRequest,
   updateAdminUserRequest,
   deleteAdminUserRequest,
-  clearAdminUsersRequest,
 } from "@/modules/admin/actions"
 import {
   fetchUserPackagesRequest,
@@ -76,6 +77,7 @@ interface Pagination {
 export default function AdminUsersContent() {
   const navigate = useNavigate()
   const dispatch: AppDispatch = useDispatch()
+  const { user: currentUser } = useAuth()
 
   // Redux state
   const { users, loading: isLoading, pagination, isSaving, error } = useSelector((state: RootState) => state.admin)
@@ -106,7 +108,6 @@ export default function AdminUsersContent() {
   const [removingPkgId, setRemovingPkgId] = useState<string | null>(null)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [removePkgConfirmId, setRemovePkgConfirmId] = useState<string | null>(null)
-  const [clearDialogOpen, setClearDialogOpen] = useState(false)
   const [trialDays, setTrialDays] = useState(7)
   const [trialCredits, setTrialCredits] = useState(50)
 
@@ -216,11 +217,6 @@ export default function AdminUsersContent() {
     }))
   }
 
-  const handleClearAll = () => {
-    dispatch(clearAdminUsersRequest({ status: statusFilter || undefined }))
-    setClearDialogOpen(false)
-  }
-
   return (
     <>
       <Suspense fallback={<Loading />}>
@@ -263,16 +259,6 @@ export default function AdminUsersContent() {
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
               <span className="hidden sm:inline">Refresh</span>
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setClearDialogOpen(true)}
-              disabled={isLoading}
-              className="h-9 gap-1.5 text-xs"
-            >
-              <Trash2 size={14} />
-              <span className="hidden sm:inline">Clear All</span>
             </Button>
           </div>
 
@@ -331,10 +317,14 @@ export default function AdminUsersContent() {
                               'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold',
                               user.role === 'admin'
                                 ? 'bg-purple-500/10 text-purple-600 border border-purple-500/30'
+                                : user.role === 'superadmin'
+                                ? 'bg-red-500/10 text-red-600 border border-red-500/30'
+                                : user.role === 'reseller'
+                                ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
                                 : 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
                             )}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${user.role === 'admin' ? 'bg-purple-500' : 'bg-blue-500'}`} />
-                              {user.role || 'user'}
+                              {user.role === 'superadmin' ? <Crown className="w-3.5 h-3.5" /> : user.role === 'admin' ? <Shield className="w-3.5 h-3.5" /> : user.role === 'reseller' ? <Store className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                              {user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'reseller' ? 'Reseller' : user.role || 'user'}
                             </span>
                           </td>
                           <td className="py-4 px-4">
@@ -563,10 +553,18 @@ export default function AdminUsersContent() {
                   Role <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
-                  {[
-                    { value: "user", label: "User", color: "bg-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30" },
-                    { value: "admin", label: "Admin", color: "bg-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/30" },
-                  ].map((role) => (
+                  {(currentUser?.role === 'superadmin'
+                    ? [
+                        { value: "user", label: "User", color: "bg-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+                        { value: "admin", label: "Admin", color: "bg-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/30" },
+                        { value: "superadmin", label: "Super Admin", color: "bg-red-500", bg: "bg-red-500/10", border: "border-red-500/30" },
+                        { value: "reseller", label: "Reseller", color: "bg-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
+                      ]
+                    : [
+                        { value: "user", label: "User", color: "bg-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+                        { value: "admin", label: "Admin", color: "bg-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/30" },
+                      ]
+                  ).map((role) => (
                     <button
                       key={role.value}
                       type="button"
@@ -945,27 +943,6 @@ export default function AdminUsersContent() {
               }
               setRemovePkgConfirmId(null)
             }}>Remove</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Clear All Users Confirmation */}
-      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 size={16} className="text-destructive" />
-              Clear All Users
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to clear all users? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-            <AlertDialogAction className="rounded-lg bg-destructive hover:bg-destructive/90" onClick={handleClearAll}>
-              Clear All
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

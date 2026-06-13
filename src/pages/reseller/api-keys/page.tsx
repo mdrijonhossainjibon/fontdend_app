@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Key, Eye, EyeOff, Copy, Check, RefreshCw, Trash2, Calendar, RotateCw } from 'lucide-react'
+import { Key, Eye, EyeOff, Copy, Check, RefreshCw, Trash2, Calendar, RotateCw, AlertCircle, Gift } from 'lucide-react'
 import { API_CALL } from '@/lib/auth-fingerprint'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog'
+import { useNavigate } from 'react-router-dom'
 
 interface ApiKeyRecord {
     _id: string
@@ -30,18 +31,21 @@ export default function ResellerApiKeys() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [newKeyName, setNewKeyName] = useState('')
     const [refreshing, setRefreshing] = useState(false)
+    const [balance, setBalance] = useState(0)
+    const [showCouponModal, setShowCouponModal] = useState(false)
+    const [lastCoupon, setLastCoupon] = useState<{ code: string; amount: number } | null>(null)
+    const navigate = useNavigate()
 
     const fetchKeys = async (showLoader = true) => {
         if (showLoader) setLoading(true)
-        try {
-            const res = await API_CALL({ method: 'GET', url: '/reseller/api-keys' })
+        const res = await API_CALL({ method: 'GET', url: '/reseller/api-keys' })
+        if (res.status >= 200 && res.status < 300) {
             setKeys(res.response.apiKeys || [])
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to load API keys')
-        } finally {
-            setLoading(false)
-            setRefreshing(false)
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to load API keys')
         }
+        setLoading(false)
+        setRefreshing(false)
     }
 
     const handleRefresh = () => {
@@ -70,36 +74,45 @@ export default function ResellerApiKeys() {
     }
 
     const regenerateKey = async (id: string) => {
-        try {
-            const res = await API_CALL({ method: 'PUT', url: `/reseller/api-keys/${id}/regenerate` })
+        const res = await API_CALL({ method: 'PUT', url: `/reseller/api-keys/${id}/regenerate` })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key regenerated')
-            // Update the key in state
             setKeys(prev => prev.map(k => k._id === id ? { ...k, key: res.response.apiKey?.key || k.key } : k))
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to regenerate')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to regenerate')
         }
     }
 
     const deleteKey = async (id: string) => {
-        try {
-            await API_CALL({ method: 'DELETE', url: `/reseller/api-keys/${id}` })
+        const res = await API_CALL({ method: 'DELETE', url: `/reseller/api-keys/${id}` })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key deleted')
             setKeys(prev => prev.filter(k => k._id !== id))
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to delete API key')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to delete API key')
         }
     }
 
     const createApiKey = async () => {
         if (!newKeyName.trim()) return toast.error('Name is required')
-        try {
-            await API_CALL({ method: 'POST', url: '/reseller/api-keys', body: { name: newKeyName } })
+        const res = await API_CALL({ method: 'POST', url: '/reseller/api-keys', body: { name: newKeyName } })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key created')
             setShowCreateModal(false)
             setNewKeyName('')
             fetchKeys()
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to create API key')
+            if (res.response?.coupon) {
+                setLastCoupon({ code: res.response.coupon.code, amount: res.response.coupon.amount })
+                setShowCouponModal(true)
+            }
+        } else {
+            const msg = res.response?.error || res.response?.message || ''
+            if (typeof msg === 'string' && msg.includes('Minimum')) {
+                toast.error(msg)
+                navigate('/dashboard/topup')
+            } else {
+                toast.error(msg || 'Failed to create API key')
+            }
         }
     }
 
@@ -236,6 +249,41 @@ export default function ResellerApiKeys() {
                         <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
                         <Button onClick={createApiKey}>Create</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Coupon Reward Modal */}
+            <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-emerald-500">
+                            <Gift className="w-5 h-5" />
+                            🎉 Advance Coupon Generated!
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/5 border border-emerald-500/20 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">Your $100 Advance Due Coupon</p>
+                            <p className="text-2xl font-mono font-bold tracking-wider text-emerald-500 select-all">
+                                {lastCoupon?.code}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">Coupon Code — Copy & use at checkout</p>
+                        </div>
+                        <div className="flex justify-center gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    if (lastCoupon?.code) {
+                                        navigator.clipboard.writeText(lastCoupon.code)
+                                        toast.success('Coupon code copied')
+                                    }
+                                }}
+                            >
+                                <Copy className="w-4 h-4 mr-1" /> Copy Code
+                            </Button>
+                            <Button onClick={() => setShowCouponModal(false)}>Done</Button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

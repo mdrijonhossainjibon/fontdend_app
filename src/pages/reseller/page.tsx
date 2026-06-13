@@ -58,20 +58,15 @@ export default function ResellerDashboard() {
     const [newKeyName, setNewKeyName] = useState('')
 
     const fetchData = async () => {
-        try {
-            const [statsRes, packagesRes, keysRes] = await Promise.all([
-                API_CALL({ method: 'GET', url: '/reseller/stats' }),
-                API_CALL({ method: 'GET', url: '/reseller/packages' }),
-                API_CALL({ method: 'GET', url: '/reseller/api-keys' }),
-            ])
-            setStats(statsRes.response.stats)
-            setPackages(packagesRes.response.packages || [])
-            setRecentKeys((keysRes.response.apiKeys || []).slice(0, 5))
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to load data')
-        } finally {
-            setLoading(false)
-        }
+        const [statsRes, packagesRes, keysRes] = await Promise.all([
+            API_CALL({ method: 'GET', url: '/reseller/stats' }),
+            API_CALL({ method: 'GET', url: '/reseller/packages' }),
+            API_CALL({ method: 'GET', url: '/reseller/api-keys' }),
+        ])
+        if (statsRes.status >= 200 && statsRes.status < 300) setStats(statsRes.response.stats)
+        if (packagesRes.status >= 200 && packagesRes.status < 300) setPackages(packagesRes.response.packages || [])
+        if (keysRes.status >= 200 && keysRes.status < 300) setRecentKeys((keysRes.response.apiKeys || []).slice(0, 5))
+        setLoading(false)
     }
 
     useEffect(() => { fetchData() }, [])
@@ -96,24 +91,24 @@ export default function ResellerDashboard() {
 
     const createApiKey = async () => {
         if (!newKeyName.trim()) return toast.error('Name is required')
-        try {
-            await API_CALL({ method: 'POST', url: '/reseller/api-keys', body: { name: newKeyName } })
+        const res = await API_CALL({ method: 'POST', url: '/reseller/api-keys', body: { name: newKeyName } })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key created')
             setShowCreateModal(false)
             setNewKeyName('')
             fetchData()
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to create API key')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to create API key')
         }
     }
 
     const deleteKey = async (id: string) => {
-        try {
-            await API_CALL({ method: 'DELETE', url: `/reseller/api-keys/${id}` })
+        const res = await API_CALL({ method: 'DELETE', url: `/reseller/api-keys/${id}` })
+        if (res.status >= 200 && res.status < 300) {
             toast.success('API key deleted')
             fetchData()
-        } catch (err: any) {
-            toast.error(err?.message || 'Failed to delete API key')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to delete API key')
         }
     }
 
@@ -151,7 +146,7 @@ export default function ResellerDashboard() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div data-tour="stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="rounded-xl border bg-card p-4 space-y-2">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Package className="w-4 h-4" />

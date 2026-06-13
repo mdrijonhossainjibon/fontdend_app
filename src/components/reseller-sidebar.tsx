@@ -34,7 +34,7 @@ export function ResellerSidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
     if (isOpen) setIsOpen(false)
   }, [pathname])
 
-  if (!['reseller', 'admin', 'superadmin'].includes(user?.role || '')) {
+  if (!['reseller', 'superadmin'].includes(user?.role || '')) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -45,6 +45,13 @@ export function ResellerSidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
     return (
       <Link
         to={item.href}
+        data-tour={
+          item.href === "/reseller" ? "stats" :
+          item.href === "/reseller/packages" ? "packages" :
+          item.href === "/reseller/packages/buy" ? "buy-package" :
+          item.href === "/reseller/api-keys" ? "api-keys" :
+          item.href === "/reseller/docs" ? "docs" : undefined
+        }
         className={cn(
           "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300",
           "hover:bg-primary/10",

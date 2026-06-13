@@ -1,6 +1,6 @@
 "use client"
 
-import { Wallet, LogOut, Shield, LayoutDashboard, Package, ShoppingCart, Key } from "lucide-react"
+import { Wallet, LogOut, Shield, LayoutDashboard, Package, ShoppingCart, Key, Gift, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from "@/components/AuthProvider"
@@ -13,7 +13,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useMemo } from "react"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog'
+import { useMemo, useState } from "react"
+import { API_CALL } from '@/lib/auth-fingerprint'
+import { toast } from 'sonner'
 
 const pageTitles: Record<string, string> = {
     "/reseller": "Dashboard",
@@ -34,6 +43,10 @@ export function ResellerHeader() {
     const location = useLocation()
 
     const balance = user?.balance ?? 0
+    const [showCouponModal, setShowCouponModal] = useState(false)
+    const [claiming, setClaiming] = useState(false)
+    const [claimedCoupon, setClaimedCoupon] = useState<{ code: string; amount: number } | null>(null)
+    const [copied, setCopied] = useState(false)
 
     const initials = useMemo(() => {
         if (!user?.name) return 'RS'
@@ -41,6 +54,28 @@ export function ResellerHeader() {
     }, [user?.name])
 
     const currentPage = pageTitles[location.pathname] || "Reseller Panel"
+
+    const handleClaimCoupon = async () => {
+        setClaiming(true)
+        const res = await API_CALL({ method: 'GET', url: '/reseller/coupon/claim' })
+        if (res.status >= 200 && res.status < 300) {
+            setClaimedCoupon({ code: res.response.coupon.code, amount: res.response.coupon.amount })
+            toast.success('$100 advance coupon claimed!')
+        } else {
+            toast.error(res.response?.error || res.response?.message || 'Failed to claim coupon')
+        }
+        setClaiming(false)
+    }
+
+    const copyCoupon = async () => {
+        if (!claimedCoupon?.code) return
+        try {
+            await navigator.clipboard.writeText(claimedCoupon.code)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+            toast.success('Coupon code copied')
+        } catch { toast.error('Failed to copy') }
+    }
 
     return (
         <header className="w-full border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
@@ -56,7 +91,14 @@ export function ResellerHeader() {
 
                     {/* Right: Balance + Avatar */}
                     <div className="flex items-center gap-3">
-                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <button
+                            onClick={() => setShowCouponModal(true)}
+                            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                            title="Claim $100 Advance Coupon"
+                        >
+                            <Gift className="w-4 h-4 text-amber-500" />
+                        </button>
+                        <div data-tour="balance" className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                             <Wallet className="w-4 h-4 text-emerald-500" />
                             <span className="text-sm font-semibold text-emerald-500">${balance.toFixed(2)}</span>
                         </div>
@@ -85,7 +127,7 @@ export function ResellerHeader() {
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-border/50" />
 
-                                {user?.role === 'admin' && (
+                                {['admin', 'superadmin'].includes(user?.role || '') && (
                                     <>
                                         <Link to="/admin">
                                             <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors">
@@ -113,6 +155,57 @@ export function ResellerHeader() {
                     </div>
                 </div>
             </div>
+
+            {/* Coupon Claim Modal */}
+            <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-amber-500">
+                            <Gift className="w-5 h-5" />
+                            $100 Advance Coupon
+                        </DialogTitle>
+                    </DialogHeader>
+                    {claimedCoupon ? (
+                        <div className="space-y-4 py-2">
+                            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 text-center">
+                                <p className="text-sm text-muted-foreground mb-2">Your $100 Advance Coupon Code</p>
+                                <p className="text-2xl font-mono font-bold tracking-wider text-amber-500 select-all">
+                                    {claimedCoupon.code}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2">Valid for 30 days — use at checkout</p>
+                            </div>
+                            <div className="flex justify-center gap-2">
+                                <Button variant="outline" onClick={copyCoupon}>
+                                    {copied ? <Check className="w-4 h-4 mr-1 text-green-500" /> : <Copy className="w-4 h-4 mr-1" />}
+                                    {copied ? 'Copied' : 'Copy Code'}
+                                </Button>
+                                <Button onClick={() => { setShowCouponModal(false); setClaimedCoupon(null) }}>Done</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4 py-2">
+                            <div className="p-4 rounded-xl bg-muted/50 border text-center space-y-2">
+                                <Gift className="w-10 h-10 mx-auto text-amber-500" />
+                                <p className="text-sm text-muted-foreground">
+                                    Get a <strong className="text-foreground">$100 advance coupon</strong> to use at checkout.
+                                    {balance >= 5
+                                        ? ' Your balance qualifies — claim it now!'
+                                        : ` You need a minimum $5 balance. Your balance: $${balance.toFixed(2)}`}
+                                </p>
+                            </div>
+                            <DialogFooter className="gap-2">
+                                <Button variant="outline" onClick={() => setShowCouponModal(false)}>Cancel</Button>
+                                <Button
+                                    onClick={handleClaimCoupon}
+                                    disabled={claiming || balance < 5}
+                                >
+                                    {claiming ? 'Claiming...' : 'Claim $100 Coupon'}
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </header>
     )
 }
