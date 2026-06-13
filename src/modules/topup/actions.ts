@@ -72,7 +72,7 @@ export const createCryptomusInvoiceRequest = (payload: { amount: number; currenc
     payload,
 })
 
-export const createCryptomusInvoiceSuccess = (payload: { url: string; invoiceId: string; walletAddress?: string; network?: string; paymentAmount?: number }) => ({
+export const createCryptomusInvoiceSuccess = (payload: { url: string; invoiceId: string; walletAddress?: string; network?: string; currency?: string; paymentAmount?: number }) => ({
     type: types.CREATE_CRYPTOMUS_INVOICE_SUCCESS,
     payload,
 })

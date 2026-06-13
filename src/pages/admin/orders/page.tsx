@@ -6,6 +6,7 @@ import {
     clearOrdersRequest,
     checkOrderPaymentRequest,
     deleteOrderRequest,
+    clearPaymentInfo,
 } from '@/modules/admin/orders/actions'
 import { OrdersContent, TableSkeleton } from './content'
 import { Button } from '@/components/ui/button'
@@ -35,7 +36,7 @@ import {
 
 export default function OrdersPage() {
     const dispatch = useDispatch()
-    const { orders, pagination, loading } = useSelector(
+    const { orders, pagination, loading, lastPaymentInfo } = useSelector(
         (state: RootState) => state.adminOrders,
     )
     const [searchTerm, setSearchTerm] = useState('')
@@ -298,6 +299,53 @@ export default function OrdersPage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="rounded-lg bg-destructive hover:bg-destructive/90" onClick={handleClearAll}>Clear All</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Payment Info Dialog ── */}
+            <AlertDialog open={!!lastPaymentInfo} onOpenChange={(open: boolean) => { if (!open) dispatch(clearPaymentInfo()) }}>
+                <AlertDialogContent className="border-border/60 max-w-lg">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-base">
+                            <RefreshCw size={15} className="text-blue-500" />
+                            Cryptomus Payment Info
+                        </AlertDialogTitle>
+                    </AlertDialogHeader>
+                    {lastPaymentInfo && (
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between border-b border-border/30 pb-1.5">
+                                <span className="text-muted-foreground/60">Status</span>
+                                <span className={`font-medium ${lastPaymentInfo.status === 'paid' || lastPaymentInfo.isFinal ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                    {lastPaymentInfo.status} {lastPaymentInfo.isFinal ? '(Final)' : ''}
+                                </span>
+                            </div>
+                            <div className="flex justify-between border-b border-border/30 pb-1.5">
+                                <span className="text-muted-foreground/60">Amount</span>
+                                <span className="font-mono tabular-nums">{lastPaymentInfo.amount} {lastPaymentInfo.currency}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-border/30 pb-1.5">
+                                <span className="text-muted-foreground/60">Payer Amount</span>
+                                <span className="font-mono tabular-nums">{lastPaymentInfo.payerAmount} {lastPaymentInfo.payerCurrency}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-border/30 pb-1.5">
+                                <span className="text-muted-foreground/60">Network</span>
+                                <span>{lastPaymentInfo.network || '-'}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-border/30 pb-1.5">
+                                <span className="text-muted-foreground/60">UUID</span>
+                                <code className="text-[11px] font-mono text-muted-foreground/70">{lastPaymentInfo.uuid}</code>
+                            </div>
+                            {lastPaymentInfo.txid && (
+                                <div className="flex justify-between border-b border-border/30 pb-1.5">
+                                    <span className="text-muted-foreground/60">TxID</span>
+                                    <code className="text-[11px] font-mono text-muted-foreground/70 max-w-[200px] truncate">{lastPaymentInfo.txid}</code>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => dispatch(clearPaymentInfo())} className="rounded-lg">Close</AlertDialogCancel>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

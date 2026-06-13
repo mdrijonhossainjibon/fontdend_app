@@ -54,7 +54,7 @@ export default function DashboardTopupPage() {
   const pendingDeposit = topupState.pendingDeposit || topupState.activePackage?.pendingDeposit
   const {
     cryptomusCreating, cryptomusUrl, cryptomusInvoiceId, cryptomusError,
-    cryptomusWalletAddress, cryptomusNetwork, cryptomusPaymentAmount,
+    cryptomusWalletAddress, cryptomusNetwork, cryptomusCurrency, cryptomusPaymentAmount,
   } = topupState
   const { configs: cryptoConfigs, loading: configsLoading, error: configsError } = useSelector(
     (state: RootState) => state.crypto
@@ -226,7 +226,19 @@ export default function DashboardTopupPage() {
     failed: { label: 'Failed', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
   }
 
-  const currentStatus = cryptomusUrl ? { label: 'Pending Payment', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' } : null
+  const statusMap = {
+    pending: { label: 'Pending Payment', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+    confirming: { label: 'Confirming', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    checking: { label: 'Checking', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    completed: { label: 'Completed', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+    failed: { label: 'Failed', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
+    expired: { label: 'Expired', color: 'text-gray-400', bg: 'bg-gray-500/10 border-gray-500/20' },
+  }
+  const currentStatus = cryptomusInvoiceId
+    ? statusMap[pendingDeposit?.status as keyof typeof statusMap] || statusMap.pending
+    : cryptomusUrl
+      ? statusMap.pending
+      : null
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-4">
@@ -252,10 +264,10 @@ export default function DashboardTopupPage() {
           <DepositInvoiceCard
             data={{
               amountUSD: cryptomusPaymentAmount || 0,
-              cryptoName: cryptomusNetwork || 'USDT',
+              cryptoName: cryptomusCurrency || cryptomusNetwork || 'USDT',
               networkName: cryptomusNetwork || '',
               address: cryptomusWalletAddress || cryptomusUrl || cryptomusInvoiceId || '',
-              status: 'pending',
+              status: pendingDeposit?.status || 'pending',
               invoiceId: cryptomusInvoiceId,
             }}
             countdown={countdown}

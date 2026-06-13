@@ -88,3 +88,7 @@ export const deleteOrderFailure = (error: string) => ({
     type: types.DELETE_ORDER_FAILURE,
     payload: error,
 });
+
+export const clearPaymentInfo = () => ({
+    type: types.CLEAR_PAYMENT_INFO,
+});

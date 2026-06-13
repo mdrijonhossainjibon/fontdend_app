@@ -49,6 +49,7 @@ export interface OrdersState {
     pagination: OrderPagination | null;
     loading: boolean;
     error: string | null;
+    lastPaymentInfo: any;
 }
 
 const initialState: OrdersState = {
@@ -57,6 +58,7 @@ const initialState: OrdersState = {
     pagination: null,
     loading: false,
     error: null,
+    lastPaymentInfo: null,
 };
 
 const ordersReducer = (state = initialState, action: any): OrdersState => {
@@ -103,16 +105,23 @@ const ordersReducer = (state = initialState, action: any): OrdersState => {
 
         case types.CHECK_ORDER_PAYMENT_SUCCESS: {
             const updated = action.payload;
+            const deposit = updated?.deposit || {};
             return {
                 ...state,
                 orders: state.orders.map((o: any) =>
-                    o._id === updated._id ? { ...o, status: updated.status } : o
+                    o._id === deposit._id
+                        ? { ...o, status: deposit.status || o.status, txHash: deposit.txHash || o.txHash }
+                        : o
                 ),
+                lastPaymentInfo: updated.paymentInfo || null,
             };
         }
 
         case types.DELETE_ORDER_SUCCESS:
             return { ...state };
+
+        case types.CLEAR_PAYMENT_INFO:
+            return { ...state, lastPaymentInfo: null };
 
         default:
             return state;

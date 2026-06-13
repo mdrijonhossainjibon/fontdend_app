@@ -291,15 +291,13 @@ export function OrdersContent({ orders, loading, onCheckPayment, onDeleteOrder }
                                         {/* Actions */}
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                                {order.status !== 'completed' && order.status !== 'failed' && (
-                                                    <button
-                                                        onClick={() => onCheckPayment(order._id)}
-                                                        className="p-1.5 rounded-lg text-blue-500/60 hover:text-blue-500 hover:bg-blue-500/10 transition-all"
-                                                        title="Check Payment Status (Cryptomus)"
-                                                    >
-                                                        <RefreshCw size={15} />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => onCheckPayment(order._id)}
+                                                    className="p-1.5 rounded-lg text-blue-500/60 hover:text-blue-500 hover:bg-blue-500/10 transition-all"
+                                                    title="Check Payment Status (Cryptomus)"
+                                                >
+                                                    <RefreshCw size={15} />
+                                                </button>
                                                 <button
                                                     onClick={() => onDeleteOrder(order._id)}
                                                     className="p-1.5 rounded-lg text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-all"

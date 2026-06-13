@@ -122,6 +122,7 @@ function* createCryptomusInvoiceSaga(action: ReturnType<typeof actions.createCry
                 invoiceId: data.invoiceId,
                 walletAddress: data.walletAddress,
                 network: data.network,
+                currency: data.currency,
                 paymentAmount: data.paymentAmount,
             }))
         } else {
@@ -189,7 +190,7 @@ function* checkTopupPaymentSaga(): Generator {
             const data = (response as any).data || (response as any)
             yield put(actions.checkTopupPaymentSuccess(data))
             // Refresh header balance & dashboard stats on completion
-            if (data?.status === 'completed') {
+            if (data?.status === 'completed' || data?.status === 'no_pending_deposit') {
                 yield put(fetchDashboardDataRequest())
                 yield put(actions.fetchActivePackageRequest())
             }

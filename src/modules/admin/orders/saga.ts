@@ -115,8 +115,9 @@ function* checkOrderPaymentSaga(action: any): Generator {
         });
 
         if (response && response.success) {
+            // Pass full response so reducer gets status, deposit, and paymentInfo
+            yield put(actions.checkOrderPaymentSuccess(response));
             toast.success(response.message || 'Payment checked');
-            yield put(actions.checkOrderPaymentSuccess(response.deposit));
             // Don't re-fetch — reducer patches the order locally
         } else {
             yield put(actions.checkOrderPaymentFailure(response?.error || 'Check failed'));

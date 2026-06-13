@@ -84,6 +84,7 @@ export interface TopupState {
     cryptomusInvoiceId: string | null
     cryptomusWalletAddress: string | null
     cryptomusNetwork: string | null
+    cryptomusCurrency: string | null
     cryptomusPaymentAmount: number | null
     cryptomusError: string | null
 
@@ -114,6 +115,7 @@ const initialState: TopupState = {
     cryptomusInvoiceId: null,
     cryptomusWalletAddress: null,
     cryptomusNetwork: null,
+    cryptomusCurrency: null,
     cryptomusPaymentAmount: null,
     cryptomusError: null,
 
@@ -134,6 +136,19 @@ const topupReducer = (state = initialState, action: any): TopupState => {
         case types.CHECK_PENDING_DEPOSIT_REQUEST:
             return { ...state, pendingDeposit: state.pendingDeposit }
         case types.CHECK_PENDING_DEPOSIT_SUCCESS:
+            // If pending deposit has moved beyond 'pending', clear cryptomus invoice state
+            if (action.payload && action.payload.status && action.payload.status !== 'pending') {
+                return {
+                    ...state,
+                    pendingDeposit: action.payload,
+                    cryptomusUrl: null,
+                    cryptomusInvoiceId: null,
+                    cryptomusWalletAddress: null,
+                    cryptomusNetwork: null,
+                    cryptomusCurrency: null,
+                    cryptomusPaymentAmount: null,
+                }
+            }
             return { ...state, pendingDeposit: action.payload }
         case types.CHECK_PENDING_DEPOSIT_FAILURE:
             return { ...state, pendingDeposit: null }
@@ -168,13 +183,13 @@ const topupReducer = (state = initialState, action: any): TopupState => {
 
         // Cryptomus Deposit
         case types.CREATE_CRYPTOMUS_INVOICE_REQUEST:
-            return { ...state, cryptomusCreating: true, cryptomusError: null, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null }
+            return { ...state, cryptomusCreating: true, cryptomusError: null, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusCurrency: null, cryptomusPaymentAmount: null }
         case types.CREATE_CRYPTOMUS_INVOICE_SUCCESS:
-            return { ...state, cryptomusCreating: false, cryptomusUrl: action.payload.url, cryptomusInvoiceId: action.payload.invoiceId, cryptomusWalletAddress: action.payload.walletAddress || null, cryptomusNetwork: action.payload.network || null, cryptomusPaymentAmount: action.payload.paymentAmount || null }
+            return { ...state, cryptomusCreating: false, cryptomusUrl: action.payload.url, cryptomusInvoiceId: action.payload.invoiceId, cryptomusWalletAddress: action.payload.walletAddress || null, cryptomusNetwork: action.payload.network || null, cryptomusCurrency: action.payload.currency || null, cryptomusPaymentAmount: action.payload.paymentAmount || null }
         case types.CREATE_CRYPTOMUS_INVOICE_FAILURE:
             return { ...state, cryptomusCreating: false, cryptomusError: action.payload }
         case types.RESET_CRYPTOMUS_STATUS:
-            return { ...state, cryptomusCreating: false, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null, cryptomusError: null }
+            return { ...state, cryptomusCreating: false, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusCurrency: null, cryptomusPaymentAmount: null, cryptomusError: null }
 
         // Invoice
         case types.FETCH_INVOICE_REQUEST:
@@ -188,7 +203,7 @@ const topupReducer = (state = initialState, action: any): TopupState => {
         case types.CANCEL_DEPOSIT_REQUEST:
             return { ...state, cancelling: true }
         case types.CANCEL_DEPOSIT_SUCCESS:
-            return { ...state, cancelling: false, pendingDeposit: null, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null }
+            return { ...state, cancelling: false, pendingDeposit: null, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusCurrency: null, cryptomusPaymentAmount: null }
         case types.CANCEL_DEPOSIT_FAILURE:
             return { ...state, cancelling: false }
 
@@ -196,7 +211,19 @@ const topupReducer = (state = initialState, action: any): TopupState => {
         case types.CHECK_TOPUP_PAYMENT_SUCCESS: {
             const data = action.payload
             if (!data || !data.deposit) {
-                return { ...state, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null, cryptomusError: null }
+                // No pending deposit (completed/failed via admin/webhook) — clear stale state
+                return {
+                    ...state,
+                    pendingDeposit: null,
+                    activePackage: state.activePackage ? { ...state.activePackage, pendingDeposit: null } : state.activePackage,
+                    cryptomusUrl: null,
+                    cryptomusInvoiceId: null,
+                    cryptomusWalletAddress: null,
+                    cryptomusNetwork: null,
+                    cryptomusCurrency: null,
+                    cryptomusPaymentAmount: null,
+                    cryptomusError: null,
+                }
             }
             const d = data.deposit
             if (d.status === 'completed' || d.status === 'failed' || d.status === 'expired') {
@@ -208,6 +235,21 @@ const topupReducer = (state = initialState, action: any): TopupState => {
                     cryptomusInvoiceId: null,
                     cryptomusWalletAddress: null,
                     cryptomusNetwork: null,
+                    cryptomusCurrency: null,
+                    cryptomusPaymentAmount: null,
+                    cryptomusError: null,
+                }
+            }
+            // Status moved past 'pending' (confirming/checking) — clear cryptomus invoice state
+            if (d.status !== 'pending') {
+                return {
+                    ...state,
+                    pendingDeposit: d,
+                    cryptomusUrl: null,
+                    cryptomusInvoiceId: null,
+                    cryptomusWalletAddress: null,
+                    cryptomusNetwork: null,
+                    cryptomusCurrency: null,
                     cryptomusPaymentAmount: null,
                     cryptomusError: null,
                 }
