@@ -23,8 +23,6 @@ import {
   checkPendingDepositRequest,
   createCryptomusInvoiceRequest,
   resetCryptomusStatus,
-  startCryptomusPolling,
-  stopCryptomusPolling,
 } from "@/modules/topup/actions"
 import { fetchCryptoConfigRequest } from "@/modules/crypto/actions"
 import { CryptoIcon } from "@/components/CryptoIcon"
@@ -55,7 +53,7 @@ export default function DashboardTopupPage() {
   const pendingDeposit = topupState.pendingDeposit || topupState.activePackage?.pendingDeposit
   const {
     cryptomusCreating, cryptomusUrl, cryptomusInvoiceId, cryptomusError,
-    cryptomusStatus, cryptomusWalletAddress, cryptomusNetwork, cryptomusPaymentAmount,
+    cryptomusWalletAddress, cryptomusNetwork, cryptomusPaymentAmount,
   } = topupState
   const { configs: cryptoConfigs, loading: configsLoading, error: configsError } = useSelector(
     (state: RootState) => state.crypto
@@ -121,13 +119,14 @@ export default function DashboardTopupPage() {
     }
   }, [configsError, dispatch])
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      dispatch(stopCryptomusPolling())
       dispatch(resetCryptomusStatus())
     }
   }, [dispatch])
 
+  // Click outside handler
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -145,7 +144,6 @@ export default function DashboardTopupPage() {
     if (cryptomusInvoiceId) {
       const expiry = Date.now() + 24 * 60 * 60 * 1000
       setExpiryTime(expiry)
-      dispatch(startCryptomusPolling(cryptomusInvoiceId))
     }
   }, [cryptomusInvoiceId, dispatch])
 
@@ -210,12 +208,14 @@ export default function DashboardTopupPage() {
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     pending: { label: 'Awaiting Payment', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+    checking: { label: 'Checking Payment', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    confirming: { label: 'Confirming', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
     paid: { label: 'Payment Completed', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
     expired: { label: 'Expired', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
     failed: { label: 'Failed', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
   }
 
-  const currentStatus = cryptomusStatus ? statusConfig[cryptomusStatus] : null
+  const currentStatus = cryptomusUrl ? { label: 'Pending Payment', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' } : null
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-4">
@@ -229,7 +229,7 @@ export default function DashboardTopupPage() {
               networkName: pendingDeposit.networkName || '',
               address: pendingDeposit.address || '',
               status: pendingDeposit.status || 'pending',
-              invoiceId: pendingDeposit.invoiceId  ||  '',
+              invoiceId: pendingDeposit.notes || pendingDeposit.invoiceId || '',
             }}
             countdown={pendingCountdown}
             copied={copied}
@@ -244,7 +244,7 @@ export default function DashboardTopupPage() {
               cryptoName: cryptomusNetwork || 'USDT',
               networkName: cryptomusNetwork || '',
               address: cryptomusWalletAddress || cryptomusUrl || cryptomusInvoiceId || '',
-              status: cryptomusStatus || 'pending',
+              status: 'pending',
               invoiceId: cryptomusInvoiceId,
             }}
             countdown={countdown}

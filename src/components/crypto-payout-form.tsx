@@ -23,7 +23,7 @@ interface Network {
     address: string
     badge?: string
     badgeColor?: string
-    isActive: boolean
+    status: string
 }
 
 interface Crypto {
@@ -35,7 +35,7 @@ interface Crypto {
     bg: string
     borderGlow: string
     networks: Network[]
-    isActive: boolean
+    status: string
 }
 
 interface PayoutFormProps {

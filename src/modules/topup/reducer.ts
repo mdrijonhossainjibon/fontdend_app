@@ -8,6 +8,7 @@ export interface PendingDepositInfo {
     createdAt: string
     expiresAt: string
     status?: string
+    notes?: string
     cryptomusUrl?: string
     invoiceId?: string
 }
@@ -86,9 +87,6 @@ export interface TopupState {
     cryptomusPaymentAmount: number | null
     cryptomusError: string | null
 
-    cryptomusStatus: string | null
-    cryptomusStatusData: any
-
     invoice: any | null
     invoiceLoading: boolean
     invoiceError: string | null
@@ -118,9 +116,6 @@ const initialState: TopupState = {
     cryptomusNetwork: null,
     cryptomusPaymentAmount: null,
     cryptomusError: null,
-
-    cryptomusStatus: null,
-    cryptomusStatusData: null,
 
     invoice: null,
     invoiceLoading: false,
@@ -179,21 +174,7 @@ const topupReducer = (state = initialState, action: any): TopupState => {
         case types.CREATE_CRYPTOMUS_INVOICE_FAILURE:
             return { ...state, cryptomusCreating: false, cryptomusError: action.payload }
         case types.RESET_CRYPTOMUS_STATUS:
-            return { ...state, cryptomusCreating: false, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null, cryptomusError: null, cryptomusStatus: null, cryptomusStatusData: null }
-
-        // Cryptomus Payment Polling
-        case types.POLL_CRYPTOMUS_STATUS_START:
-            return { ...state, cryptomusStatus: 'pending' }
-        case types.POLL_CRYPTOMUS_STATUS_UPDATE:
-            return { ...state, cryptomusStatus: action.payload.status, cryptomusStatusData: action.payload.data }
-        case types.POLL_CRYPTOMUS_PAYMENT_DETAILS:
-            return {
-                ...state,
-                cryptomusWalletAddress: action.payload.address || state.cryptomusWalletAddress,
-                cryptomusNetwork: action.payload.network || state.cryptomusNetwork,
-            }
-        case types.POLL_CRYPTOMUS_STATUS_STOP:
-            return { ...state, cryptomusStatus: null, cryptomusStatusData: null }
+            return { ...state, cryptomusCreating: false, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null, cryptomusError: null }
 
         // Invoice
         case types.FETCH_INVOICE_REQUEST:

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState } from '@/modules/rootReducer'
 import {
@@ -26,6 +26,11 @@ import {
     ChevronLeft,
     ChevronRight,
     SlidersHorizontal,
+    Wallet,
+    CheckCircle2,
+    Clock,
+    XCircle,
+    TrendingUp,
 } from 'lucide-react'
 
 export default function OrdersPage() {
@@ -65,30 +70,118 @@ export default function OrdersPage() {
         setClearDialogOpen(false)
     }
 
+    // Stats computed from current page data
+    const stats = useMemo(() => {
+        const total = pagination?.total || orders.length
+        const completed = orders.filter(o => o.status === 'completed').length
+        const pending = orders.filter(o => o.status === 'pending').length
+        const failed = orders.filter(o => o.status === 'failed' || o.status === 'expired' || o.status === 'rejected').length
+        const revenue = orders.reduce((sum, o) => o.status === 'completed' ? sum + (o.amountUSD || 0) : sum, 0)
+        return { total, completed, pending, failed, revenue }
+    }, [orders, pagination])
+
+    const statCards = [
+        {
+            label: 'Total Orders',
+            value: stats.total,
+            icon: Wallet,
+            gradient: 'from-blue-500/20 to-indigo-500/20',
+            iconBg: 'bg-blue-500/20 text-blue-500',
+            border: 'border-blue-500/20',
+        },
+        {
+            label: 'Completed',
+            value: stats.completed,
+            icon: CheckCircle2,
+            gradient: 'from-emerald-500/20 to-green-500/20',
+            iconBg: 'bg-emerald-500/20 text-emerald-500',
+            border: 'border-emerald-500/20',
+        },
+        {
+            label: 'Pending',
+            value: stats.pending,
+            icon: Clock,
+            gradient: 'from-amber-500/20 to-yellow-500/20',
+            iconBg: 'bg-amber-500/20 text-amber-500',
+            border: 'border-amber-500/20',
+        },
+        {
+            label: 'Failed',
+            value: stats.failed,
+            icon: XCircle,
+            gradient: 'from-red-500/20 to-rose-500/20',
+            iconBg: 'bg-red-500/20 text-red-500',
+            border: 'border-red-500/20',
+        },
+        {
+            label: 'Revenue (USD)',
+            value: `$${stats.revenue.toFixed(2)}`,
+            icon: TrendingUp,
+            gradient: 'from-purple-500/20 to-pink-500/20',
+            iconBg: 'bg-purple-500/20 text-purple-500',
+            border: 'border-purple-500/20',
+        },
+    ]
+
     return (
         <div className="space-y-6">
-            {/* ── Actions Row ── */}
-            <div className="flex items-center justify-end gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={doFetch}
-                    disabled={loading}
-                    className="h-9 gap-1.5 text-xs"
-                >
-                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                    <span className="hidden sm:inline">Refresh</span>
-                </Button>
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setClearDialogOpen(true)}
-                    disabled={loading}
-                    className="h-9 gap-1.5 text-xs"
-                >
-                    <Trash2 size={14} />
-                    <span className="hidden sm:inline">Clear All</span>
-                </Button>
+            {/* ── Page Header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Orders</h1>
+                    <p className="text-sm text-muted-foreground/70 mt-1">
+                        Manage and monitor all deposit orders
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={doFetch}
+                        disabled={loading}
+                        className="h-9 gap-1.5 text-xs"
+                    >
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                        <span className="hidden sm:inline">Refresh</span>
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setClearDialogOpen(true)}
+                        disabled={loading}
+                        className="h-9 gap-1.5 text-xs"
+                    >
+                        <Trash2 size={14} />
+                        <span className="hidden sm:inline">Clear All</span>
+                    </Button>
+                </div>
+            </div>
+
+            {/* ── Stat Cards ── */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {statCards.map((stat) => {
+                    const Icon = stat.icon
+                    return (
+                        <div
+                            key={stat.label}
+                            className={`relative rounded-xl border ${stat.border} bg-gradient-to-br ${stat.gradient} backdrop-blur-sm p-4 overflow-hidden`}
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-1.5">
+                                    <p className="text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                                        {stat.label}
+                                    </p>
+                                    <p className="text-xl font-bold text-foreground">
+                                        {stat.value}
+                                    </p>
+                                </div>
+                                <div className={`p-2 rounded-lg ${stat.iconBg} backdrop-blur-sm`}>
+                                    <Icon size={16} />
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
             {/* ── Filters ── */}

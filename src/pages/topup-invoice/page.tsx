@@ -14,7 +14,6 @@ export default function TopupInvoicePage() {
   const dispatch = useDispatch()
 
   const { invoice, invoiceLoading, invoiceError } = useSelector((s: any) => s.topup)
-  const { cryptomusStatus } = useSelector((s: any) => s.topup)
 
   const [countdown, setCountdown] = useState('')
   const [copied, setCopied] = useState(false)
@@ -27,21 +26,6 @@ export default function TopupInvoicePage() {
     dispatch(topupActions.fetchInvoiceRequest(invoiceId))
     return () => { dispatch(topupActions.resetInvoice()) }
   }, [invoiceId, dispatch])
-
-  useEffect(() => {
-    if (!invoice || !invoiceId) return
-    const s = invoice.status
-    if (s !== 'pending' && s !== 'confirming') return
-    dispatch(topupActions.startCryptomusPolling(invoiceId))
-    return () => { dispatch(topupActions.stopCryptomusPolling()) }
-  }, [invoice?.status, invoiceId, dispatch])
-
-  useEffect(() => {
-    if (!cryptomusStatus) return
-    if (['paid', 'expired', 'failed', 'cancel'].includes(cryptomusStatus)) {
-      dispatch(topupActions.fetchInvoiceRequest(invoiceId))
-    }
-  }, [cryptomusStatus, invoiceId, dispatch])
 
   useEffect(() => {
     if (!invoice?.expiresAt) return

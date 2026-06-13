@@ -181,14 +181,10 @@ export default function UserDetailPage() {
                 {/* Main Content - Right Area */}
                 <div className="lg:col-span-4 space-y-5">
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-xl border border-border/50 bg-card p-4">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Credits</p>
-                            <p className="text-lg font-extrabold text-foreground mt-0.5">{user.credits ?? 0}</p>
-                        </div>
-                        <div className="rounded-xl border border-border/50 bg-card p-4">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Purchased</p>
-                            <p className="text-lg font-extrabold text-foreground mt-0.5">{user.totalCreditsPurchased ?? 0}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Balance</p>
+                            <p className="text-lg font-extrabold text-foreground mt-0.5">{user.balance ?? 0}</p>
                         </div>
                         <div className="rounded-xl border border-border/50 bg-card p-4">
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Packages</p>

@@ -43,6 +43,8 @@ function getNetworkCoinId(networkName: string): string {
 export const statusColors: Record<string, string> = {
   pending:       'text-amber-600 dark:text-[#F0B90B] bg-amber-500/10 dark:bg-[#F0B90B]/10 border-amber-500/20 dark:border-[#F0B90B]/20',
   confirming:    'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20',
+  check:         'text-amber-600 dark:text-[#F0B90B] bg-amber-500/10 dark:bg-[#F0B90B]/10 border-amber-500/20 dark:border-[#F0B90B]/20',
+  confirm_check: 'text-amber-600 dark:text-[#F0B90B] bg-amber-500/10 dark:bg-[#F0B90B]/10 border-amber-500/20 dark:border-[#F0B90B]/20',
   completed:     'text-emerald-600 dark:text-[#0ECB81] bg-emerald-500/10 dark:bg-[#0ECB81]/10 border-emerald-500/20 dark:border-[#0ECB81]/20',
   paid:          'text-emerald-600 dark:text-[#0ECB81] bg-emerald-500/10 dark:bg-[#0ECB81]/10 border-emerald-500/20 dark:border-[#0ECB81]/20',
   failed:        'text-red-600 dark:text-[#F6465D] bg-red-500/10 dark:bg-[#F6465D]/10 border-red-500/20 dark:border-[#F6465D]/20',
@@ -55,6 +57,8 @@ export const statusColors: Record<string, string> = {
 export const statusLabel: Record<string, string> = {
   pending:        'Awaiting Deposit',
   confirming:     'Confirming',
+  check:          'Checking',
+  confirm_check:  'Confirming',
   completed:      'Completed',
   paid:           'Completed',
   failed:         'Failed',
@@ -111,7 +115,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 // ── Active Payment (Binance two-panel) ──
 function ActivePaymentView({ data, countdown, copied, onCopy }: DepositInvoiceCardProps) {
-  const isActive = data.status === 'pending' || data.status === 'confirming' || data.status === 'pending_funds'
+  const isActive = data.status === 'pending' || data.status === 'confirming' || data.status === 'pending_funds' || data.status === 'check' || data.status === 'confirm_check' || data.status === 'confirm_check'
 
   return (
     <div className="w-full max-w-[900px] mx-auto">
@@ -379,7 +383,7 @@ function FinalStatusView({ data }: { data: DepositData }) {
 // ── Main Component ──
 export default function DepositInvoiceCard(props: DepositInvoiceCardProps) {
   const { data, hideActions } = props
-  const isActive = data.status === 'pending' || data.status === 'confirming' || data.status === 'pending_funds' || data.status === 'check'
+  const isActive = data.status === 'pending' || data.status === 'confirming' || data.status === 'pending_funds' || data.status === 'check' || data.status === 'confirm_check' || data.status === 'confirm_check' || data.status === 'check'
 
   if (hideActions || !isActive) {
     return <FinalStatusView data={data} />

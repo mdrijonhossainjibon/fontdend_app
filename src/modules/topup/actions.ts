@@ -86,26 +86,6 @@ export const resetCryptomusStatus = () => ({
     type: types.RESET_CRYPTOMUS_STATUS,
 })
 
-// Cryptomus Payment Polling
-export const startCryptomusPolling = (invoiceId: string) => ({
-    type: types.POLL_CRYPTOMUS_STATUS_START,
-    payload: invoiceId,
-})
-
-export const stopCryptomusPolling = () => ({
-    type: types.POLL_CRYPTOMUS_STATUS_STOP,
-})
-
-export const updateCryptomusStatus = (payload: { status: string; data?: any }) => ({
-    type: types.POLL_CRYPTOMUS_STATUS_UPDATE,
-    payload,
-})
-
-export const pollCryptomusPaymentDetails = (payload: { address?: string; network?: string; payerCurrency?: string }) => ({
-    type: types.POLL_CRYPTOMUS_PAYMENT_DETAILS,
-    payload,
-})
-
 // Invoice
 export const fetchInvoiceRequest = (invoiceId: string) => ({
     type: types.FETCH_INVOICE_REQUEST,

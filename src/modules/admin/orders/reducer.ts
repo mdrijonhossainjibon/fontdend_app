@@ -7,6 +7,7 @@ export interface OrderRecord {
         name: string;
         email: string;
         username?: string;
+        avatar?: string;
     } | null;
     type: string;
     status: 'pending' | 'confirming' | 'completed' | 'failed' | 'expired' | 'rejected' | 'approved';

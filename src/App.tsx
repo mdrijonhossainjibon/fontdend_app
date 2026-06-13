@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import PrivateRoute from '@/components/PrivateRoute'
 import PublicRoute from '@/components/PublicRoute'
 import AdminRoute from '@/components/AdminRoute'
+import { Toaster } from '@/components/ui/sonner'
 
 // Landing
 const LandingPage = lazy(() => import('@/pages/page'))
@@ -82,6 +83,7 @@ function Loading() {
 export default function App() {
   return (
     <Suspense fallback={<Loading />}>
+      <Toaster position="top-right" richColors closeButton />
       <Routes>
         {/* Public landing */}
         <Route path="/" element={<LandingPage />} />
