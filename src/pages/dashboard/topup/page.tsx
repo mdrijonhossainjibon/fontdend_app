@@ -107,15 +107,15 @@ export default function DashboardTopupPage() {
     return () => clearInterval(timer)
   }, [pendingDeposit?.expiresAt, dispatch])
 
-  // 5-second Cryptomus payment polling while pending deposit exists
+  // 5-second Cryptomus payment polling while pending deposit or invoice exists
   useEffect(() => {
-    if (!pendingDeposit || cryptomusInvoiceId) return
+    if (!pendingDeposit && !cryptomusInvoiceId) return
     dispatch(checkTopupPaymentRequest())
     const interval = setInterval(() => {
       dispatch(checkTopupPaymentRequest())
     }, 5000)
     return () => clearInterval(interval)
-  }, [pendingDeposit ? 'has' : 'none', cryptomusInvoiceId, dispatch])
+  }, [pendingDeposit ? 'has' : 'none', cryptomusInvoiceId ? 'has' : 'none', dispatch])
 
   useEffect(() => {
     dispatch(fetchCryptoConfigRequest())

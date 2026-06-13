@@ -3,6 +3,7 @@ import { API_CALL, APIResponse } from '@/lib/auth-fingerprint'
 import { toast } from 'sonner'
 import * as types from './constants'
 import * as actions from './actions'
+import { fetchDashboardDataRequest } from '@/modules/dashboard/actions'
 
 // ── Active Package ──
 function* fetchActivePackageSaga(): Generator {
@@ -185,7 +186,13 @@ function* checkTopupPaymentSaga(): Generator {
             url: '/topup/check-payment',
         })
         if (status === 200 && (response as any).success) {
-            yield put(actions.checkTopupPaymentSuccess((response as any).data || response as any))
+            const data = (response as any).data || (response as any)
+            yield put(actions.checkTopupPaymentSuccess(data))
+            // Refresh header balance & dashboard stats on completion
+            if (data?.status === 'completed') {
+                yield put(fetchDashboardDataRequest())
+                yield put(actions.fetchActivePackageRequest())
+            }
         } else {
             yield put(actions.checkTopupPaymentFailure((response as any)?.error || 'Check failed'))
         }
