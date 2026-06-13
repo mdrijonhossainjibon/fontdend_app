@@ -101,6 +101,19 @@ const ordersReducer = (state = initialState, action: any): OrdersState => {
         case types.REJECT_ORDER_FAILURE:
             return { ...state, error: action.payload };
 
+        case types.CHECK_ORDER_PAYMENT_SUCCESS: {
+            const updated = action.payload;
+            return {
+                ...state,
+                orders: state.orders.map((o: any) =>
+                    o._id === updated._id ? { ...o, status: updated.status } : o
+                ),
+            };
+        }
+
+        case types.DELETE_ORDER_SUCCESS:
+            return { ...state };
+
         default:
             return state;
     }

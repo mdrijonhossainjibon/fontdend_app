@@ -59,3 +59,32 @@ export const clearOrdersFailure = (error: string) => ({
     type: types.CLEAR_ORDERS_FAILURE,
     payload: error,
 });
+
+export const checkOrderPaymentRequest = (payload: string) => ({
+    type: types.CHECK_ORDER_PAYMENT_REQUEST,
+    payload,
+});
+
+export const checkOrderPaymentSuccess = (payload: any) => ({
+    type: types.CHECK_ORDER_PAYMENT_SUCCESS,
+    payload,
+});
+
+export const checkOrderPaymentFailure = (error: string) => ({
+    type: types.CHECK_ORDER_PAYMENT_FAILURE,
+    payload: error,
+});
+
+export const deleteOrderRequest = (payload: string) => ({
+    type: types.DELETE_ORDER_REQUEST,
+    payload,
+});
+
+export const deleteOrderSuccess = () => ({
+    type: types.DELETE_ORDER_SUCCESS,
+});
+
+export const deleteOrderFailure = (error: string) => ({
+    type: types.DELETE_ORDER_FAILURE,
+    payload: error,
+});

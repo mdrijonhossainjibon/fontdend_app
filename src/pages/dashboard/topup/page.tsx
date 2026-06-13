@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
 import {
   checkPendingDepositRequest,
+  checkTopupPaymentRequest,
   createCryptomusInvoiceRequest,
   resetCryptomusStatus,
 } from "@/modules/topup/actions"
@@ -105,6 +106,16 @@ export default function DashboardTopupPage() {
     const timer = setInterval(tick, 1000)
     return () => clearInterval(timer)
   }, [pendingDeposit?.expiresAt, dispatch])
+
+  // 5-second Cryptomus payment polling while pending deposit exists
+  useEffect(() => {
+    if (!pendingDeposit || cryptomusInvoiceId) return
+    dispatch(checkTopupPaymentRequest())
+    const interval = setInterval(() => {
+      dispatch(checkTopupPaymentRequest())
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [pendingDeposit ? 'has' : 'none', cryptomusInvoiceId, dispatch])
 
   useEffect(() => {
     dispatch(fetchCryptoConfigRequest())

@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import type { RootState } from '@/modules/rootReducer'
 import {
     fetchOrdersRequest,
-    approveOrderRequest,
-    rejectOrderRequest,
     clearOrdersRequest,
+    checkOrderPaymentRequest,
+    deleteOrderRequest,
 } from '@/modules/admin/orders/actions'
 import { OrdersContent, TableSkeleton } from './content'
 import { Button } from '@/components/ui/button'
@@ -62,8 +62,8 @@ export default function OrdersPage() {
 
     const [clearDialogOpen, setClearDialogOpen] = useState(false)
 
-    const handleApprove = (id: string) => dispatch(approveOrderRequest(id))
-    const handleReject = (id: string) => dispatch(rejectOrderRequest(id))
+    const handleCheckPayment = (id: string) => dispatch(checkOrderPaymentRequest(id))
+    const handleDeleteOrder = (id: string) => dispatch(deleteOrderRequest(id))
 
     const handleClearAll = () => {
         dispatch(clearOrdersRequest({ status: filterStatus || undefined }))
@@ -222,8 +222,8 @@ export default function OrdersPage() {
             <OrdersContent
                 orders={orders}
                 loading={loading}
-                onApprove={handleApprove}
-                onReject={handleReject}
+                onCheckPayment={handleCheckPayment}
+                onDeleteOrder={handleDeleteOrder}
             />
 
             {/* ── Pagination ── */}

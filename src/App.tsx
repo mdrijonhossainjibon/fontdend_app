@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import PrivateRoute from '@/components/PrivateRoute'
 import PublicRoute from '@/components/PublicRoute'
 import AdminRoute from '@/components/AdminRoute'
+import ResellerRoute from '@/components/ResellerRoute'
 import { Toaster } from '@/components/ui/sonner'
 
 // Landing
@@ -55,6 +56,14 @@ const AdminTrainingData = lazy(() => import('@/pages/admin/ai-training/training-
 const AdminSmtp = lazy(() => import('@/pages/admin/system/smtp/page'))
 const AdminPermissions = lazy(() => import('@/pages/admin/permissions/page'))
 const AdminUserPackages = lazy(() => import('@/pages/admin/user-packages/page'))
+
+// Reseller
+const ResellerLayout = lazy(() => import('@/pages/reseller/layout'))
+const ResellerPage = lazy(() => import('@/pages/reseller/page'))
+const ResellerPackages = lazy(() => import('@/pages/reseller/packages/page'))
+const ResellerBuyPackage = lazy(() => import('@/pages/reseller/packages/buy/page'))
+const ResellerApiKeys = lazy(() => import('@/pages/reseller/api-keys/page'))
+const ResellerDocs = lazy(() => import('@/pages/reseller/docs/page'))
 
 // Public pages
 const AboutPage = lazy(() => import('@/pages/about/page'))
@@ -109,6 +118,15 @@ export default function App() {
 
         {/* Direct topup route (from history Pay Now) */}
         <Route path="/topup" element={<PrivateRoute><TopupInvoicePage /></PrivateRoute>} />
+
+        {/* Reseller routes */}
+        <Route path="/reseller" element={<ResellerRoute><ResellerLayout /></ResellerRoute>}>
+          <Route index element={<ResellerPage />} />
+          <Route path="packages" element={<ResellerPackages />} />
+          <Route path="packages/buy" element={<ResellerBuyPackage />} />
+          <Route path="api-keys" element={<ResellerApiKeys />} />
+          <Route path="docs" element={<ResellerDocs />} />
+        </Route>
 
         {/* Admin routes (private) */}
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>

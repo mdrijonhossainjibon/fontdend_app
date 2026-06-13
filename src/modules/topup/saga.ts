@@ -177,6 +177,23 @@ function* fetchInvoiceSaga(action: ReturnType<typeof actions.fetchInvoiceRequest
     }
 }
 
+// ── Check Payment (Cryptomus) ──
+function* checkTopupPaymentSaga(): Generator {
+    try {
+        const { response, status }: APIResponse = yield call(API_CALL, {
+            method: 'POST',
+            url: '/topup/check-payment',
+        })
+        if (status === 200 && (response as any).success) {
+            yield put(actions.checkTopupPaymentSuccess((response as any).data || response as any))
+        } else {
+            yield put(actions.checkTopupPaymentFailure((response as any)?.error || 'Check failed'))
+        }
+    } catch (error: any) {
+        yield put(actions.checkTopupPaymentFailure(error.message))
+    }
+}
+
 // ── Root Saga ──
 export default function* topupSaga() {
     yield takeLatest(types.FETCH_ACTIVE_PACKAGE_REQUEST, fetchActivePackageSaga)
@@ -187,4 +204,5 @@ export default function* topupSaga() {
     yield takeLatest(types.FETCH_INVOICE_REQUEST, fetchInvoiceSaga)
     yield takeLatest(types.CHECK_PENDING_DEPOSIT_REQUEST, checkPendingDepositSaga)
     yield takeLatest(types.CANCEL_DEPOSIT_REQUEST, cancelDepositSaga)
+    yield takeLatest(types.CHECK_TOPUP_PAYMENT_REQUEST, checkTopupPaymentSaga)
 }

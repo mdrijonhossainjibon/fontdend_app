@@ -188,9 +188,34 @@ const topupReducer = (state = initialState, action: any): TopupState => {
         case types.CANCEL_DEPOSIT_REQUEST:
             return { ...state, cancelling: true }
         case types.CANCEL_DEPOSIT_SUCCESS:
-            return { ...state, cancelling: false, pendingDeposit: null }
+            return { ...state, cancelling: false, pendingDeposit: null, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null }
         case types.CANCEL_DEPOSIT_FAILURE:
             return { ...state, cancelling: false }
+
+        // Check Payment (Cryptomus)
+        case types.CHECK_TOPUP_PAYMENT_SUCCESS: {
+            const data = action.payload
+            if (!data || !data.deposit) {
+                return { ...state, cryptomusUrl: null, cryptomusInvoiceId: null, cryptomusWalletAddress: null, cryptomusNetwork: null, cryptomusPaymentAmount: null, cryptomusError: null }
+            }
+            const d = data.deposit
+            if (d.status === 'completed' || d.status === 'failed' || d.status === 'expired') {
+                return {
+                    ...state,
+                    pendingDeposit: d.status === 'completed' ? null : state.pendingDeposit,
+                    activePackage: d.status === 'completed' && state.activePackage ? { ...state.activePackage, pendingDeposit: null } : state.activePackage,
+                    cryptomusUrl: null,
+                    cryptomusInvoiceId: null,
+                    cryptomusWalletAddress: null,
+                    cryptomusNetwork: null,
+                    cryptomusPaymentAmount: null,
+                    cryptomusError: null,
+                }
+            }
+            return { ...state, pendingDeposit: d }
+        }
+        case types.CHECK_TOPUP_PAYMENT_FAILURE:
+            return { ...state }
 
         default:
             return state

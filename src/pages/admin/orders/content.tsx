@@ -1,27 +1,7 @@
 import { useState } from 'react'
-import { ExternalLink, CheckCircle, XCircle, Copy, AlertTriangle } from 'lucide-react'
+import { ExternalLink, CheckCircle, Copy, RefreshCw, Trash2 } from 'lucide-react'
 import { CryptoIcon } from '@/components/CryptoIcon'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import type { OrderRecord } from '@/modules/admin/orders/reducer'
-
-const statusStyles: Record<string, string> = {
-    completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/25',
-    pending: 'bg-amber-500/10 text-amber-500 border-amber-500/25',
-    confirming: 'bg-blue-500/10 text-blue-500 border-blue-500/25',
-    failed: 'bg-red-500/10 text-red-500 border-red-500/25',
-    expired: 'bg-gray-500/10 text-gray-400 border-gray-500/25',
-    rejected: 'bg-rose-500/10 text-rose-500 border-rose-500/25',
-    approved: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/25',
-}
 
 const statusLabels: Record<string, string> = {
     completed: 'Completed',
@@ -143,12 +123,11 @@ function EmptyState() {
 interface OrdersContentProps {
     orders: OrderRecord[]
     loading: boolean
-    onApprove: (id: string) => void
-    onReject: (id: string) => void
+    onCheckPayment: (id: string) => void
+    onDeleteOrder: (id: string) => void
 }
 
-export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersContentProps) {
-    const [confirmDialog, setConfirmDialog] = useState<{ type: 'approve' | 'reject'; id: string } | null>(null)
+export function OrdersContent({ orders, loading, onCheckPayment, onDeleteOrder }: OrdersContentProps) {
     const [copiedId, setCopiedId] = useState<string | null>(null)
 
     const copyId = async (id: string) => {
@@ -298,11 +277,7 @@ export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersCo
 
                                         {/* Status */}
                                         <td className="px-4 py-3">
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-background/50 shadow-sm"
-                                                style={{
-                                                    borderColor: `color-mix(in srgb, var(--${order.status === 'completed' ? 'emerald' : order.status === 'pending' ? 'amber' : order.status === 'confirming' ? 'blue' : 'red'}-500) 25%, transparent)`,
-                                                }}
-                                            >
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${statusDots[order.status] || 'bg-gray-400'}`} />
                                                 {statusLabels[order.status] || order.status}
                                             </div>
@@ -316,19 +291,21 @@ export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersCo
                                         {/* Actions */}
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                {order.status !== 'completed' && order.status !== 'failed' && (
+                                                    <button
+                                                        onClick={() => onCheckPayment(order._id)}
+                                                        className="p-1.5 rounded-lg text-blue-500/60 hover:text-blue-500 hover:bg-blue-500/10 transition-all"
+                                                        title="Check Payment Status (Cryptomus)"
+                                                    >
+                                                        <RefreshCw size={15} />
+                                                    </button>
+                                                )}
                                                 <button
-                                                    onClick={() => setConfirmDialog({ type: 'approve', id: order._id })}
-                                                    className="p-1.5 rounded-lg text-emerald-500/60 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
-                                                    title="Approve"
-                                                >
-                                                    <CheckCircle size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={() => setConfirmDialog({ type: 'reject', id: order._id })}
+                                                    onClick={() => onDeleteOrder(order._id)}
                                                     className="p-1.5 rounded-lg text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                                    title="Reject"
+                                                    title="Delete Order"
                                                 >
-                                                    <XCircle size={15} />
+                                                    <Trash2 size={15} />
                                                 </button>
                                             </div>
                                         </td>
@@ -341,49 +318,7 @@ export function OrdersContent({ orders, loading, onApprove, onReject }: OrdersCo
             </div>
 
             {/* ── Confirm Dialog ── */}
-            <AlertDialog open={!!confirmDialog} onOpenChange={(open) => { if (!open) setConfirmDialog(null) }}>
-                <AlertDialogContent className="border-border/60">
-                    <AlertDialogHeader>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className={`p-2.5 rounded-xl ${confirmDialog?.type === 'approve' ? 'bg-emerald-500/15' : 'bg-red-500/15'}`}>
-                                {confirmDialog?.type === 'approve' ? (
-                                    <CheckCircle size={20} className="text-emerald-500" />
-                                ) : (
-                                    <XCircle size={20} className="text-red-500" />
-                                )}
-                            </div>
-                            <div>
-                                <AlertDialogTitle className="text-base">
-                                    {confirmDialog?.type === 'approve' ? 'Approve Order' : 'Reject Order'}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-sm mt-0.5">
-                                    {confirmDialog?.type === 'approve'
-                                        ? 'This will mark the order as completed and credit the user balance.'
-                                        : 'This will mark the order as failed. The user will not receive credits.'}
-                                </AlertDialogDescription>
-                            </div>
-                        </div>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="gap-2">
-                        <AlertDialogCancel className="rounded-lg border-border/60">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            className={`rounded-lg px-5 shadow-sm ${
-                                confirmDialog?.type === 'approve'
-                                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                    : 'bg-red-600 hover:bg-red-700 text-white'
-                            }`}
-                            onClick={() => {
-                                if (!confirmDialog) return
-                                if (confirmDialog.type === 'approve') onApprove(confirmDialog.id)
-                                else onReject(confirmDialog.id)
-                                setConfirmDialog(null)
-                            }}
-                        >
-                            {confirmDialog?.type === 'approve' ? 'Approve' : 'Reject'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {/* approve/reject removed — check-payment handles everything via Cryptomus API */}
         </>
     )
 }

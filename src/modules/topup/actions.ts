@@ -123,3 +123,8 @@ export const checkPendingDepositFailure = (error: string) => ({
 export const cancelDepositRequest = (depositId: string) => ({ type: types.CANCEL_DEPOSIT_REQUEST, payload: depositId })
 export const cancelDepositSuccess = (data: any) => ({ type: types.CANCEL_DEPOSIT_SUCCESS, payload: data })
 export const cancelDepositFailure = (error: string) => ({ type: types.CANCEL_DEPOSIT_FAILURE, payload: error })
+
+// ── Check Payment (Cryptomus) ──
+export const checkTopupPaymentRequest = () => ({ type: types.CHECK_TOPUP_PAYMENT_REQUEST })
+export const checkTopupPaymentSuccess = (payload: any) => ({ type: types.CHECK_TOPUP_PAYMENT_SUCCESS, payload })
+export const checkTopupPaymentFailure = (error: string) => ({ type: types.CHECK_TOPUP_PAYMENT_FAILURE, payload: error })

@@ -13,6 +13,7 @@ import {
   Gift,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/components/AuthProvider"
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -100,6 +101,29 @@ export function DashboardSidebar({ isMobileMenuOpen = false, onCloseMobileMenu }
     )
   }
 
+  function ResellerNav() {
+    const { user } = useAuth()
+    if (!['reseller', 'admin', 'superadmin'].includes(user?.role || '')) return null
+    return (
+      <div className="space-y-1">
+        <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Reseller
+        </p>
+        <Link
+          to="/reseller"
+          className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+        >
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-lg group-hover:bg-secondary transition-all duration-300">
+            <Package className="w-5 h-5" />
+          </div>
+          <span className="font-medium whitespace-nowrap transition-all duration-300 opacity-100">
+            Reseller Panel
+          </span>
+        </Link>
+      </div>
+    )
+  }
+
   const NavSection = ({
     title,
     items,
@@ -181,7 +205,7 @@ export function DashboardSidebar({ isMobileMenuOpen = false, onCloseMobileMenu }
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-3 space-y-6">
         <NavSection title="Main" items={mainNavItems} startIndex={0} />
- 
+        <ResellerNav />
       </nav>
 
       {/* Decorative elements */}

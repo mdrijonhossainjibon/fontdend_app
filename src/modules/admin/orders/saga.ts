@@ -107,9 +107,53 @@ function* clearOrdersSaga(action: any): Generator {
     }
 }
 
+function* checkOrderPaymentSaga(action: any): Generator {
+    try {
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'POST',
+            url: `/admin/deposits/${action.payload}/check-payment`,
+        });
+
+        if (response && response.success) {
+            toast.success(response.message || 'Payment checked');
+            yield put(actions.checkOrderPaymentSuccess(response.deposit));
+            // Don't re-fetch — reducer patches the order locally
+        } else {
+            yield put(actions.checkOrderPaymentFailure(response?.error || 'Check failed'));
+            toast.error(response?.error || 'Check failed');
+        }
+    } catch (error) {
+        yield put(actions.checkOrderPaymentFailure('Check failed'));
+        toast.error('Check failed');
+    }
+}
+
+function* deleteOrderSaga(action: any): Generator {
+    try {
+        const { response }: APIResponse = yield call(API_CALL, {
+            method: 'DELETE',
+            url: `/admin/deposits/${action.payload}`,
+        });
+
+        if (response && response.success) {
+            toast.success('Order deleted');
+            yield put(actions.deleteOrderSuccess());
+            yield put(actions.fetchOrdersRequest());
+        } else {
+            yield put(actions.deleteOrderFailure(response?.error || 'Delete failed'));
+            toast.error(response?.error || 'Delete failed');
+        }
+    } catch (error) {
+        yield put(actions.deleteOrderFailure('Delete failed'));
+        toast.error('Delete failed');
+    }
+}
+
 export default function* ordersSaga() {
     yield takeLatest(types.FETCH_ORDERS_REQUEST, fetchOrdersSaga);
     yield takeLatest(types.APPROVE_ORDER_REQUEST, approveOrderSaga);
     yield takeLatest(types.REJECT_ORDER_REQUEST, rejectOrderSaga);
     yield takeLatest(types.CLEAR_ORDERS_REQUEST, clearOrdersSaga);
+    yield takeLatest(types.CHECK_ORDER_PAYMENT_REQUEST, checkOrderPaymentSaga);
+    yield takeLatest(types.DELETE_ORDER_REQUEST, deleteOrderSaga);
 }
