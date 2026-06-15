@@ -16,7 +16,7 @@ export default function ResellerLayout() {
                 "lg:ml-64",
                 isSidebarOpen ? "ml-0" : "ml-0"
             )}>
-                <ResellerHeader />
+                <ResellerHeader onMenuToggle={() => setIsSidebarOpen(prev => !prev)} />
                 <div className="p-4 sm:p-6">
                     <Suspense fallback={null}>
                         <Outlet />

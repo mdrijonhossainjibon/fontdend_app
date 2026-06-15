@@ -1,10 +1,11 @@
 "use client"
 
-import { Bell, User, MoreVertical, Puzzle, Code, Wallet, Loader2, Gift, LogOut, Shield, LayoutDashboard, ExternalLink, CreditCard, History, Package, Users, Settings } from "lucide-react"
+import { Bell, User, MoreVertical, Puzzle, Code, Wallet, Loader2, Gift, LogOut, Shield, LayoutDashboard, ExternalLink, CreditCard, History, Package, Users, Settings, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link, useLocation } from 'react-router-dom'
 import { useSelector } from "react-redux"
 import { RootState } from "@/modules/rootReducer"
+import { useTheme } from "next-themes"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,22 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
   const balance = userData?.balance || 0
 
   const location = useLocation()
+  const { theme, setTheme } = useTheme()
+
+  function ThemeToggleButton() {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        className="text-muted-foreground hover:text-foreground hover:bg-primary/5 rounded-xl transition-all duration-300"
+        title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      >
+        <Sun className="w-5 h-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute w-5 h-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      </Button>
+    )
+  }
 
   const pageTitles: Record<string, string> = {
     "/dashboard": "Dashboard",
@@ -131,6 +148,7 @@ export function Header({ onMenuToggle }: HeaderProps = {}) {
                   <Gift className="w-5 h-5" />
                 </Button>
               </Link>
+              <ThemeToggleButton />
               <Button
                 variant="ghost"
                 size="icon"

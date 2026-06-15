@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { ThemeProvider } from '@/components/theme-provider'
 import PrivateRoute from '@/components/PrivateRoute'
 import PublicRoute from '@/components/PublicRoute'
 import AdminRoute from '@/components/AdminRoute'
@@ -91,11 +92,12 @@ function Loading() {
 
 export default function App() {
   return (
-    <Suspense fallback={<Loading />}>
-      <Toaster position="top-right" richColors closeButton />
-      <Routes>
-        {/* Public landing */}
-        <Route path="/" element={<LandingPage />} />
+    <ThemeProvider>
+      <Suspense fallback={<Loading />}>
+        <Toaster position="top-right" richColors closeButton />
+        <Routes>
+          {/* Public landing */}
+          <Route path="/" element={<LandingPage />} />
 
         {/* Auth routes (guest only) */}
         <Route path="/auth/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -175,6 +177,7 @@ export default function App() {
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </ThemeProvider>
   )
 }

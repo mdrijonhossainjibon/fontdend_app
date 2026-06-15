@@ -1,6 +1,6 @@
 "use client"
 
-import { Wallet, LogOut, Shield, LayoutDashboard, Package, ShoppingCart, Key, Gift, Copy, Check } from "lucide-react"
+import { Wallet, LogOut, Shield, LayoutDashboard, Package, ShoppingCart, Key, Gift, Copy, Check, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from "@/components/AuthProvider"
@@ -38,8 +38,12 @@ const pageIcons: Record<string, React.ReactNode> = {
     "/reseller/api-keys": <Key className="w-5 h-5" />,
 }
 
-export function ResellerHeader() {
-    const { user, status } = useAuth()
+interface ResellerHeaderProps {
+    onMenuToggle?: () => void
+}
+
+export function ResellerHeader({ onMenuToggle }: ResellerHeaderProps = {}) {
+    const { user, status, refresh } = useAuth()
     const location = useLocation()
 
     const balance = user?.balance ?? 0
@@ -60,6 +64,7 @@ export function ResellerHeader() {
         const res = await API_CALL({ method: 'GET', url: '/reseller/coupon/claim' })
         if (res.status >= 200 && res.status < 300) {
             setClaimedCoupon({ code: res.response.coupon.code, amount: res.response.coupon.amount })
+            await refresh()
             toast.success('$100 advance coupon claimed!')
         } else {
             toast.error(res.response?.error || res.response?.message || 'Failed to claim coupon')
@@ -83,6 +88,16 @@ export function ResellerHeader() {
                 <div className="flex items-center justify-between h-16">
                     {/* Left: Page title */}
                     <div className="flex items-center gap-3">
+                        {/* Mobile menu toggle */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onMenuToggle}
+                            className="lg:hidden text-muted-foreground hover:text-foreground"
+                            title="Toggle sidebar"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </Button>
                         <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-emerald-400 to-teal-600 shadow-sm text-white">
                             {pageIcons[location.pathname] || <LayoutDashboard className="w-5 h-5" />}
                         </div>
@@ -128,16 +143,23 @@ export function ResellerHeader() {
                                 <DropdownMenuSeparator className="bg-border/50" />
 
                                 {['admin', 'superadmin'].includes(user?.role || '') && (
-                                    <>
-                                        <Link to="/admin">
-                                            <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors">
-                                                <Shield className="w-4 h-4" />
-                                                <span>Admin Panel</span>
-                                            </DropdownMenuItem>
-                                        </Link>
-                                        <DropdownMenuSeparator className="bg-border/50" />
-                                    </>
+                                    <Link to="/admin">
+                                        <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors">
+                                            <Shield className="w-4 h-4" />
+                                            <span>Admin Panel</span>
+                                        </DropdownMenuItem>
+                                    </Link>
                                 )}
+                                {!['admin', 'superadmin'].includes(user?.role || '') && (
+                                    <Link to="/dashboard">
+                                        <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors">
+                                            <LayoutDashboard className="w-4 h-4" />
+                                            <span>Dashboard</span>
+                                        </DropdownMenuItem>
+                                    </Link>
+                                )}
+
+                                <DropdownMenuSeparator className="bg-border/50" />
 
                                 <DropdownMenuItem
                                     onClick={() => {
