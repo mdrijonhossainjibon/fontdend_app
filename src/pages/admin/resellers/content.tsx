@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { useDispatch } from "react-redux"
 import { API_CALL } from '@/lib/auth-fingerprint'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -7,8 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, Key, Tag, Copy, CheckCheck, ChevronDown, ChevronUp, Shield } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-import store from "@/modules/store"
-type AppDispatch = typeof store.dispatch
 
 interface Coupon {
   _id: string
@@ -41,7 +38,6 @@ interface Reseller {
 }
 
 export default function AdminResellersContent() {
-  const dispatch = useDispatch<AppDispatch>()
   const [resellers, setResellers] = useState<Reseller[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -54,7 +50,7 @@ export default function AdminResellersContent() {
   async function fetchResellers() {
     setLoading(true)
     try {
-      const { response }: any = await dispatch(API_CALL({ method: "GET", url: "/admin/resellers" }))
+      const { response }: any = await API_CALL({ method: "GET", url: "/admin/resellers" })
       const data = response?.data || response || { resellers: [] }
       setResellers(data.resellers || [])
     } catch (err) {
