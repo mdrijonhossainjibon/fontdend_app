@@ -306,7 +306,12 @@ export default function AdminUsersContent() {
                               {user.image ? (
                                 <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
                               ) : (
-                                user.name.charAt(0).toUpperCase()
+                                <svg className="w-full h-full" viewBox="0 0 32 32">
+                                  <rect width="32" height="32" rx="16" fill="#6366f1" />
+                                  <text x="16" y="21" textAnchor="middle" fill="#fff" fontSize="14" fontWeight="600" fontFamily="sans-serif">
+                                    {user.name.charAt(0).toUpperCase()}
+                                  </text>
+                                </svg>
                               )}
                             </div>
                             {user.name}

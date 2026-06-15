@@ -48,6 +48,7 @@ function* fetchAdminUsersSaga(action: any): Generator {
             const mappedUsers = response.users.map((u: any) => ({
                 ...u,
                 id: u._id || u.id,
+                image: u.avatar || u.image,
             }));
             yield put(actions.fetchAdminUsersSuccess({ users: mappedUsers, pagination: response.pagination }));
         } else {
