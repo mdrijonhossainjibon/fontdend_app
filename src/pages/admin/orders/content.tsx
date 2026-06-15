@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ExternalLink, CheckCircle, Copy, RefreshCw, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ExternalLink, CheckCircle, Copy, RefreshCw, Trash2, Eye } from 'lucide-react'
 import { CryptoIcon } from '@/components/CryptoIcon'
 import type { OrderRecord } from '@/modules/admin/orders/reducer'
 
@@ -56,6 +57,8 @@ function getNetworkIcon(networkName: string): string {
     if (net.includes('avalanche') || net.includes('avax')) return 'avax'
     if (net.includes('tron') || net.includes('trc20')) return 'trx'
     if (net.includes('solana') || net.includes('sol')) return 'sol'
+    if (net.includes('litecoin') || net === 'ltc') return 'ltc'
+    if (net.includes('bitcoin') || net === 'btc') return 'btc'
     return 'btc'
 }
 
@@ -128,6 +131,7 @@ interface OrdersContentProps {
 }
 
 export function OrdersContent({ orders, loading, onCheckPayment, onDeleteOrder }: OrdersContentProps) {
+    const navigate = useNavigate()
     const [copiedId, setCopiedId] = useState<string | null>(null)
 
     const copyId = async (id: string) => {
@@ -291,13 +295,24 @@ export function OrdersContent({ orders, loading, onCheckPayment, onDeleteOrder }
                                         {/* Actions */}
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => onCheckPayment(order._id)}
-                                                    className="p-1.5 rounded-lg text-blue-500/60 hover:text-blue-500 hover:bg-blue-500/10 transition-all"
-                                                    title="Check Payment Status (Cryptomus)"
-                                                >
-                                                    <RefreshCw size={15} />
-                                                </button>
+                                                {order.userId?._id && (
+                                                    <button
+                                                        onClick={() => navigate(`/admin/users/${order.userId._id}`)}
+                                                        className="p-1.5 rounded-lg text-emerald-500/60 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                                                        title="View User"
+                                                    >
+                                                        <Eye size={15} />
+                                                    </button>
+                                                )}
+                                                {order.status !== 'completed' && (
+                                                    <button
+                                                        onClick={() => onCheckPayment(order._id)}
+                                                        className="p-1.5 rounded-lg text-blue-500/60 hover:text-blue-500 hover:bg-blue-500/10 transition-all"
+                                                        title="Check Payment Status (Cryptomus)"
+                                                    >
+                                                        <RefreshCw size={15} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => onDeleteOrder(order._id)}
                                                     className="p-1.5 rounded-lg text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-all"
