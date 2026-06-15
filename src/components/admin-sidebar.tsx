@@ -59,6 +59,7 @@ const managementItems = [
   { href: "/admin/cache-control", label: "Cache Control", icon: RefreshCw },
   { href: "/admin/redeem-codes", label: "Redeem Codes", icon: Gift },
   { href: "/admin/promo-offers", label: "Promo Offers", icon: Gift },
+  { href: "/admin/resellers", label: "Resellers", icon: ArrowRightLeft },
 ]
 
 const systemItems = [

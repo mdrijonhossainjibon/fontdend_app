@@ -39,6 +39,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
     "/admin/redeem-codes": { title: "Redeem Codes", description: "Manage redeem code generation" },
     "/admin/promo-offers": { title: "Promo Offers", description: "Manage promotional offers" },
     "/admin/user-packages": { title: "User Packages", description: "View all user-assigned packages" },
+    "/admin/resellers": { title: "Resellers", description: "Manage resellers and their coupon codes" },
     "/admin/notifications": { title: "Notifications", description: "Send notifications and announcements to users" },
     "/admin/database/transfer": { title: "Database Transfer", description: "Transfer data between databases" },
     "/admin/ai-training/bot-endpoints": { title: "Bot Endpoints", description: "Manage AI bot endpoints" },

@@ -57,6 +57,7 @@ const AdminTrainingData = lazy(() => import('@/pages/admin/ai-training/training-
 const AdminSmtp = lazy(() => import('@/pages/admin/system/smtp/page'))
 const AdminPermissions = lazy(() => import('@/pages/admin/permissions/page'))
 const AdminUserPackages = lazy(() => import('@/pages/admin/user-packages/page'))
+const AdminResellers = lazy(() => import('@/pages/admin/resellers/page'))
 
 // Reseller
 const ResellerLayout = lazy(() => import('@/pages/reseller/layout'))
@@ -159,6 +160,7 @@ export default function App() {
           <Route path="system/smtp" element={<AdminSmtp />} />
           <Route path="permissions" element={<AdminPermissions />} />
           <Route path="user-packages" element={<AdminUserPackages />} />
+          <Route path="resellers" element={<AdminResellers />} />
         </Route>
 
         {/* Public pages */}
