@@ -91,6 +91,17 @@ export default function AdminResellersContent() {
     }
   }
 
+  // Background refresh — no skeleton, keeps existing data visible
+  async function reloadResellers() {
+    try {
+      const { response }: any = await API_CALL({ method: "GET", url: "/admin/resellers" })
+      const data = response?.data || response || { resellers: [] }
+      setResellers(data.resellers || [])
+    } catch (err) {
+      console.error("Failed to reload resellers", err)
+    }
+  }
+
   function copyCode(code: string) {
     navigator.clipboard.writeText(code)
     setCopiedCode(code)
@@ -108,7 +119,7 @@ export default function AdminResellersContent() {
       await API_CALL({ method: "DELETE", url: `/admin/resellers/coupon/${deleteTarget._id}` })
       toast.success("Coupon deleted")
       setDeleteTarget(null)
-      fetchResellers()
+      reloadResellers()
     } catch {
       toast.error("Failed to delete coupon")
     } finally {
@@ -139,7 +150,7 @@ export default function AdminResellersContent() {
       setNewMaxUses("")
       setNewDiscount("")
       setNewType("fixed")
-      fetchResellers()
+      reloadResellers()
     } catch {
       toast.error("Failed to create coupon")
     } finally {
@@ -180,7 +191,7 @@ export default function AdminResellersContent() {
           <Shield className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold">Reseller Management</h1>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchResellers} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={reloadResellers} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
           Reload
         </Button>
