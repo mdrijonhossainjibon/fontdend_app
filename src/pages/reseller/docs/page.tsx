@@ -27,41 +27,41 @@ const sectionContent: Record<string, { desc: string; endpoints: { method: string
     'base-url': {
         desc: 'All endpoints are relative to this base URL. The API automatically uses your current domain.',
         endpoints: [
-            { method: '', path: 'Base URL', desc: '', code: 'https://captchamaster.com/api' },
+            { method: '', path: 'Base URL', desc: '', code: 'https://captchamaster.org/api' },
         ],
     },
     stats: {
         desc: 'Get reseller dashboard statistics — customers, API keys, credits, and usage.',
         endpoints: [
-            { method: 'GET', path: '/api/reseller/stats', desc: 'Check your reseller wallet balance and stats.', code: 'curl https://captchamaster.com/api/reseller/stats \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/stats' },
+            { method: 'GET', path: '/api/reseller/stats', desc: 'Check your reseller wallet balance and stats.', code: 'curl https://captchamaster.org/api/reseller/stats \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/stats' },
         ],
     },
     pricing: {
         desc: 'Get all available pricing plans for purchasing packages.',
         endpoints: [
-            { method: 'GET', path: '/api/reseller/pricing-plans', desc: 'List all active pricing plans.', code: 'curl https://captchamaster.com/api/reseller/pricing-plans \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/pricing-plans' },
+            { method: 'GET', path: '/api/reseller/pricing-plans', desc: 'List all active pricing plans.', code: 'curl https://captchamaster.org/api/reseller/pricing-plans \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/pricing-plans' },
         ],
     },
     buy: {
         desc: 'Purchase a package for a customer. Requires a valid pricing plan ID and customer email.',
         endpoints: [
-            { method: 'POST', path: '/api/reseller/purchase/:planId', desc: 'Buy a package for a customer.', code: 'curl -X POST https://captchamaster.com/api/reseller/purchase/{planId} \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx" \\\n  -H "Content-Type: application/json" \\\n  -d \'{\n    "customerEmail": "customer@example.com"\n  }\'', tryMethod: 'POST', tryPath: '/reseller/purchase/{planId}', tryBody: { customerEmail: 'customer@example.com' } },
+            { method: 'POST', path: '/api/reseller/purchase/:planId', desc: 'Buy a package for a customer.', code: 'curl -X POST https://captchamaster.org/api/reseller/purchase/{planId} \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx" \\\n  -H "Content-Type: application/json" \\\n  -d \'{\n    "customerEmail": "customer@example.com"\n  }\'', tryMethod: 'POST', tryPath: '/reseller/purchase/{planId}', tryBody: { customerEmail: 'customer@example.com' } },
         ],
     },
     packages: {
         desc: 'List all customer packages or delete a specific one.',
         endpoints: [
-            { method: 'GET', path: '/api/reseller/packages', desc: 'Get all customer packages with API keys, credits, and expiry.', code: 'curl https://captchamaster.com/api/reseller/packages \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/packages' },
-            { method: 'DELETE', path: '/api/reseller/packages/:id', desc: 'Delete a customer package.', code: 'curl -X DELETE https://captchamaster.com/api/reseller/packages/{id} \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryMethod: 'DELETE', tryPath: '/reseller/packages/{id}' },
+            { method: 'GET', path: '/api/reseller/packages', desc: 'Get all customer packages with API keys, credits, and expiry.', code: 'curl https://captchamaster.org/api/reseller/packages \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/packages' },
+            { method: 'DELETE', path: '/api/reseller/packages/:id', desc: 'Delete a customer package.', code: 'curl -X DELETE https://captchamaster.org/api/reseller/packages/{id} \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryMethod: 'DELETE', tryPath: '/reseller/packages/{id}' },
         ],
     },
     'api-keys': {
         desc: 'Manage standalone API keys — list, create, regenerate, and delete.',
         endpoints: [
-            { method: 'GET', path: '/api/reseller/api-keys', desc: 'List all API keys.', code: 'curl https://captchamaster.com/api/reseller/api-keys \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/api-keys' },
-            { method: 'POST', path: '/api/reseller/api-keys', desc: 'Create a new API key.', code: 'curl -X POST https://captchamaster.com/api/reseller/api-keys \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx" \\\n  -H "Content-Type: application/json" \\\n  -d \'{\n    "name": "My App Key"\n  }\'', tryEndpoint: '/reseller/api-keys', tryMethod: 'POST', tryBody: { name: 'Test Key' } },
-            { method: 'PUT', path: '/api/reseller/api-keys/:id/regenerate', desc: 'Regenerate an API key.', code: 'curl -X PUT https://captchamaster.com/api/reseller/api-keys/{id}/regenerate \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryMethod: 'PUT', tryPath: '/reseller/api-keys/{id}/regenerate' },
-            { method: 'DELETE', path: '/api/reseller/api-keys/:id', desc: 'Delete an API key.', code: 'curl -X DELETE https://captchamaster.com/api/reseller/api-keys/{id} \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryMethod: 'DELETE', tryPath: '/reseller/api-keys/{id}' },
+            { method: 'GET', path: '/api/reseller/api-keys', desc: 'List all API keys.', code: 'curl https://captchamaster.org/api/reseller/api-keys \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryEndpoint: '/reseller/api-keys' },
+            { method: 'POST', path: '/api/reseller/api-keys', desc: 'Create a new API key.', code: 'curl -X POST https://captchamaster.org/api/reseller/api-keys \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx" \\\n  -H "Content-Type: application/json" \\\n  -d \'{\n    "name": "My App Key"\n  }\'', tryEndpoint: '/reseller/api-keys', tryMethod: 'POST', tryBody: { name: 'Test Key' } },
+            { method: 'PUT', path: '/api/reseller/api-keys/:id/regenerate', desc: 'Regenerate an API key.', code: 'curl -X PUT https://captchamaster.org/api/reseller/api-keys/{id}/regenerate \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryMethod: 'PUT', tryPath: '/reseller/api-keys/{id}/regenerate' },
+            { method: 'DELETE', path: '/api/reseller/api-keys/:id', desc: 'Delete an API key.', code: 'curl -X DELETE https://captchamaster.org/api/reseller/api-keys/{id} \\\n  -H "Authorization: Bearer rk_live_xxxxxxxxxxxx"', tryMethod: 'DELETE', tryPath: '/reseller/api-keys/{id}' },
         ],
     },
     errors: {
