@@ -3,8 +3,30 @@ import { API_CALL } from '@/lib/auth-fingerprint'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, Key, Tag, Copy, CheckCheck, ChevronDown, ChevronUp, Shield } from "lucide-react"
+import { Users, Key, Tag, Copy, CheckCheck, ChevronDown, ChevronUp, Shield, RefreshCw, Trash2, Plus } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 interface Coupon {
@@ -42,6 +64,15 @@ export default function AdminResellersContent() {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [addDialog, setAddDialog] = useState<Reseller | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [newCode, setNewCode] = useState("")
+  const [newCredits, setNewCredits] = useState("")
+  const [newMaxUses, setNewMaxUses] = useState("")
+  const [newDiscount, setNewDiscount] = useState("")
+  const [newType, setNewType] = useState<"percentage" | "fixed">("fixed")
 
   useEffect(() => {
     fetchResellers()
@@ -68,6 +99,52 @@ export default function AdminResellersContent() {
 
   function toggleExpand(id: string) {
     setExpandedId(expandedId === id ? null : id)
+  }
+
+  async function handleDeleteCoupon() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await API_CALL({ method: "DELETE", url: `/admin/resellers/coupon/${deleteTarget._id}` })
+      toast.success("Coupon deleted")
+      setDeleteTarget(null)
+      fetchResellers()
+    } catch {
+      toast.error("Failed to delete coupon")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  async function handleAddCoupon() {
+    if (!addDialog || !newCode || !newCredits) return
+    setAdding(true)
+    try {
+      await API_CALL({
+        method: "POST",
+        url: "/admin/resellers/coupon",
+        body: {
+          resellerId: addDialog._id,
+          code: newCode,
+          credits: Number(newCredits),
+          maxUses: Number(newMaxUses) || 1,
+          discount: Number(newDiscount) || 0,
+          type: newType,
+        },
+      })
+      toast.success("Coupon created")
+      setAddDialog(null)
+      setNewCode("")
+      setNewCredits("")
+      setNewMaxUses("")
+      setNewDiscount("")
+      setNewType("fixed")
+      fetchResellers()
+    } catch {
+      toast.error("Failed to create coupon")
+    } finally {
+      setAdding(false)
+    }
   }
 
   // Skeleton
@@ -98,9 +175,15 @@ export default function AdminResellersContent() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Shield className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Reseller Management</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Shield className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-bold">Reseller Management</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={fetchResellers} disabled={loading}>
+          <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+          Reload
+        </Button>
       </div>
 
       {/* Stats */}
@@ -227,7 +310,7 @@ export default function AdminResellersContent() {
                         {reseller.createdAt ? new Date(reseller.createdAt).toLocaleDateString() : '-'}
                       </TableCell>
                     </TableRow>
-                    {expandedId === reseller._id && reseller.coupons.length > 0 && (
+                    {expandedId === reseller._id && (
                       <TableRow key={`${reseller._id}-coupons`}>
                         <TableCell colSpan={7} className="bg-muted/30 p-4">
                           <div className="space-y-2">
@@ -250,6 +333,9 @@ export default function AdminResellersContent() {
                                           <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
                                         )}
                                       </button>
+                                      <button onClick={() => setDeleteTarget(coupon)} className="shrink-0">
+                                        <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-500" />
+                                      </button>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                       {coupon.credits} credits · {coupon.usedCount}/{coupon.maxUses} used
@@ -260,6 +346,13 @@ export default function AdminResellersContent() {
                                   </Badge>
                                 </div>
                               ))}
+                              <button
+                                onClick={() => setAddDialog(reseller)}
+                                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
+                              >
+                                <Plus className="w-4 h-4" />
+                                <span className="text-xs font-medium">Add Coupon</span>
+                              </button>
                             </div>
                           </div>
                         </TableCell>
@@ -272,6 +365,71 @@ export default function AdminResellersContent() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Coupon</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete coupon <strong>{deleteTarget?.code}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCoupon} disabled={deleting} className="bg-red-500 hover:bg-red-600">
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Add Coupon Dialog */}
+      <Dialog open={!!addDialog} onOpenChange={(open) => { if (!open) setAddDialog(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Coupon — {addDialog?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Coupon Code</Label>
+              <Input value={newCode} onChange={(e) => setNewCode(e.target.value.toUpperCase())} placeholder="e.g. SAVE50" />
+            </div>
+            <div>
+              <Label>Credits</Label>
+              <Input value={newCredits} onChange={(e) => setNewCredits(e.target.value)} type="number" placeholder="e.g. 100" />
+            </div>
+            <div>
+              <Label>Max Uses</Label>
+              <Input value={newMaxUses} onChange={(e) => setNewMaxUses(e.target.value)} type="number" placeholder="e.g. 10" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Discount Type</Label>
+                <Select value={newType} onValueChange={(v: "percentage" | "fixed") => setNewType(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Fixed</SelectItem>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Discount Value</Label>
+                <Input value={newDiscount} onChange={(e) => setNewDiscount(e.target.value)} type="number" placeholder="e.g. 0" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialog(null)} disabled={adding}>Cancel</Button>
+            <Button onClick={handleAddCoupon} disabled={adding || !newCode || !newCredits}>
+              {adding ? "Creating..." : "Create Coupon"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
