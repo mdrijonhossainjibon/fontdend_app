@@ -105,7 +105,7 @@ export function ResellerHeader({ onMenuToggle }: ResellerHeaderProps = {}) {
                     </div>
 
                     {/* Right: Balance + Avatar */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={() => setShowCouponModal(true)}
                             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
@@ -125,7 +125,7 @@ export function ResellerHeader({ onMenuToggle }: ResellerHeaderProps = {}) {
                                     className="rounded-full w-9 h-9 p-0 hover:ring-2 hover:ring-emerald-500/30 transition-all"
                                 >
                                     <Avatar className="w-9 h-9">
-                                        <AvatarImage src={user?.avatar || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || 'Reseller')}&backgroundColor=10b981`} alt={user?.name || 'Reseller'} />
+                                        <AvatarImage src={user?.avatar || ''} alt={user?.name || 'Reseller'} />
                                         <AvatarFallback className="bg-emerald-500/10 text-emerald-600 text-xs font-medium">
                                             {initials}
                                         </AvatarFallback>
@@ -142,19 +142,18 @@ export function ResellerHeader({ onMenuToggle }: ResellerHeaderProps = {}) {
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-border/50" />
 
+                                <Link to="/dashboard">
+                                    <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors">
+                                        <LayoutDashboard className="w-4 h-4" />
+                                        <span>Dashboard</span>
+                                    </DropdownMenuItem>
+                                </Link>
+
                                 {['admin', 'superadmin'].includes(user?.role || '') && (
                                     <Link to="/admin">
                                         <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors">
                                             <Shield className="w-4 h-4" />
                                             <span>Admin Panel</span>
-                                        </DropdownMenuItem>
-                                    </Link>
-                                )}
-                                {!['admin', 'superadmin'].includes(user?.role || '') && (
-                                    <Link to="/dashboard">
-                                        <DropdownMenuItem className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors">
-                                            <LayoutDashboard className="w-4 h-4" />
-                                            <span>Dashboard</span>
                                         </DropdownMenuItem>
                                     </Link>
                                 )}

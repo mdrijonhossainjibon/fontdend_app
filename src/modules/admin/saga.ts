@@ -49,6 +49,7 @@ function* fetchAdminUsersSaga(action: any): Generator {
                 ...u,
                 id: u._id || u.id,
                 image: u.avatar || u.image,
+                joined: u.createdAt || u.joined,
             }));
             yield put(actions.fetchAdminUsersSuccess({ users: mappedUsers, pagination: response.pagination }));
         } else {
