@@ -31,7 +31,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
     "/admin/settings": { title: "Settings", description: "General system settings and configuration" },
     "/admin/system/smtp": { title: "SMTP Configuration", description: "Manage outgoing email server settings" },
     "/admin/crypto": { title: "Crypto Config", description: "Manage supported cryptocurrencies" },
-    "/admin/history": { title: "All History", description: "View all system transactions and records" },
+
     "/admin/extensions": { title: "Extensions", description: "Manage browser extensions" },
     "/admin/solutions": { title: "Solution Cache", description: "Manage captcha solution cache" },
     "/admin/upload-model": { title: "Upload Model", description: "Upload AI model files" },
@@ -70,7 +70,7 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
         { label: 'Packages', path: '/admin/packages', keywords: 'packages pricing plans subscription' },
         { label: 'Orders', path: '/admin/orders', keywords: 'orders deposits crypto payments approve reject' },
         { label: 'Topup History', path: '/admin/topup-history', keywords: 'topup history deposits payments' },
-        { label: 'All History', path: '/admin/history', keywords: 'history transactions records all' },
+
         { label: 'Analytics', path: '/admin/analytics', keywords: 'analytics stats statistics insights' },
         { label: 'Email Templates', path: '/admin/email', keywords: 'email templates mail' },
         { label: 'System SMTP', path: '/admin/system/smtp', keywords: 'smtp mail server email settings' },
